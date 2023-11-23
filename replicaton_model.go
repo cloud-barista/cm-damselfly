@@ -8,6 +8,10 @@ import (
 	// "github.com/davecgh/go-spew/spew"
 )
 
+const (
+	ReplicationModelDir string =  "/.replication_model"
+)
+
 type Replication struct {
 	TemplateFormatVersion 	string        	`yaml:"TemplateFormatVersion"`
 	Description           	string        	`yaml:"Description"`
@@ -85,7 +89,7 @@ type HealthCheck struct {
 func GetReplicaResources(yamlName string) (Replication, error){
 	cblogger.Info("Model Handler called GetReplicaResources()!")
 
-	modelFilePath := os.Getenv("MODEL_ROOT") + modelDir + "/"
+	modelFilePath := os.Getenv("MODEL_ROOT") + ReplicationModelDir + "/"
 	yamlFile := modelFilePath + yamlName + ".yaml"
 	fmt.Printf("# Replica YAML File: %+s\n", yamlFile)
 
