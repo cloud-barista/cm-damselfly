@@ -26,10 +26,11 @@ type JSON_Model struct {
 }
 
 type MigrationModel struct {
-    Description string `json:"description"`
-    Name        string `json:"name"`
-    Version     string `json:"version"`
-	ModelId     string `json:"modelId"`
+    Description 	string `json:"description"`
+    Name        	string `json:"name"`
+    Version     	string `json:"version"`
+	ModelId     	string `json:"modelId"`
+	MigrationStep   string `json:"migrationStep"`
     TargetEnvironment TargetEnvironment `json:"targetEnvironment"`
 }
 

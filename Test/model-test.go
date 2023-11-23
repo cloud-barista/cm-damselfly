@@ -58,6 +58,7 @@ func handleModel() {
 						Name:        "My-New-Model",
 						Version:     "v0.1",
 						ModelId:     "Otacbatcvafafa001",
+						MigrationStep: "Step-01-abcdefg",
 						TargetEnvironment: model.TargetEnvironment{
 							Provider: "NCP VPC",
 							Details: model.Details{
@@ -179,6 +180,7 @@ func handleModel() {
 						Name:        "My-New-Model",
 						Version:     "v0.2",
 						ModelId:     "Otacbatcvafafa00100000000",
+						MigrationStep: "Step-02-abcdefg",
 						TargetEnvironment: model.TargetEnvironment{
 							Provider: "AWS",
 							Details: model.Details{
