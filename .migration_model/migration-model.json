@@ -1,0 +1,189 @@
+{
+  "migrationModel": {
+    "description": "Description for this model",
+    "name": "My-New-Model",
+    "version": "v0.1",
+    "modelId": "abcdefg0001",
+    "targetEnvironment": {
+      "provider": "Private Cloud, or Public Cloud Name",
+      "details": {
+        "region": "Cloud provider Region code",
+        "zone": "Zone code",
+        "resources": [
+          {
+            "type": "Namespace",
+            "specifications": {
+              "description": "MyVPC_001",
+              "name": "ns01"
+            }
+          },
+          {
+            "type": "vNet",
+            "specifications": {
+              "cidrBlock": "string",
+              "cspVNetId": "string",
+              "description": "string",
+              "name": "string",
+              "subnetInfoList": [
+                {
+                  "description": "string",
+                  "ipv4_CIDR": "192.168.1.0/24",
+                  "keyValueList": [
+                    {
+                      "key": "myKey",
+                      "value": "myValue"
+                    }
+                  ],
+                  "name": "string"
+                }
+              ]
+            }
+          },
+          {
+            "type": "MCIS",
+            "specifications": {
+              "description": "MCIS descrition ...",
+              "installMonAgent": "no",
+              "label": "custom tag",
+              "name": "mcis01",
+              "placementAlgo": "string",
+              "systemLabel": "",
+              "vm": [
+                {
+                  "dataDiskIds": [
+                    "string"
+                  ],
+                  "description": "Description",
+                  "idByCsp": "i-014fa6ede6ada0b2c",
+                  "imageId": "string",
+                  "label": "string",
+                  "name": "g1-1",
+                  "rootDiskSize": "default, 30, 42, ...",
+                  "rootDiskType": "default, TYPE1, ...",
+                  "securityGroupIds": [
+                    "string"
+                  ],
+                  "specId": "string",
+                  "sshKeyId": "string",
+                  "subGroupSize": "3",
+                  "vNetId": "string",
+                  "subnetId": "string",
+                  "vmUserAccount": "string",
+                  "vmUserPassword": "string"
+                }
+              ]
+            }
+          },
+          {
+            "type": "VMImage",
+            "specifications": {
+              "cspImageId": "string",
+              "description": "string",
+              "name": "string"
+            }
+          },
+          {
+            "type": "SecurityGroup",
+            "specifications": {
+              "cspSecurityGroupId": "string",
+              "description": "string",
+              "firewallRules": [
+                {
+                  "cidr": "string",
+                  "direction": "string",
+                  "fromPort": "string",
+                  "ipprotocol": "string",
+                  "toPort": "string"
+                }
+              ],
+              "name": "string",
+              "vNetId": "string"
+            }
+          },
+          {
+            "type": "KeyPair",
+            "specifications": {
+              "connectionName": "string",
+              "cspSshKeyId": "string",
+              "description": "string",
+              "fingerprint": "string",
+              "name": "string",
+              "privateKey": "string",
+              "publicKey": "string",
+              "username": "string",
+              "verifiedUsername": "string"
+            }
+          },
+          {
+            "type": "Database",
+            "name": "db_001",
+            "specifications": {
+              "databaseType": "SQL",
+              "version": "MySQL vXXX",
+              "size": "200 GB",
+              "tables": "50",
+              "storedProcedures": "100"
+            }
+          },
+          {
+            "type": "DataDisk",
+            "name": "MyStorage_001",
+            "specifications": {
+              "connectionName": "aws-ap-southeast-1",
+              "cspDataDiskId": "string",
+              "description": "string",
+              "diskSize": "77",
+              "diskType": "default",
+              "name": "aws-ap-southeast-1-datadisk"
+            }
+          },
+          {
+            "type": "NLB",
+            "name": "MyNLB_001",
+            "specifications": {
+              "cspNLBId": "string",
+              "description": "string",
+              "healthChecker": {
+                "interval": "default",
+                "threshold": "default",
+                "timeout": "default"
+              },
+              "listener": {
+                "port": "80",
+                "protocol": "TCP"
+              },
+              "scope": "REGION",
+              "targetGroup": {
+                "port": "80",
+                "protocol": "TCP",
+                "subGroupId": "g1"
+              },
+              "type": "PUBLIC"
+            }
+          },        
+          {
+            "type": "Application-1",
+            "specifications": {
+              "name": "ERP System",
+              "version": "5.2",
+              "language": "Java",
+              "dependencies": [
+                "Java Runtime Environment",
+                "MySQL Database"
+              ]
+            }
+          },
+          {
+            "type": "Web Server",
+            "specifications": {
+              "software": "Apache",
+              "version": "2.4.41",
+              "hostedWebsites": "5",
+              "traffic": "Approx. 1000 visits/day"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
