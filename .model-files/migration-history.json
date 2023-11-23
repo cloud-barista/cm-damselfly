@@ -137,7 +137,6 @@
               }
             }
           }
-          // Add more resource mappings ...
         ]
       },
       "dataTransferMethod": {
