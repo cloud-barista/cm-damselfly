@@ -25,8 +25,7 @@ func handleModel() {
 	cblogger.Debug("Start Migration Model Test")
 
 	var modelIId model.IID
-	modelIId.NameId = "migration-model"
-	// modelIId.NameId = "migrationModel-Test-1"
+	modelIId.NameId = "migrationModel-test-1"
 
 	for {
 		fmt.Println("\n============================================================================================")
@@ -87,6 +86,37 @@ func handleModel() {
 														},
 													},
 													Name: "NewSubnetName",
+												},
+											},
+										},
+									},
+									{
+										Type: "MCIS",
+										Specifications: model.Specifications{
+											Description:      "MCIS descrition ...",
+											InstallMonAgent:  "no",
+											Label:            "custom tag",
+											Name:             "mcis01",
+											PlacementAlgo:    "string",
+											SystemLabel:      "",
+											Vm: []model.VM{
+												{
+													DataDiskIds:      []string{"disk1", "disk2"},
+													Description:      "Description",
+													IdByCsp:          "i-014fa6ede6ada0b2c",
+													ImageId:          "image1",
+													Label:            "label1",
+													Name:             "g1-1",
+													RootDiskSize:     "42",
+													RootDiskType:     "SSD",
+													SecurityGroupIds: []string{"sg1", "sg2"},
+													SpecId:           "spec1",
+													SshKeyId:         "key1",
+													SubGroupSize:     "3",
+													VNetId:           "vnet1",
+													SubnetId:         "subnet1",
+													VmUserAccount:    "user1",
+													VmUserPassword:   "pass1",
 												},
 											},
 										},
@@ -177,6 +207,37 @@ func handleModel() {
 														},
 													},
 													Name: "NewSubnetName",
+												},
+											},
+										},
+									},
+									{
+										Type: "MCIS",
+										Specifications: model.Specifications{
+											Description:      "MCIS descrition ...",
+											InstallMonAgent:  "no",
+											Label:            "custom tag",
+											Name:             "mcis01",
+											PlacementAlgo:    "string",
+											SystemLabel:      "",
+											Vm: []model.VM{
+												{
+													DataDiskIds:      []string{"disk1", "disk2"},
+													Description:      "Description",
+													IdByCsp:          "i-014fa6ede6ada0b2c",
+													ImageId:          "image1",
+													Label:            "label1",
+													Name:             "g1-1",
+													RootDiskSize:     "42",
+													RootDiskType:     "SSD",
+													SecurityGroupIds: []string{"sg1", "sg2"},
+													SpecId:           "spec1",
+													SshKeyId:         "key1",
+													SubGroupSize:     "3",
+													VNetId:           "vnet1",
+													SubnetId:         "subnet1",
+													VmUserAccount:    "user1",
+													VmUserPassword:   "pass1",
 												},
 											},
 										},
