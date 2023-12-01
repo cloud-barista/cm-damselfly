@@ -52,7 +52,8 @@ func handleModel() {
 			case 1:
 				fmt.Println("Start WriteModel() ...")
 
-				jsonModel := model.JSON_Model {
+				var jsonModel model.JSON_Model
+				jsonModel = model.JSON_Model {
 					model.MigrationModel{
 						Description: "Description for this model",
 						Name:        "My-New-Model",
@@ -61,20 +62,20 @@ func handleModel() {
 						MigrationStep: "Step-01-abcdefg",
 						TargetEnvironment: model.TargetEnvironment{
 							Provider: "NCP VPC",
-							Details: model.Details{
+							Details: model.EnvironmentDetails{
 								Region: "Korea",
 								Zone:   "KR-1",
 								Resources: []model.Resource{
 									{
 										Type: "Namespace",
-										Specifications: model.Specifications{
+										NsSpecifications: &model.Namespace{
 											Description: "MyVPC_001",
 											Name:        "ns01",
 										},
 									},
 									{
 										Type: "vNet",
-										Specifications: model.Specifications{							
+										VNetSpecifications: &model.VNet{							
 											CidrBlock:      "string",
 											SubnetInfoList : []model.SubnetInfo{
 												{
@@ -93,14 +94,14 @@ func handleModel() {
 									},
 									{
 										Type: "MCIS",
-										Specifications: model.Specifications{
+										McisSpecifications: &model.MCIS{
 											Description:      "MCIS descrition ...",
 											InstallMonAgent:  "no",
 											Label:            "custom tag",
 											Name:             "mcis01",
 											PlacementAlgo:    "string",
 											SystemLabel:      "",
-											Vm: []model.VM{
+											VM: []model.VM{
 												{
 													DataDiskIds:      []string{"disk1", "disk2"},
 													Description:      "Description",
@@ -174,7 +175,8 @@ func handleModel() {
 			case 4:
 				fmt.Println("Start UpdateModel() ...")
 
-				jsonModel2 := model.JSON_Model {
+				var jsonModel2 model.JSON_Model
+				jsonModel2 = model.JSON_Model {
 					model.MigrationModel{
 						Description: "Description for this model",
 						Name:        "My-New-Model",
@@ -183,20 +185,20 @@ func handleModel() {
 						MigrationStep: "Step-02-abcdefg",
 						TargetEnvironment: model.TargetEnvironment{
 							Provider: "AWS",
-							Details: model.Details{
+							Details: model.EnvironmentDetails{
 								Region: "Korea",
 								Zone:   "KR-1",
 								Resources: []model.Resource{
 									{
 										Type: "Namespace",
-										Specifications: model.Specifications{
+										NsSpecifications: &model.Namespace{
 											Description: "MyVPC_001",
 											Name:        "ns01",
 										},
 									},
 									{
 										Type: "vNet",
-										Specifications: model.Specifications{							
+										VNetSpecifications: &model.VNet{							
 											CidrBlock:      "string",
 											SubnetInfoList : []model.SubnetInfo{
 												{
@@ -215,14 +217,14 @@ func handleModel() {
 									},
 									{
 										Type: "MCIS",
-										Specifications: model.Specifications{
+										McisSpecifications: &model.MCIS{
 											Description:      "MCIS descrition ...",
 											InstallMonAgent:  "no",
 											Label:            "custom tag",
 											Name:             "mcis01",
 											PlacementAlgo:    "string",
 											SystemLabel:      "",
-											Vm: []model.VM{
+											VM: []model.VM{
 												{
 													DataDiskIds:      []string{"disk1", "disk2"},
 													Description:      "Description",
@@ -285,7 +287,7 @@ func handleModel() {
 				newSubnetInfoList := []model.SubnetInfo{
 					{
 						Description: "New Subnet Description",
-						Ipv4CIDR:    "10.10.1.0/24",
+						Ipv4CIDR:    "10.10.2.0/24",
 						KeyValueList: []model.KeyValue{
 							{
 								Key:   "NewKey",
