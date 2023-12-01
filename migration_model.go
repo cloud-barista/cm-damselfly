@@ -35,63 +35,120 @@ type MigrationModel struct {
 }
 
 type TargetEnvironment struct {
-    Provider string `json:"provider"`
-    Details  Details `json:"details"`
+    Provider string 			`json:"provider"`
+    Details  EnvironmentDetails `json:"details"`
 }
 
-type Details struct {
+type EnvironmentDetails struct {
     Region  string    `json:"region"`
     Zone    string    `json:"zone"`
     Resources []Resource `json:"resources"`
 }
 
 type Resource struct {
-    Type           string        `json:"type"`
-    Name           string        `json:"name,omitempty"`
-    Specifications Specifications `json:"specifications"`
+    Type                string             `json:"type"`
+    NsSpecifications    *Namespace         `json:"nsSpecifications,omitempty"`
+    VNetSpecifications  *VNet              `json:"vNetSpecifications,omitempty"`
+    McisSpecifications  *MCIS              `json:"mcisSpecifications,omitempty"`
+    ImgSpecifications   *VMImage           `json:"imgSpecifications,omitempty"`
+    SgSpecifications    *SG     		   `json:"sgSpecifications,omitempty"`
+    KeySpecifications   *KeyPair           `json:"keySpecifications,omitempty"`
+    DbSpecifications    *Database          `json:"dbSpecifications,omitempty"`
+    DiskSpecifications  *DataDisk          `json:"diskSpecifications,omitempty"`
+    NlbSpecifications   *NLB               `json:"nlbSpecifications,omitempty"`
+    AppSpecifications   *Application       `json:"appSpecifications,omitempty"`
+    WebSvrSpecifications *WebServer        `json:"webSvrSpecifications,omitempty"`
 }
 
-type Specifications struct {
-    // Common fields
-    Description string `json:"description,omitempty"`
-    Name        string `json:"name,omitempty"`
+// Define structs for each specification
+type Namespace struct {
+    Description string `json:"description"`
+    Name        string `json:"name"`
+}
 
-    // Fields specific to certain resources
-    CidrBlock         string         `json:"cidrBlock,omitempty"`
-    ConnectionName    string         `json:"connectionName,omitempty"`
-    CspVNetId         string         `json:"cspVNetId,omitempty"`
-    SubnetInfoList    []SubnetInfo   `json:"subnetInfoList,omitempty"`
-    InstallMonAgent   string         `json:"installMonAgent,omitempty"`
-    Label             string         `json:"label,omitempty"`
-    PlacementAlgo     string         `json:"placementAlgo,omitempty"`
-    SystemLabel       string         `json:"systemLabel,omitempty"`
-    Vm                []VM           `json:"vm,omitempty"`
-    CspImageId        string         `json:"cspImageId,omitempty"`
-    CspSecurityGroupId string        `json:"cspSecurityGroupId,omitempty"`
-    FirewallRules     []FirewallRule `json:"firewallRules,omitempty"`
-    VNetId            string         `json:"vNetId,omitempty"`
-    Fingerprint       string         `json:"fingerprint,omitempty"`
-    PrivateKey        string         `json:"privateKey,omitempty"`
-    PublicKey         string         `json:"publicKey,omitempty"`
-    VerifiedUsername  string         `json:"verifiedUsername,omitempty"`
-    DatabaseType      string         `json:"databaseType,omitempty"`
-    Version           string         `json:"version,omitempty"`
-    Size              string         `json:"size,omitempty"`
-    Tables            string         `json:"tables,omitempty"`
-    StoredProcedures  string         `json:"storedProcedures,omitempty"`
-    DiskSize          string         `json:"diskSize,omitempty"`
-    DiskType          string         `json:"diskType,omitempty"`
-    CspNLBId          string         `json:"cspNLBId,omitempty"`
-    HealthChecker     HealthChecker  `json:"healthChecker,omitempty"`
-    LbListener        LbListener     `json:"listener,omitempty"`
-    Scope             string         `json:"scope,omitempty"`
-    TargetGroup       TargetGroup    `json:"targetGroup,omitempty"`
-    Type              string         `json:"type,omitempty"`
-    Language          string         `json:"language,omitempty"`
-    Dependencies      []string       `json:"dependencies,omitempty"`
-    Software          string         `json:"software,omitempty"`
-    HostedWebsites    string         `json:"hostedWebsites,omitempty"`
-    Traffic           string         `json:"traffic,omitempty"`
+type VNet struct {
+    CidrBlock      string `json:"cidrBlock"`
+    CspVNetId      string `json:"cspVNetId"`
+    Description    string `json:"description"`
+    Name           string `json:"name"`
+    SubnetInfoList []SubnetInfo `json:"subnetInfoList"`
+}
+
+type MCIS struct {
+    Description    string `json:"description"`
+    InstallMonAgent string `json:"installMonAgent"`
+    Label          string `json:"label"`
+    Name           string `json:"name"`
+    PlacementAlgo  string `json:"placementAlgo"`
+    SystemLabel    string `json:"systemLabel"`
+    VM             []VM   `json:"vm"`
+}
+
+type VMImage struct {
+    CspImageId   string `json:"cspImageId"`
+    Description  string `json:"description"`
+    Name         string `json:"name"`
+}
+
+type SG struct {
+    CspSecurityGroupId string         `json:"cspSecurityGroupId"`
+    Description        string         `json:"description"`
+    FirewallRules      []FirewallRule `json:"firewallRules"`
+    Name               string         `json:"name"`
+    VNetId             string         `json:"vNetId"`
+}
+
+type KeyPair struct {
+    ConnectionName    string `json:"connectionName"`
+    CspSshKeyId       string `json:"cspSshKeyId"`
+    Description       string `json:"description"`
+    Fingerprint       string `json:"fingerprint"`
+    Name              string `json:"name"`
+    PrivateKey        string `json:"privateKey"`
+    PublicKey         string `json:"publicKey"`
+    Username          string `json:"username"`
+    VerifiedUsername  string `json:"verifiedUsername"`
+}
+
+type Database struct {
+    DatabaseType    string `json:"databaseType"`
+    Version         string `json:"version"`
+    Size            string `json:"size"`
+    Tables          string `json:"tables"`
+    StoredProcedures string `json:"storedProcedures"`
+}
+
+type DataDisk struct {
+    ConnectionName string `json:"connectionName"`
+    CspDataDiskId  string `json:"cspDataDiskId"`
+    Description    string `json:"description"`
+    DiskSize       string `json:"diskSize"`
+    DiskType       string `json:"diskType"`
+    Name           string `json:"name"`
+}
+
+type NLB struct {
+    CspNLBId       string      `json:"cspNLBId"`
+    Description    string      `json:"description"`
+    HealthChecker  HealthChecker `json:"healthChecker"`
+    Listener       Listener    `json:"listener"`
+    Scope          string      `json:"scope"`
+    TargetGroup    TargetGroup `json:"targetGroup"`
+    Type           string      `json:"type"`
+}
+
+type Application struct {
+    Name         string   `json:"name"`
+    Version      string   `json:"version"`
+    Language     string   `json:"language"`
+    Dependencies []string `json:"dependencies"`
+}
+
+type WebServer struct {
+    Software       string `json:"software"`
+    Version        string `json:"version"`
+    HostedWebsites string `json:"hostedWebsites"`
+    Traffic        string `json:"traffic"`
 }
 
 // Sub structs for nested objects in specifications
@@ -359,7 +416,7 @@ func UpdateSubnetInfoList(modelIId IID, newSubnetInfoList []SubnetInfo) (JSON_Mo
 	for i, resource := range modelInfo.MigrationModel.TargetEnvironment.Details.Resources {
 		cblogger.Infof("# resource.Type : [%s]", resource.Type)
         if resource.Type == "vNet" {
-            modelInfo.MigrationModel.TargetEnvironment.Details.Resources[i].Specifications.SubnetInfoList = newSubnetInfoList
+            modelInfo.MigrationModel.TargetEnvironment.Details.Resources[i].VNetSpecifications.SubnetInfoList = newSubnetInfoList
 			break
 		}
     }
@@ -381,66 +438,3 @@ func UpdateSubnetInfoList(modelIId IID, newSubnetInfoList []SubnetInfo) (JSON_Mo
 	}
 	return model, nil
 }
-
-
-// func SearchVMImageByName(rsInfo JSON_Model, imageName string) (*VMImage, error) {
-// 	for _, image := range rsInfo.VMImages {
-// 		if image.Name == imageName {
-// 			return &image, nil
-// 		}
-// 	}
-// 	return nil, fmt.Errorf("VMImage not found")
-// }
-
-// func UpdateVMImageByName(rsInfo *JSON_Model, imageName string, newImage VMImage) error {
-// 	for i, image := range rsInfo.VMImages {
-// 		if image.Name == imageName {
-// 			rsInfo.VMImages[i] = newImage
-// 			return nil
-// 		}
-// 	}
-// 	return fmt.Errorf("VMImage not found")
-// }
-
-// func DeleteVMImageByName(rsInfo *JSON_Model, imageName string) error {
-// 	for i, image := range rsInfo.VMImages {
-// 		if image.Name == imageName {
-// 			rsInfo.VMImages = append(rsInfo.VMImages[:i], rsInfo.VMImages[i+1:]...)
-// 			return nil
-// 		}
-// 	}
-// 	return fmt.Errorf("VMImage not found")
-// }
-
-// func MergeJSONFiles(outputFile string, inputFiles ...string) error {
-// 	mergedRS := JSON_Model{}
-
-// 	for _, file := range inputFiles {
-// 		data, err := os.ReadFile(file)
-// 		if err != nil {
-// 			return fmt.Errorf("error reading file %s: %v", file, err)
-// 		}
-
-// 		var rsInfo JSON_Model
-// 		err = json.Unmarshal(data, &rsInfo)
-// 		if err != nil {
-// 			return fmt.Errorf("error unmarshalling file %s: %v", file, err)
-// 		}
-
-// 		mergedRS.VMImages = append(mergedRS.VMImages, rsInfo.VMImages...)
-// 		mergedRS.VMSpecs = append(mergedRS.VMSpecs, rsInfo.VMSpecs...)
-// 		//... similarly merge other resource lists
-// 	}
-
-// 	mergedData, err := json.MarshalIndent(mergedRS, "", "  ")
-// 	if err != nil {
-// 		return fmt.Errorf("error marshalling merged data: %v", err)
-// 	}
-
-// 	err = os.WriteFile(outputFile, mergedData, 0644)
-// 	if err != nil {
-// 		return fmt.Errorf("error writing to %s: %v", outputFile, err)
-// 	}
-
-// 	return nil
-// }

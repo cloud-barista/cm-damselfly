@@ -13,14 +13,14 @@
         "resources": [
           {
             "type": "Namespace",
-            "specifications": {
+            "nsSpecifications": {
               "description": "MyVPC_001",
               "name": "ns01"
             }
           },
           {
             "type": "vNet",
-            "specifications": {
+            "vNetSpecifications": {
               "cidrBlock": "string",
               "cspVNetId": "string",
               "description": "string",
@@ -42,7 +42,7 @@
           },
           {
             "type": "MCIS",
-            "specifications": {
+            "mcisSpecifications": {
               "description": "MCIS descrition ...",
               "installMonAgent": "no",
               "label": "custom tag",
@@ -77,7 +77,7 @@
           },
           {
             "type": "VMImage",
-            "specifications": {
+            "imgSpecifications": {
               "cspImageId": "string",
               "description": "string",
               "name": "string"
@@ -85,7 +85,7 @@
           },
           {
             "type": "SecurityGroup",
-            "specifications": {
+            "sgSpecifications": {
               "cspSecurityGroupId": "string",
               "description": "string",
               "firewallRules": [
@@ -103,7 +103,7 @@
           },
           {
             "type": "KeyPair",
-            "specifications": {
+            "keySpecifications": {
               "connectionName": "string",
               "cspSshKeyId": "string",
               "description": "string",
@@ -118,7 +118,7 @@
           {
             "type": "Database",
             "name": "db_001",
-            "specifications": {
+            "dbSpecifications": {
               "databaseType": "SQL",
               "version": "MySQL vXXX",
               "size": "200 GB",
@@ -129,7 +129,7 @@
           {
             "type": "DataDisk",
             "name": "MyStorage_001",
-            "specifications": {
+            "diskSpecifications": {
               "connectionName": "aws-ap-southeast-1",
               "cspDataDiskId": "string",
               "description": "string",
@@ -141,7 +141,7 @@
           {
             "type": "NLB",
             "name": "MyNLB_001",
-            "specifications": {
+            "nlbSpecifications": {
               "cspNLBId": "string",
               "description": "string",
               "healthChecker": {
@@ -164,7 +164,7 @@
           },        
           {
             "type": "Application-1",
-            "specifications": {
+            "appSpecifications": {
               "name": "ERP System",
               "version": "5.2",
               "language": "Java",
@@ -176,7 +176,7 @@
           },
           {
             "type": "Web Server",
-            "specifications": {
+            "webSvrSpecifications": {
               "software": "Apache",
               "version": "2.4.41",
               "hostedWebsites": "5",
