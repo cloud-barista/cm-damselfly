@@ -40,19 +40,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                            "$ref": "#/definitions/handler.ResHTTPVersion"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                            "$ref": "#/definitions/handler.ResHTTPVersion"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                            "$ref": "#/definitions/handler.ResHTTPVersion"
                         }
                     }
                 }
@@ -75,7 +75,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(sample) This is a list of models",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetModels"
+                            "$ref": "#/definitions/handler.ResGetModels"
                         }
                     },
                     "404": {
@@ -105,7 +105,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ReqCreateModel"
+                            "$ref": "#/definitions/handler.ReqCreateModel"
                         }
                     }
                 ],
@@ -113,7 +113,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResCreateModel"
+                            "$ref": "#/definitions/handler.ResCreateModel"
                         }
                     },
                     "400": {
@@ -151,7 +151,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(Sample) a model",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetModel"
+                            "$ref": "#/definitions/handler.ResGetModel"
                         }
                     },
                     "404": {
@@ -188,7 +188,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ReqUpdateModel"
+                            "$ref": "#/definitions/handler.ReqUpdateModel"
                         }
                     }
                 ],
@@ -196,7 +196,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResUpdateModel"
+                            "$ref": "#/definitions/handler.ResUpdateModel"
                         }
                     },
                     "400": {
@@ -275,7 +275,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ReqPatchModel"
+                            "$ref": "#/definitions/handler.ReqPatchModel"
                         }
                     }
                 ],
@@ -283,7 +283,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResPatchModel"
+                            "$ref": "#/definitions/handler.ResPatchModel"
                         }
                     },
                     "400": {
@@ -318,13 +318,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResReadyz"
+                            "$ref": "#/definitions/handler.ResReadyz"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResReadyz"
+                            "$ref": "#/definitions/handler.ResReadyz"
                         }
                     }
                 }
@@ -332,7 +332,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "pkg_api_rest_handler.MyModel": {
+        "handler.MyModel": {
             "type": "object",
             "properties": {
                 "id": {
@@ -343,7 +343,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ReqCreateModel": {
+        "handler.ReqCreateModel": {
             "type": "object",
             "properties": {
                 "id": {
@@ -354,7 +354,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ReqPatchModel": {
+        "handler.ReqPatchModel": {
             "type": "object",
             "properties": {
                 "id": {
@@ -365,7 +365,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ReqUpdateModel": {
+        "handler.ReqUpdateModel": {
             "type": "object",
             "properties": {
                 "id": {
@@ -376,7 +376,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ResCreateModel": {
+        "handler.ResCreateModel": {
             "type": "object",
             "properties": {
                 "id": {
@@ -387,7 +387,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ResGetModel": {
+        "handler.ResGetModel": {
             "type": "object",
             "properties": {
                 "id": {
@@ -398,18 +398,18 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ResGetModels": {
+        "handler.ResGetModels": {
             "type": "object",
             "properties": {
                 "models": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pkg_api_rest_handler.MyModel"
+                        "$ref": "#/definitions/handler.MyModel"
                     }
                 }
             }
         },
-        "pkg_api_rest_handler.ResHTTPVersion": {
+        "handler.ResHTTPVersion": {
             "type": "object",
             "properties": {
                 "message": {
@@ -417,7 +417,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ResPatchModel": {
+        "handler.ResPatchModel": {
             "type": "object",
             "properties": {
                 "id": {
@@ -428,7 +428,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ResReadyz": {
+        "handler.ResReadyz": {
             "type": "object",
             "properties": {
                 "message": {
@@ -436,7 +436,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.ResUpdateModel": {
+        "handler.ResUpdateModel": {
             "type": "object",
             "properties": {
                 "id": {

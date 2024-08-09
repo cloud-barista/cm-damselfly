@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"strconv"
 	"sync"
 
 	"github.com/cloud-barista/cm-damselfly/pkg/config"
+	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	"github.com/cloud-barista/cm-damselfly/pkg/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -15,8 +17,10 @@ import (
 
 func init() {
 
+	// Initialize the configuration from "config.yaml" file or environment variables
 	config.Init()
 
+	// Initialize the logger
 	logger := logger.NewLogger(logger.Config{
 		LogLevel:    viper.GetString("damselfly.log.level"),
 		LogWriter:   viper.GetString("damselfly.log.writer"),
@@ -27,7 +31,15 @@ func init() {
 		Compress:    viper.GetBool("damselfly.logfile.compress"),
 	})
 
+	// Set a global logger
 	log.Logger = *logger
+
+	// Initialize the local key-value store with the specified file path
+	prjRoot := viper.GetString("damselfly.root")
+	dbFilePath := prjRoot + "/.damselfly/lkvstore.db"
+	lkvstore.Init(lkvstore.Config{
+		DbFilePath: dbFilePath,
+	})
 
 }
 
@@ -47,7 +59,25 @@ func init() {
 // @securityDefinitions.basic BasicAuth
 
 func main() {
-	log.Info().Msg("CM-Damselfly server is starting...")
+	log.Info().Msg("Preparing to run CM-Damselfly")
+
+	// Load the state from the file back into the key-value store
+	if err := lkvstore.LoadLkvStore(); err != nil {
+		fmt.Printf("Error loading: %v\n", err)
+	} else {
+		fmt.Println("Successfully loaded the lkvstore from file.")
+	}
+
+	defer func() {
+		// Save the current state of the key-value store to file
+		if err := lkvstore.SaveLkvStore(); err != nil {
+			fmt.Printf("Error saving: %v\n", err)
+		} else {
+			fmt.Println("Successfully saved the lkvstore to file.")
+		}
+	}()
+
+	log.Info().Msg("Setting mc-terrarium REST API server")
 
 	// Set the default port number "8056" for the REST API server to listen on
 	port := flag.String("port", "8088", "port number for the restapiserver to listen to")
@@ -63,6 +93,7 @@ func main() {
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 
+	log.Info().Msg("CM-Damselfly REST API server is starting...")
 	// Start REST Server
 	go func() {
 		restServer.RunServer(*port)
