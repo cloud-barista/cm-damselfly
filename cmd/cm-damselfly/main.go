@@ -22,8 +22,8 @@ func init() {
 
 	// Initialize the logger
 	logger := logger.NewLogger(logger.Config{
-		LogLevel:    viper.GetString("damselfly.log.level"),
-		LogWriter:   viper.GetString("damselfly.log.writer"),
+		LogLevel:    viper.GetString("damselfly.loglevel"),
+		LogWriter:   viper.GetString("damselfly.logwriter"),
 		LogFilePath: viper.GetString("damselfly.logfile.path"),
 		MaxSize:     viper.GetInt("damselfly.logfile.maxsize"),
 		MaxBackups:  viper.GetInt("damselfly.logfile.maxbackups"),
