@@ -1,0 +1,298 @@
+basePath: /damselfly
+definitions:
+  handler.MyModel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.ReqCreateModel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.ReqPatchModel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.ReqUpdateModel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.ResCreateModel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.ResGetModel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.ResGetModels:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.MyModel'
+        type: array
+    type: object
+  handler.ResHTTPVersion:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.ResPatchModel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.ResReadyz:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.ResUpdateModel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+info:
+  contact:
+    email: contact-to-cloud-barista@googlegroups.com
+    name: API Support
+    url: http://cloud-barista.github.io
+  description: CM-Damselfly REST API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: CM-Damselfly REST API
+  version: latest
+paths:
+  /httpVersion:
+    get:
+      consumes:
+      - application/json
+      description: Checks and logs the HTTP version of the incoming request to the
+        server console.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ResHTTPVersion'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ResHTTPVersion'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ResHTTPVersion'
+      summary: Check HTTP version of incoming request
+      tags:
+      - '[Admin] System management'
+  /model:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of models.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: (sample) This is a list of models
+          schema:
+            $ref: '#/definitions/handler.ResGetModels'
+        "404":
+          description: model not found
+          schema:
+            type: object
+      summary: Get a list of models
+      tags:
+      - '[API] Cloud Migration Models (TBD)'
+    post:
+      consumes:
+      - application/json
+      description: Create a new model with the given information.
+      parameters:
+      - description: model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReqCreateModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: (Sample) This is a sample description for success response
+            in Swagger UI
+          schema:
+            $ref: '#/definitions/handler.ResCreateModel'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+      summary: Create a new model
+      tags:
+      - '[API] Cloud Migration Models (TBD)'
+  /model/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a model with the given information.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Model deletion successful
+          schema:
+            type: string
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+      summary: Delete a model
+      tags:
+      - '[API] Cloud Migration Models (TBD)'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific model.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: (Sample) a model
+          schema:
+            $ref: '#/definitions/handler.ResGetModel'
+        "404":
+          description: model not found
+          schema:
+            type: object
+      summary: Get a specific model
+      tags:
+      - '[API] Cloud Migration Models (TBD)'
+    patch:
+      consumes:
+      - application/json
+      description: Patch a model with the given information.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReqPatchModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: (Sample) This is a sample description for success response
+            in Swagger UI
+          schema:
+            $ref: '#/definitions/handler.ResPatchModel'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+      summary: Patch a model
+      tags:
+      - '[API] Cloud Migration Models (TBD)'
+    put:
+      consumes:
+      - application/json
+      description: Update a model with the given information.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReqUpdateModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: (Sample) This is a sample description for success response
+            in Swagger UI
+          schema:
+            $ref: '#/definitions/handler.ResUpdateModel'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+      summary: Update a model
+      tags:
+      - '[API] Cloud Migration Models (TBD)'
+  /readyz:
+    get:
+      consumes:
+      - application/json
+      description: Check Damselfly is ready
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ResReadyz'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/handler.ResReadyz'
+      summary: Check Damselfly is ready
+      tags:
+      - '[Admin] System management'
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

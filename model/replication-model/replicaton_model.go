@@ -2,58 +2,59 @@ package model
 
 import (
 	"fmt"
-	"os"
 	"log"
+	"os"
+
 	"gopkg.in/yaml.v2"
 	// "github.com/davecgh/go-spew/spew"
 )
 
 const (
-	ReplicationModelDir string =  "/.replication_model"
+	ReplicationModelDir string = "/.replication_model"
 )
 
 type Replication struct {
-	TemplateFormatVersion 	string        	`yaml:"TemplateFormatVersion"`
-	Description           	string        	`yaml:"Description"`
-	CSP    		  			CSP 			`yaml:"CSP"`
-	Resources             	Replica_RS 	 	`yaml:"Resources"`	
+	TemplateFormatVersion string     `yaml:"TemplateFormatVersion"`
+	Description           string     `yaml:"Description"`
+	CSP                   CSP        `yaml:"CSP"`
+	Resources             Replica_RS `yaml:"Resources"`
 }
 
 type Replica_RS struct {
-	VMInstance    VMInstance 	`yaml:"VMInstance"`
-	LoadBalancer  LoadBalancer 	`yaml:"LoadBalancer"`
+	VMInstance   VMInstance   `yaml:"VMInstance"`
+	LoadBalancer LoadBalancer `yaml:"LoadBalancer"`
 }
 
 type CSP struct {
-	Name       		string 			`yaml:"Name"`
-	RegionCode 		string 			`yaml:"Region"`
-	ZoneCode       	string   		`yaml:"Zone"`
+	Name       string `yaml:"Name"`
+	RegionCode string `yaml:"Region"`
+	ZoneCode   string `yaml:"Zone"`
 }
 
 type VMInstance struct {
-	Name       		string 			`yaml:"Name"`
-	ImageId        	string   		`yaml:"ImageId"`
-	VMSpecId   		string   		`yaml:"VMSpecId"`
-	KeyPairName    	string   		`yaml:"KeyPairName"`
-	SecurityGroups 	[]SecurityGroup `yaml:"SecurityGroups"`
-	VPC            	VPCInstance     `yaml:"VPCInstance"`
-	Subnets         []Subnet   		`yaml:"Subnets"`
+	Name           string          `yaml:"Name"`
+	ImageId        string          `yaml:"ImageId"`
+	VMSpecId       string          `yaml:"VMSpecId"`
+	KeyPairName    string          `yaml:"KeyPairName"`
+	SecurityGroups []SecurityGroup `yaml:"SecurityGroups"`
+	VPC            VPCInstance     `yaml:"VPCInstance"`
+	Subnets        []Subnet        `yaml:"Subnets"`
 }
 
 type SecurityGroup struct {
-	GroupDescription    string        `yaml:"GroupDescription"`
+	GroupDescription     string        `yaml:"GroupDescription"`
 	SecurityGroupIngress []IngressRule `yaml:"SecurityGroupIngress"`
 }
 
 type VPCInstance struct {
-	Name       			string `yaml:"Name"`
-	CidrBlock          	string `yaml:"CidrBlock"`
-	EnableDnsSupport   	bool   `yaml:"EnableDnsSupport"`
-	EnableDnsHostnames 	bool   `yaml:"EnableDnsHostnames"`
+	Name               string `yaml:"Name"`
+	CidrBlock          string `yaml:"CidrBlock"`
+	EnableDnsSupport   bool   `yaml:"EnableDnsSupport"`
+	EnableDnsHostnames bool   `yaml:"EnableDnsHostnames"`
 }
 
 type Subnet struct {
-	Name       			string `yaml:"Name"`
+	Name             string `yaml:"Name"`
 	CidrBlock        string `yaml:"CidrBlock"`
 	AvailabilityZone string `yaml:"AvailabilityZone"`
 }
@@ -66,10 +67,10 @@ type IngressRule struct {
 }
 
 type LoadBalancer struct {
-	Name       		string `yaml:"Name"`
-	Listeners 		[]Listener `yaml:"Listeners"`
-	HealthCheck 	HealthCheck `yaml:"HealthCheck"`
-	VMInstances		[]VMInstance  `yaml:"VMInstances"`
+	Name        string       `yaml:"Name"`
+	Listeners   []Listener   `yaml:"Listeners"`
+	HealthCheck HealthCheck  `yaml:"HealthCheck"`
+	VMInstances []VMInstance `yaml:"VMInstances"`
 }
 
 type Listener struct {
@@ -86,7 +87,7 @@ type HealthCheck struct {
 	Timeout            string `yaml:"Timeout"`
 }
 
-func GetReplicaResources(yamlName string) (Replication, error){
+func GetReplicaResources(yamlName string) (Replication, error) {
 	cblogger.Info("Model Handler called GetReplicaResources()!")
 
 	modelFilePath := os.Getenv("MODEL_ROOT") + ReplicationModelDir + "/"
@@ -95,7 +96,7 @@ func GetReplicaResources(yamlName string) (Replication, error){
 
 	// Check if the Model file folder Exists, and Create it
 	if err := CheckFolderAndCreate(modelFilePath); err != nil {
-		newErr := fmt.Errorf("Failed to Create the Model Path : [%s] : [%v]" + modelFilePath, err)
+		newErr := fmt.Errorf("Failed to Create the Model Path : [%s] : [%v]"+modelFilePath, err)
 		cblogger.Error(newErr.Error())
 		return Replication{}, newErr
 	}
@@ -114,6 +115,6 @@ func GetReplicaResources(yamlName string) (Replication, error){
 		log.Fatalf("error: %v", err)
 	}
 	err = yaml.Unmarshal(data, &replica)
-	// fmt.Printf("# Parsed Data: %+v\n", replica)	
+	// fmt.Printf("# Parsed Data: %+v\n", replica)
 	return replica, nil
 }
