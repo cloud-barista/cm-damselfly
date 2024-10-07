@@ -9,6 +9,8 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/cloud-barista/cb-log v0.7.0 h1:5ACU99hdSPKLp/rGUu3abumEomS2dVPujfdCOEWQ9j4=
 github.com/cloud-barista/cb-log v0.7.0/go.mod h1:nGgfTFMPwl1MpCO3FBjexUkNdOYA0BNJoyM9Pd0lMms=
+github.com/cloud-barista/cm-model v0.0.2 h1:6qxrkENlGurVs20rywKoT7L8OlvK4KWegIpJHaPJN3M=
+github.com/cloud-barista/cm-model v0.0.2/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

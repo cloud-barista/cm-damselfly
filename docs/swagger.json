@@ -1,0 +1,810 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "CM-Damselfly REST API",
+        "title": "CM-Damselfly REST API",
+        "contact": {
+            "name": "API Support",
+            "url": "http://cloud-barista.github.io",
+            "email": "contact-to-cloud-barista@googlegroups.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "latest"
+    },
+    "basePath": "/damselfly",
+    "paths": {
+        "/httpVersion": {
+            "get": {
+                "description": "Checks and logs the HTTP version of the incoming request to the server console.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Admin] System management"
+                ],
+                "summary": "Check HTTP version of incoming request",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                        }
+                    }
+                }
+            }
+        },
+        "/model": {
+            "get": {
+                "description": "Get a list of models.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Get a list of models",
+                "responses": {
+                    "200": {
+                        "description": "(sample) This is a list of models",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetModels"
+                        }
+                    },
+                    "404": {
+                        "description": "model not found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Create a new model",
+                "parameters": [
+                    {
+                        "description": "model information",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ReqCreateModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResCreateModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/model/{id}": {
+            "get": {
+                "description": "Get a specific model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Get a specific model",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "(Sample) a model",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetModel"
+                        }
+                    },
+                    "404": {
+                        "description": "model not found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Update a model",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ReqUpdateModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResUpdateModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Delete a model",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Model deletion successful",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Patch a model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Patch a model",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ReqPatchModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResPatchModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/readyz": {
+            "get": {
+                "description": "Check Damselfly is ready",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Admin] System management"
+                ],
+                "summary": "Check Damselfly is ready",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResReadyz"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResReadyz"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "onprem.CpuProperty": {
+            "type": "object",
+            "required": [
+                "cores",
+                "cpus",
+                "threads"
+            ],
+            "properties": {
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "cores": {
+                    "description": "Number of physical cores per CPU",
+                    "type": "integer",
+                    "example": 18
+                },
+                "cpus": {
+                    "description": "Number of physical CPUs (sockets)",
+                    "type": "integer",
+                    "example": 2
+                },
+                "maxSpeed": {
+                    "description": "Maximum speed in GHz",
+                    "type": "number",
+                    "example": 3.6
+                },
+                "model": {
+                    "type": "string",
+                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+                },
+                "threads": {
+                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
+                    "type": "integer",
+                    "example": 36
+                },
+                "vendor": {
+                    "type": "string",
+                    "example": "GenuineIntel"
+                }
+            }
+        },
+        "onprem.DiskProperty": {
+            "type": "object",
+            "required": [
+                "label",
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 1024
+                },
+                "type": {
+                    "description": "SSD, HDD",
+                    "type": "string",
+                    "example": "SSD"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "onprem.MemoryProperty": {
+            "type": "object",
+            "required": [
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 128
+                },
+                "type": {
+                    "type": "string",
+                    "example": "DDR4"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "onprem.NetworkInterfaceProperty": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "ipv4CidrBlocks": {
+                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ipv6CidrBlocks": {
+                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "macAddress": {
+                    "description": "MAC address",
+                    "type": "string"
+                },
+                "mtu": {
+                    "description": "Maximum Transmission Unit (MTU) in bytes",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "Interface state (e.g., UP, DOWN)",
+                    "type": "string"
+                }
+            }
+        },
+        "onprem.NetworkProperty": {
+            "type": "object",
+            "properties": {
+                "ipv4Networks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "172.26.240.0/20"
+                    ]
+                },
+                "ipv6Networks": {
+                    "description": "TBD",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "onprem.OsProperty": {
+            "type": "object",
+            "required": [
+                "prettyName"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "ubuntu"
+                },
+                "idLike": {
+                    "type": "string",
+                    "example": "debian"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Ubuntu"
+                },
+                "prettyName": {
+                    "description": "Pretty name",
+                    "type": "string",
+                    "example": "Ubuntu 22.04.3 LTS"
+                },
+                "version": {
+                    "description": "Full version string",
+                    "type": "string",
+                    "example": "22.04.3 LTS (Jammy Jellyfish)"
+                },
+                "versionCodename": {
+                    "type": "string",
+                    "example": "jammy"
+                },
+                "versionId": {
+                    "type": "string",
+                    "example": "22.04"
+                }
+            }
+        },
+        "onprem.RouteProperty": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "description": "Destination network, expressed in CIDR format",
+                    "type": "string"
+                },
+                "gateway": {
+                    "description": "Gateway address to which packets are forwarded",
+                    "type": "string"
+                },
+                "interface": {
+                    "description": "Network interface associated with the route",
+                    "type": "string"
+                },
+                "linkState": {
+                    "description": "Link state of the route (e.g., UP, DOWN)",
+                    "type": "string"
+                },
+                "metric": {
+                    "description": "Metric value indicating the priority of the route",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "Protocol used to set the route (e.g., kernel, static)",
+                    "type": "string"
+                },
+                "scope": {
+                    "description": "Scope of the route (e.g., global, link, host)",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Optionally stores the source address (used for policy-based routing)",
+                    "type": "string"
+                }
+            }
+        },
+        "onprem.ServerProperty": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "$ref": "#/definitions/onprem.CpuProperty"
+                },
+                "dataDisks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.DiskProperty"
+                    }
+                },
+                "hostname": {
+                    "type": "string"
+                },
+                "interfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.NetworkInterfaceProperty"
+                    }
+                },
+                "memory": {
+                    "$ref": "#/definitions/onprem.MemoryProperty"
+                },
+                "os": {
+                    "$ref": "#/definitions/onprem.OsProperty"
+                },
+                "rootDisk": {
+                    "$ref": "#/definitions/onprem.DiskProperty"
+                },
+                "routingTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.RouteProperty"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.MyModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ReqCreateModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ReqPatchModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ReqUpdateModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResCreateModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResGetModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResGetModels": {
+            "type": "object",
+            "properties": {
+                "models": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pkg_api_rest_handler.MyModel"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResHTTPVersion": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResPatchModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResReadyz": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResUpdateModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        }
+    }
+}
