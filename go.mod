@@ -1,8 +1,6 @@
 module github.com/cloud-barista/cm-damselfly
 
-go 1.21
-
-toolchain go1.21.4
+go 1.23.0
 
 require (
 	github.com/cloud-barista/cb-log v0.7.0
@@ -15,6 +13,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.2.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/cloud-barista/cm-model v0.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
