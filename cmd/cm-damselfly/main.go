@@ -79,7 +79,7 @@ func main() {
 
 	log.Info().Msg("Setting mc-terrarium REST API server")
 
-	// Set the default port number "8056" for the REST API server to listen on
+	// Set the default port number "8088" for the REST API server to listen on
 	port := flag.String("port", "8088", "port number for the restapiserver to listen to")
 	flag.Parse()
 
