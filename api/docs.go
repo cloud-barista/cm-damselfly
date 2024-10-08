@@ -736,6 +736,23 @@ const docTemplate = `{
                 }
             }
         },
+        "onprem.OnPremInfra": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                }
+            }
+        },
         "onprem.OsProperty": {
             "type": "object",
             "required": [
@@ -852,10 +869,10 @@ const docTemplate = `{
         "pkg_api_rest_handler.MyCloudModel": {
             "type": "object",
             "required": [
-                "cloud"
+                "cloudinfra"
             ],
             "properties": {
-                "cloud": {
+                "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
                 "id": {
@@ -872,9 +889,6 @@ const docTemplate = `{
         },
         "pkg_api_rest_handler.MyOnPremModel": {
             "type": "object",
-            "required": [
-                "servers"
-            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -885,14 +899,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "network": {
-                    "$ref": "#/definitions/onprem.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onprem.ServerProperty"
-                    }
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
                 },
                 "version": {
                     "type": "string"
@@ -902,10 +910,10 @@ const docTemplate = `{
         "pkg_api_rest_handler.ReqCreateCloudModel": {
             "type": "object",
             "required": [
-                "cloud"
+                "cloudinfra"
             ],
             "properties": {
-                "cloud": {
+                "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
                 "id": {
@@ -922,9 +930,6 @@ const docTemplate = `{
         },
         "pkg_api_rest_handler.ReqCreateOnPremModel": {
             "type": "object",
-            "required": [
-                "servers"
-            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -935,14 +940,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "network": {
-                    "$ref": "#/definitions/onprem.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onprem.ServerProperty"
-                    }
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
                 },
                 "version": {
                     "type": "string"
@@ -952,10 +951,10 @@ const docTemplate = `{
         "pkg_api_rest_handler.ReqUpdateCloudModel": {
             "type": "object",
             "required": [
-                "cloud"
+                "cloudinfra"
             ],
             "properties": {
-                "cloud": {
+                "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
                 "id": {
@@ -972,9 +971,6 @@ const docTemplate = `{
         },
         "pkg_api_rest_handler.ReqUpdateOnPremModel": {
             "type": "object",
-            "required": [
-                "servers"
-            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -985,14 +981,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "network": {
-                    "$ref": "#/definitions/onprem.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onprem.ServerProperty"
-                    }
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
                 },
                 "version": {
                     "type": "string"
@@ -1002,10 +992,10 @@ const docTemplate = `{
         "pkg_api_rest_handler.ResCreateCloudModel": {
             "type": "object",
             "required": [
-                "cloud"
+                "cloudinfra"
             ],
             "properties": {
-                "cloud": {
+                "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
                 "id": {
@@ -1022,9 +1012,6 @@ const docTemplate = `{
         },
         "pkg_api_rest_handler.ResCreateOnPremModel": {
             "type": "object",
-            "required": [
-                "servers"
-            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -1035,14 +1022,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "network": {
-                    "$ref": "#/definitions/onprem.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onprem.ServerProperty"
-                    }
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
                 },
                 "version": {
                     "type": "string"
@@ -1052,10 +1033,10 @@ const docTemplate = `{
         "pkg_api_rest_handler.ResGetCloudModel": {
             "type": "object",
             "required": [
-                "cloud"
+                "cloudinfra"
             ],
             "properties": {
-                "cloud": {
+                "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
                 "id": {
@@ -1083,9 +1064,6 @@ const docTemplate = `{
         },
         "pkg_api_rest_handler.ResGetOnPremModel": {
             "type": "object",
-            "required": [
-                "servers"
-            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -1096,14 +1074,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "network": {
-                    "$ref": "#/definitions/onprem.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onprem.ServerProperty"
-                    }
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
                 },
                 "version": {
                     "type": "string"
@@ -1140,10 +1112,10 @@ const docTemplate = `{
         "pkg_api_rest_handler.ResUpdateCloudModel": {
             "type": "object",
             "required": [
-                "cloud"
+                "cloudinfra"
             ],
             "properties": {
-                "cloud": {
+                "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
                 "id": {
@@ -1160,9 +1132,6 @@ const docTemplate = `{
         },
         "pkg_api_rest_handler.ResUpdateOnPremModel": {
             "type": "object",
-            "required": [
-                "servers"
-            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -1173,14 +1142,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "network": {
-                    "$ref": "#/definitions/onprem.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onprem.ServerProperty"
-                    }
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
                 },
                 "version": {
                     "type": "string"
