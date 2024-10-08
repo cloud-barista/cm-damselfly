@@ -51,7 +51,7 @@
                 }
             }
         },
-        "/model": {
+        "/model/cloud": {
             "get": {
                 "description": "Get a list of models.",
                 "consumes": [
@@ -68,7 +68,7 @@
                     "200": {
                         "description": "(sample) This is a list of models",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetModels"
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetCloudModels"
                         }
                     },
                     "404": {
@@ -98,7 +98,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ReqCreateModel"
+                            "$ref": "#/definitions/pkg_api_rest_handler.ReqCreateCloudModel"
                         }
                     }
                 ],
@@ -106,7 +106,7 @@
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResCreateModel"
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResCreateCloudModel"
                         }
                     },
                     "400": {
@@ -118,7 +118,7 @@
                 }
             }
         },
-        "/model/{id}": {
+        "/model/cloud/{id}": {
             "get": {
                 "description": "Get a specific model.",
                 "consumes": [
@@ -144,7 +144,7 @@
                     "200": {
                         "description": "(Sample) a model",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetModel"
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetCloudModel"
                         }
                     },
                     "404": {
@@ -181,7 +181,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ReqUpdateModel"
+                            "$ref": "#/definitions/pkg_api_rest_handler.ReqUpdateCloudModel"
                         }
                     }
                 ],
@@ -189,7 +189,199 @@
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResUpdateModel"
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResUpdateCloudModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Delete a model",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Model deletion successful",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/model/onprem": {
+            "get": {
+                "description": "Get a list of models.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Get a list of models",
+                "responses": {
+                    "200": {
+                        "description": "(sample) This is a list of models",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetOnPremModels"
+                        }
+                    },
+                    "404": {
+                        "description": "model not found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Create a new model",
+                "parameters": [
+                    {
+                        "description": "model information",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ReqCreateOnPremModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResCreateOnPremModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/model/onprem/{id}": {
+            "get": {
+                "description": "Get a specific model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Get a specific model",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "(Sample) a model",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResGetOnPremModel"
+                        }
+                    },
+                    "404": {
+                        "description": "model not found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Cloud Migration Models (TBD)"
+                ],
+                "summary": "Update a model",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ReqUpdateOnPremModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/pkg_api_rest_handler.ResUpdateOnPremModel"
                         }
                     },
                     "400": {
@@ -274,6 +466,111 @@
         }
     },
     "definitions": {
+        "model.TbMciDynamicReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "vm"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbVmDynamicReq"
+                    }
+                }
+            }
+        },
+        "model.TbVmDynamicReq": {
+            "type": "object",
+            "required": [
+                "commonImage",
+                "commonSpec"
+            ],
+            "properties": {
+                "commonImage": {
+                    "description": "CommonImage is field for id of a image in common namespace",
+                    "type": "string",
+                    "example": "ubuntu18.04"
+                },
+                "commonSpec": {
+                    "description": "CommonSpec is field for id of a spec in common namespace",
+                    "type": "string",
+                    "example": "aws+ap-northeast-2+t2.small"
+                },
+                "connectionName": {
+                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "default, TYPE1, ..."
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
+                    "type": "string",
+                    "default": "1",
+                    "example": "3"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
         "onprem.CpuProperty": {
             "type": "object",
             "required": [
@@ -545,7 +842,28 @@
                 }
             }
         },
-        "pkg_api_rest_handler.MyModel": {
+        "pkg_api_rest_handler.MyCloudModel": {
+            "type": "object",
+            "required": [
+                "cloud"
+            ],
+            "properties": {
+                "cloud": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "description": "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring \t\t\t\t\t`json:\"description\"`",
+                    "type": "string"
+                }
+            }
+        },
+        "pkg_api_rest_handler.MyOnPremModel": {
             "type": "object",
             "required": [
                 "servers"
@@ -574,7 +892,28 @@
                 }
             }
         },
-        "pkg_api_rest_handler.ReqCreateModel": {
+        "pkg_api_rest_handler.ReqCreateCloudModel": {
+            "type": "object",
+            "required": [
+                "cloud"
+            ],
+            "properties": {
+                "cloud": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "description": "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring \t\t\t\t\t`json:\"description\"`",
+                    "type": "string"
+                }
+            }
+        },
+        "pkg_api_rest_handler.ReqCreateOnPremModel": {
             "type": "object",
             "required": [
                 "servers"
@@ -603,7 +942,28 @@
                 }
             }
         },
-        "pkg_api_rest_handler.ReqUpdateModel": {
+        "pkg_api_rest_handler.ReqUpdateCloudModel": {
+            "type": "object",
+            "required": [
+                "cloud"
+            ],
+            "properties": {
+                "cloud": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "description": "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring \t\t\t\t\t`json:\"description\"`",
+                    "type": "string"
+                }
+            }
+        },
+        "pkg_api_rest_handler.ReqUpdateOnPremModel": {
             "type": "object",
             "required": [
                 "servers"
@@ -632,7 +992,28 @@
                 }
             }
         },
-        "pkg_api_rest_handler.ResCreateModel": {
+        "pkg_api_rest_handler.ResCreateCloudModel": {
+            "type": "object",
+            "required": [
+                "cloud"
+            ],
+            "properties": {
+                "cloud": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "description": "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring \t\t\t\t\t`json:\"description\"`",
+                    "type": "string"
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResCreateOnPremModel": {
             "type": "object",
             "required": [
                 "servers"
@@ -661,42 +1042,74 @@
                 }
             }
         },
-        "pkg_api_rest_handler.ResGetModel": {
+        "pkg_api_rest_handler.ResGetCloudModel": {
             "type": "object",
             "required": [
-                "servers"
+                "cloud"
             ],
             "properties": {
-                "description": {
-                    "type": "string"
+                "cloud": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "name": {
-                    "type": "string"
-                },
-                "network": {
-                    "$ref": "#/definitions/onprem.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onprem.ServerProperty"
-                    }
+                "istargetmodel": {
+                    "type": "boolean"
                 },
                 "version": {
+                    "description": "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring \t\t\t\t\t`json:\"description\"`",
                     "type": "string"
                 }
             }
         },
-        "pkg_api_rest_handler.ResGetModels": {
+        "pkg_api_rest_handler.ResGetCloudModels": {
             "type": "object",
             "properties": {
                 "models": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pkg_api_rest_handler.MyModel"
+                        "$ref": "#/definitions/pkg_api_rest_handler.MyCloudModel"
+                    }
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResGetOnPremModel": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResGetOnPremModels": {
+            "type": "object",
+            "properties": {
+                "models": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pkg_api_rest_handler.MyOnPremModel"
                     }
                 }
             }
@@ -717,7 +1130,28 @@
                 }
             }
         },
-        "pkg_api_rest_handler.ResUpdateModel": {
+        "pkg_api_rest_handler.ResUpdateCloudModel": {
+            "type": "object",
+            "required": [
+                "cloud"
+            ],
+            "properties": {
+                "cloud": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "description": "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring \t\t\t\t\t`json:\"description\"`",
+                    "type": "string"
+                }
+            }
+        },
+        "pkg_api_rest_handler.ResUpdateOnPremModel": {
             "type": "object",
             "required": [
                 "servers"
