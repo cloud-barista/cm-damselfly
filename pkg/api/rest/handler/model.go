@@ -54,9 +54,6 @@ func GetModels(c echo.Context) error {
 type ResGetModel struct {
 	MyModel
 }
-// type ResGetModel struct {
-// 	onprem.OnPremInfra
-// }
 
 // GetModel godoc
 // @Summary Get a specific model
@@ -88,6 +85,12 @@ func GetModel(c echo.Context) error {
 // [Note]
 // Struct Embedding is used to inherit the fields of MyModel
 type ReqCreateModel struct {
+	MyModel
+}
+
+// [Note]
+// Struct Embedding is used to inherit the fields of MyModel
+type ResCreateModel struct {
 	MyModel
 }
 
@@ -201,45 +204,6 @@ func UpdateModel(c echo.Context) error {
 	}	
 
 	return c.JSON(http.StatusCreated, updateModel)
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of MyModel
-type ReqPatchModel struct {
-	MyModel
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of MyModel
-type ResPatchModel struct {
-	MyModel
-}
-
-// PatchModel godoc
-// @Summary Patch a model
-// @Description Patch a model with the given information.
-// @Tags [API] Cloud Migration Models (TBD)
-// @Accept  json
-// @Produce  json
-// @Param id path int true "Model ID"
-// @Param Model body ReqPatchModel true "Model information to update"
-// @Success 200 {object} ResPatchModel "(Sample) This is a sample description for success response in Swagger UI"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
-// @Router /model/{id} [patch]
-func PatchModel(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid ID format")
-	}
-
-	u := new(ReqPatchModel)
-	if err := c.Bind(u); err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid request")
-	}
-	u.Id = id
-
-	return c.JSON(http.StatusOK, u)
 }
 
 // [Note]
