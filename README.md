@@ -81,7 +81,7 @@ pwd
 make
 # included : swag init --parseDependency --parseInternal
 
-# Run API server
+# Run Damselfly and API server
 make run
 ```
 - Swagger API URL<BR>
@@ -89,61 +89,3 @@ make run
 
 - DB to store (The user migration model is stored to K/V DB as a file in the following location.)
   - ./cloud-barista/cm-damselfly/.damselfly/lkvstore.db
-
-<BR>
-
-(Example) On-premise user migration model creation request body (for testing)
-```bash
-{ 
-
- "name": "MyModel-241007-1",
- "description": "MyModel-241007-1",
- "version": "On-premise-v0.01",
- "network": {
-    "cidr": "192.168.1.0/24",
-    "gateway": "192.168.1.1",
-    "dns": "8.8.8.8"
-  },
-  "servers": [
-    {
-      "hostname": "UbuntuServer01",
-      "cpu": {
-        "cores": 4,
-        "model": "Intel Xeon"
-      },
-      "memory": {
-        "totalMB": 16384,
-        "type": "DDR4"
-      },
-      "rootDisk": {
-        "sizeGB": 500,
-        "mountPoint": "/"
-      },
-      "dataDisks": [
-        {
-          "sizeGB": 1000,
-          "mountPoint": "/data1"
-        }
-      ],
-      "interfaces": [
-        {
-          "name": "eth0",
-          "ipAddress": "192.168.1.100",
-          "macAddress": "00:0a:95:9d:68:16"
-        }
-      ],
-      "routingTable": [
-        {
-          "destination": "0.0.0.0/0",
-          "gateway": "192.168.1.1"
-        }
-      ],
-      "os": {
-        "name": "Ubuntu",
-        "version": "22.04"
-      }
-    }
-  ]
-
-}
-```
