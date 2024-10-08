@@ -14,7 +14,7 @@ As a Cloud Computing Infrastructure Migration Framework (codename: cm-damselply)
 - Operating system (OS): 
     - Ubuntu 22.04
 - Languages: 
-    - Go: 1.23
+    - Go: 1.23.0
 
 ## How to run CM-Damselfly
 
@@ -35,11 +35,11 @@ sudo apt install make gcc git
 2. Install Go
 
 Note - **Install the stable version of Go**.
-For example, install Go v1.19 or v1.21.x
+For example, install Go v1.23.0
 
 ```bash
 # Set Go version
-GO_VERSION=1.21.4
+GO_VERSION=1.23.0
 
 # Get Go archive
 wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
@@ -63,49 +63,42 @@ go version
 
 #### Download the source code
 
-Clone CM-Damselfly repository
-
 ```bash
+# Clone CM-Damselfly repository
 git clone https://github.com/cloud-barista/cm-damselfly.git ${HOME}/cm-damselfly
 ```
 
-
 #### Build and Run
+```bash
 
-Open Ubuntu Firewall TCP 8088 port
-```
+# Open ubuntu firewall TCP 8088 port to access to the API(If need)
 sudo ufw allow 8088/tcp
 
+pwd
+/home/(user)/go/src/github.com/cloud-barista/cm-damselfly
+
+# Build and Create Swagger API docs
+make
+# included : swag init --parseDependency --parseInternal
+
+# Run API server
 make run
 ```
+- Swagger API URL<BR>
+  - http://localhost:8088/damselfly/api (username: default / password: default)
 
-Swagger API docs 생성
-./cloud-barista/cm-damselfly]# 에서 (import한 structure를 위해 아래와 같이 실행)
-```
-swag init --parseDependency --parseInternal
-```
+- DB to store (The user migration model is stored to K/V DB as a file in the following location.)
+  - ./cloud-barista/cm-damselfly/.damselfly/lkvstore.db
 
-Build 및 API server 구동
-```
-make run
-```
+<BR>
 
-Swagger API URL : http://localhost:8088/damselfly/api (username: default / password: default)
-
-
-사용자 모델은 아래의 위치에 파일 DB로 저장됨.
-```
-./cloud-barista/cm-damselfly/.damselfly/lkvstore.db
-```
-
-(참고) 테스트용 Source 사용자 모델 생성 request body
-```
-# 아래의 첫 괄호{}는 swagger request body form에 있는거 활용해야...
+(Example) On-premise user migration model creation request body (for testing)
+```bash
 { 
 
  "name": "MyModel-241007-1",
  "description": "MyModel-241007-1",
- "version": "SourceModel-v0.01",
+ "version": "On-premise-v0.01",
  "network": {
     "cidr": "192.168.1.0/24",
     "gateway": "192.168.1.1",
@@ -113,7 +106,7 @@ Swagger API URL : http://localhost:8088/damselfly/api (username: default / passw
   },
   "servers": [
     {
-      "hostname": "server01",
+      "hostname": "UbuntuServer01",
       "cpu": {
         "cores": 4,
         "model": "Intel Xeon"
@@ -147,7 +140,7 @@ Swagger API URL : http://localhost:8088/damselfly/api (username: default / passw
       ],
       "os": {
         "name": "Ubuntu",
-        "version": "20.04"
+        "version": "22.04"
       }
     }
   ]

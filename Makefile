@@ -36,7 +36,7 @@ update: ## Update all module dependencies
 swag swagger: ## Generate Swagger API documentation
 	@echo "Generating Swagger API documentation..."
 	@ln -sf cmd/$(MODULE_NAME)/main.go ./main.go
-	@$(SWAG) i --generalInfo ./main.go --dir ./ --output ./api
+	@$(SWAG) i --parseDependency --parseInternal --generalInfo ./main.go --dir ./ --output ./api
 	@rm ./main.go
 	@echo "Generated Swagger API documentation!"
 
