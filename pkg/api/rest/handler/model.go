@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	// "github.com/davecgh/go-spew/spew"
 	"github.com/labstack/echo/v4"
+	// "github.com/davecgh/go-spew/spew"
 
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	onprem "github.com/cloud-barista/cm-model/infra/onprem"
@@ -16,13 +16,13 @@ import (
 // ##############################################################################################
 // ### On-premise Infra Model
 // ##############################################################################################
+
 type MyOnPremModel struct {
 	Id   		int    					`json:"id"`
 	Name 		string  				`json:"name"`
 	Description string 					`json:"description"`
 	Version		string  				`json:"version"`
-	Network 	onprem.NetworkProperty  `json:"network,omitempty"`
-	Servers 	[]onprem.ServerProperty `json:"servers" validate:"required"`
+	OnPremInfra onprem.OnPremInfra 		`json:"onpreminfra"`	
 	// TODO: Add other fields
 }
 // Caution!!)
@@ -263,7 +263,7 @@ type MyCloudModel struct {
 	// Name 		string  				`json:"name"`
 	// Description 	string 					`json:"description"`
 	Version			string  				`json:"version"`
-	MciDynamic 		tbmodel.TbMciDynamicReq `json:"cloud" validate:"required"`
+	CloudInfra		tbmodel.TbMciDynamicReq `json:"cloudinfra" validate:"required"`
 	// TODO: Add other fields
 }
 // Caution!!)
