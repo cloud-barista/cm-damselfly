@@ -166,13 +166,17 @@ func RunServer(port string) {
 
 	// for model API, set a router group which has "/damselfly/model" as prefix
 	gModel := groupBase.Group("/model")
-	gModel.POST("", handler.CreateModel)
-	gModel.GET("", handler.GetModels)
-	gModel.GET("/:id", handler.GetModel)
-	gModel.PUT("/:id", handler.UpdateModel)
-	gModel.DELETE("/:id", handler.DeleteModel)
+	gModel.POST("/onprem", handler.CreateOnPremModel)
+	gModel.GET("/onprem", handler.GetOnPremModels)
+	gModel.GET("/onprem/:id", handler.GetOnPremModel)
+	gModel.PUT("/onprem/:id", handler.UpdateOnPremModel)
+	gModel.DELETE("/onprem/:id", handler.DeleteOnPremModel)
 
-	// Add more API routes here...
+	gModel.POST("/cloud", handler.CreateCloudModel)
+	gModel.GET("/cloud", handler.GetCloudModels)
+	gModel.GET("/cloud/:id", handler.GetCloudModel)
+	gModel.PUT("/cloud/:id", handler.UpdateCloudModel)
+	gModel.DELETE("/cloud/:id", handler.DeleteCloudModel)
 
 	// Run Damselfly API server
 	selfEndpoint := viper.GetString("damselfly.self.endpoint")
