@@ -87,5 +87,8 @@ make run
 - Swagger API URL<BR>
   - http://localhost:8088/damselfly/api (username: default / password: default)
 
+- Swagger web UI URL<BR>
+  - https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-damselfly/refs/heads/main/api/swagger.yaml
+
 - DB to store (The user migration model is stored to K/V DB as a file in the following location.)
   - ./cloud-barista/cm-damselfly/.damselfly/lkvstore.db
