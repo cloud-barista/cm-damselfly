@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+    "time"
     "math/big"
 	"crypto/rand"
 	"encoding/base64"
@@ -73,4 +74,10 @@ func generateUnique15DigitString() (int, error) {
     }
 
     return result, nil
+}
+
+func getSeoulCurrentTime() string {
+	loc, _ := time.LoadLocation("Asia/Seoul")
+	currentTime := time.Now().In(loc)	
+	return currentTime.Format("2006-01-02 15:04:05")
 }
