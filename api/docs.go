@@ -875,21 +875,47 @@ const docTemplate = `{
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "istargetmodel": {
                     "type": "boolean"
                 },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
                 "version": {
-                    "description": "Name \t\tstring  \t\t\t\t` + "`" + `json:\"name\"` + "`" + `\nDescription \tstring \t\t\t\t\t` + "`" + `json:\"description\"` + "`" + `",
+                    "type": "string"
+                },
+                "zone": {
                     "type": "string"
                 }
             }
         },
         "pkg_api_rest_handler.MyOnPremModel": {
             "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
             "properties": {
+                "createtime": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -901,6 +927,9 @@ const docTemplate = `{
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "updatetime": {
+                    "type": "string"
                 },
                 "version": {
                     "type": "string"
@@ -916,21 +945,47 @@ const docTemplate = `{
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "istargetmodel": {
                     "type": "boolean"
                 },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
                 "version": {
-                    "description": "Name \t\tstring  \t\t\t\t` + "`" + `json:\"name\"` + "`" + `\nDescription \tstring \t\t\t\t\t` + "`" + `json:\"description\"` + "`" + `",
+                    "type": "string"
+                },
+                "zone": {
                     "type": "string"
                 }
             }
         },
         "pkg_api_rest_handler.ReqCreateOnPremModel": {
             "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
             "properties": {
+                "createtime": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -942,6 +997,9 @@ const docTemplate = `{
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "updatetime": {
+                    "type": "string"
                 },
                 "version": {
                     "type": "string"
@@ -957,21 +1015,47 @@ const docTemplate = `{
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "istargetmodel": {
                     "type": "boolean"
                 },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
                 "version": {
-                    "description": "Name \t\tstring  \t\t\t\t` + "`" + `json:\"name\"` + "`" + `\nDescription \tstring \t\t\t\t\t` + "`" + `json:\"description\"` + "`" + `",
+                    "type": "string"
+                },
+                "zone": {
                     "type": "string"
                 }
             }
         },
         "pkg_api_rest_handler.ReqUpdateOnPremModel": {
             "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
             "properties": {
+                "createtime": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -983,6 +1067,9 @@ const docTemplate = `{
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "updatetime": {
+                    "type": "string"
                 },
                 "version": {
                     "type": "string"
@@ -998,21 +1085,47 @@ const docTemplate = `{
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "istargetmodel": {
                     "type": "boolean"
                 },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
                 "version": {
-                    "description": "Name \t\tstring  \t\t\t\t` + "`" + `json:\"name\"` + "`" + `\nDescription \tstring \t\t\t\t\t` + "`" + `json:\"description\"` + "`" + `",
+                    "type": "string"
+                },
+                "zone": {
                     "type": "string"
                 }
             }
         },
         "pkg_api_rest_handler.ResCreateOnPremModel": {
             "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
             "properties": {
+                "createtime": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1024,6 +1137,9 @@ const docTemplate = `{
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "updatetime": {
+                    "type": "string"
                 },
                 "version": {
                     "type": "string"
@@ -1039,14 +1155,34 @@ const docTemplate = `{
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "istargetmodel": {
                     "type": "boolean"
                 },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
                 "version": {
-                    "description": "Name \t\tstring  \t\t\t\t` + "`" + `json:\"name\"` + "`" + `\nDescription \tstring \t\t\t\t\t` + "`" + `json:\"description\"` + "`" + `",
+                    "type": "string"
+                },
+                "zone": {
                     "type": "string"
                 }
             }
@@ -1064,7 +1200,13 @@ const docTemplate = `{
         },
         "pkg_api_rest_handler.ResGetOnPremModel": {
             "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
             "properties": {
+                "createtime": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1076,6 +1218,9 @@ const docTemplate = `{
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "updatetime": {
+                    "type": "string"
                 },
                 "version": {
                     "type": "string"
@@ -1118,21 +1263,47 @@ const docTemplate = `{
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
                 },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "istargetmodel": {
                     "type": "boolean"
                 },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
                 "version": {
-                    "description": "Name \t\tstring  \t\t\t\t` + "`" + `json:\"name\"` + "`" + `\nDescription \tstring \t\t\t\t\t` + "`" + `json:\"description\"` + "`" + `",
+                    "type": "string"
+                },
+                "zone": {
                     "type": "string"
                 }
             }
         },
         "pkg_api_rest_handler.ResUpdateOnPremModel": {
             "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
             "properties": {
+                "createtime": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1144,6 +1315,9 @@ const docTemplate = `{
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "updatetime": {
+                    "type": "string"
                 },
                 "version": {
                     "type": "string"

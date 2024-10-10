@@ -300,19 +300,33 @@ definitions:
     properties:
       cloudinfra:
         $ref: '#/definitions/model.TbMciDynamicReq'
+      createtime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
       id:
         type: integer
       istargetmodel:
         type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      updatetime:
+        type: string
       version:
-        description: "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring
-          \t\t\t\t\t`json:\"description\"`"
+        type: string
+      zone:
         type: string
     required:
     - cloudinfra
     type: object
   pkg_api_rest_handler.MyOnPremModel:
     properties:
+      createtime:
+        type: string
       description:
         type: string
       id:
@@ -321,26 +335,44 @@ definitions:
         type: string
       onpreminfra:
         $ref: '#/definitions/onprem.OnPremInfra'
+      updatetime:
+        type: string
       version:
         type: string
+    required:
+    - onpreminfra
     type: object
   pkg_api_rest_handler.ReqCreateCloudModel:
     properties:
       cloudinfra:
         $ref: '#/definitions/model.TbMciDynamicReq'
+      createtime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
       id:
         type: integer
       istargetmodel:
         type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      updatetime:
+        type: string
       version:
-        description: "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring
-          \t\t\t\t\t`json:\"description\"`"
+        type: string
+      zone:
         type: string
     required:
     - cloudinfra
     type: object
   pkg_api_rest_handler.ReqCreateOnPremModel:
     properties:
+      createtime:
+        type: string
       description:
         type: string
       id:
@@ -349,26 +381,44 @@ definitions:
         type: string
       onpreminfra:
         $ref: '#/definitions/onprem.OnPremInfra'
+      updatetime:
+        type: string
       version:
         type: string
+    required:
+    - onpreminfra
     type: object
   pkg_api_rest_handler.ReqUpdateCloudModel:
     properties:
       cloudinfra:
         $ref: '#/definitions/model.TbMciDynamicReq'
+      createtime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
       id:
         type: integer
       istargetmodel:
         type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      updatetime:
+        type: string
       version:
-        description: "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring
-          \t\t\t\t\t`json:\"description\"`"
+        type: string
+      zone:
         type: string
     required:
     - cloudinfra
     type: object
   pkg_api_rest_handler.ReqUpdateOnPremModel:
     properties:
+      createtime:
+        type: string
       description:
         type: string
       id:
@@ -377,26 +427,44 @@ definitions:
         type: string
       onpreminfra:
         $ref: '#/definitions/onprem.OnPremInfra'
+      updatetime:
+        type: string
       version:
         type: string
+    required:
+    - onpreminfra
     type: object
   pkg_api_rest_handler.ResCreateCloudModel:
     properties:
       cloudinfra:
         $ref: '#/definitions/model.TbMciDynamicReq'
+      createtime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
       id:
         type: integer
       istargetmodel:
         type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      updatetime:
+        type: string
       version:
-        description: "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring
-          \t\t\t\t\t`json:\"description\"`"
+        type: string
+      zone:
         type: string
     required:
     - cloudinfra
     type: object
   pkg_api_rest_handler.ResCreateOnPremModel:
     properties:
+      createtime:
+        type: string
       description:
         type: string
       id:
@@ -405,20 +473,36 @@ definitions:
         type: string
       onpreminfra:
         $ref: '#/definitions/onprem.OnPremInfra'
+      updatetime:
+        type: string
       version:
         type: string
+    required:
+    - onpreminfra
     type: object
   pkg_api_rest_handler.ResGetCloudModel:
     properties:
       cloudinfra:
         $ref: '#/definitions/model.TbMciDynamicReq'
+      createtime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
       id:
         type: integer
       istargetmodel:
         type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      updatetime:
+        type: string
       version:
-        description: "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring
-          \t\t\t\t\t`json:\"description\"`"
+        type: string
+      zone:
         type: string
     required:
     - cloudinfra
@@ -432,6 +516,8 @@ definitions:
     type: object
   pkg_api_rest_handler.ResGetOnPremModel:
     properties:
+      createtime:
+        type: string
       description:
         type: string
       id:
@@ -440,8 +526,12 @@ definitions:
         type: string
       onpreminfra:
         $ref: '#/definitions/onprem.OnPremInfra'
+      updatetime:
+        type: string
       version:
         type: string
+    required:
+    - onpreminfra
     type: object
   pkg_api_rest_handler.ResGetOnPremModels:
     properties:
@@ -464,19 +554,33 @@ definitions:
     properties:
       cloudinfra:
         $ref: '#/definitions/model.TbMciDynamicReq'
+      createtime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
       id:
         type: integer
       istargetmodel:
         type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      updatetime:
+        type: string
       version:
-        description: "Name \t\tstring  \t\t\t\t`json:\"name\"`\nDescription \tstring
-          \t\t\t\t\t`json:\"description\"`"
+        type: string
+      zone:
         type: string
     required:
     - cloudinfra
     type: object
   pkg_api_rest_handler.ResUpdateOnPremModel:
     properties:
+      createtime:
+        type: string
       description:
         type: string
       id:
@@ -485,8 +589,12 @@ definitions:
         type: string
       onpreminfra:
         $ref: '#/definitions/onprem.OnPremInfra'
+      updatetime:
+        type: string
       version:
         type: string
+    required:
+    - onpreminfra
     type: object
 info:
   contact:
