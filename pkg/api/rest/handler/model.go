@@ -18,12 +18,13 @@ import (
 // ##############################################################################################
 
 type MyOnPremModel struct {
-	Id   		int    					`json:"id"`
-	Name 		string  				`json:"name"`
-	Description string 					`json:"description"`
-	Version		string  				`json:"version"`
-	OnPremInfra onprem.OnPremInfra 		`json:"onpreminfra"`	
-	// TODO: Add other fields
+	Id   			int    				`json:"id"`
+	Name 			string  			`json:"name"`
+	Description 	string 				`json:"description"`
+	Version			string  			`json:"version"`
+	CreateTime		string				`json:"createtime"`
+	UpdateTime		string				`json:"updatetime"`
+	OnPremInfra 	onprem.OnPremInfra 	`json:"onpreminfra" validate:"required"`
 }
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
@@ -124,6 +125,7 @@ func CreateOnPremModel(c echo.Context) error {
         fmt.Println("Random 15-digit number:", randomNum)
     }
 	model.Id = randomNum
+	model.CreateTime = getSeoulCurrentTime()
 
 	// Convert Int to String type
 	strNum := strconv.Itoa(randomNum)
@@ -186,6 +188,8 @@ func UpdateOnPremModel(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, "Invalid Request")
 		}	
 		updateModel.Id = id
+		updateModel.UpdateTime = getSeoulCurrentTime()
+
 		// fmt.Println("### MyOnPremModel",)		
 		// spew.Dump(updateOnPremModel)
 
@@ -260,11 +264,15 @@ func DeleteOnPremModel(c echo.Context) error {
 type MyCloudModel struct {
 	Id   			int    					`json:"id"`
 	IsTargetModel	bool	  				`json:"istargetmodel"`	
-	// Name 		string  				`json:"name"`
-	// Description 	string 					`json:"description"`
+	Name 			string  				`json:"name"`
+	Description 	string 					`json:"description"`
 	Version			string  				`json:"version"`
+	CreateTime		string					`json:"createtime"`
+	UpdateTime		string					`json:"updatetime"`
+	CSP				string					`json:"csp"`
+	Region			string					`json:"region"`
+	Zone			string					`json:"zone"`
 	CloudInfra		tbmodel.TbMciDynamicReq `json:"cloudinfra" validate:"required"`
-	// TODO: Add other fields
 }
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
@@ -365,6 +373,7 @@ func CreateCloudModel(c echo.Context) error {
         fmt.Println("Random 15-digit number:", randomNum)
     }
 	model.Id = randomNum
+	model.CreateTime = getSeoulCurrentTime()
 
 	// Convert Int to String type
 	strNum := strconv.Itoa(randomNum)
@@ -427,6 +436,8 @@ func UpdateCloudModel(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, "Invalid Request")
 		}	
 		updateModel.Id = id
+		updateModel.UpdateTime = getSeoulCurrentTime()
+
 		// fmt.Println("### MyCloudModel",)		
 		// spew.Dump(updateCloudModel)
 
