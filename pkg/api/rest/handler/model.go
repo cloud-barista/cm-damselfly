@@ -1,6 +1,6 @@
 package handler
 
-import (	
+import (
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,47 +8,59 @@ import (
 	"github.com/labstack/echo/v4"
 	// "github.com/davecgh/go-spew/spew"
 
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	onprem "github.com/cloud-barista/cm-model/infra/onprem"
-	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 )
 
 // ##############################################################################################
 // ### On-premise Infra Model
 // ##############################################################################################
 
-type MyOnPremModel struct {
-	Id   			int    				`json:"id"`
-	Name 			string  			`json:"name"`
-	Description 	string 				`json:"description"`
-	Version			string  			`json:"version"`
-	CreateTime		string				`json:"createtime"`
-	UpdateTime		string				`json:"updatetime"`
-	OnPremInfra 	onprem.OnPremInfra 	`json:"onpreminfra" validate:"required"`
+type OnPremInfraModelReqInfo struct {
+	UserId 				string    			`json:"userid"`
+	IsInitModel			bool	  			`json:"isinitmodel"`
+	Name 				string  			`json:"name"`
+	Description 		string 				`json:"description"`
+	Version				string  			`json:"version"`
+	OnPremInfra 		onprem.OnPremInfra 	`json:"onpreminfra" validate:"required"`
+}
+
+type OnPremInfraModelRespInfo struct {
+	Id   				int    				`json:"id"`
+	UserId 				string    			`json:"userid"`
+	IsInitModel			bool	  			`json:"isinitmodel"`
+	Name 				string  			`json:"name"`
+	Description 		string 				`json:"description"`
+	Version				string  			`json:"version"`
+	CreateTime			string				`json:"createtime"`
+	UpdateTime			string				`json:"updatetime"`
+	IsCloudInfraModel	bool				`json:"iscloudinframodel"`
+	OnPremInfra 		onprem.OnPremInfra 	`json:"onpreminfra" validate:"required"`
 }
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
 // Need to add '--parseDependency --parseInternal' in order to apply imported structures
 
-type ResGetOnPremModels struct {
-	Models []MyOnPremModel `json:"models"`
+type GetOnPremInfraModelsResp struct {
+	Models []OnPremInfraModelRespInfo `json:"models"`
 }
 
-// GetOnPremModels godoc
-// @Summary Get a list of models
-// @Description Get a list of models.
-// @Tags [API] Cloud Migration Models (TBD)
+// GetOnPremInfraModels godoc
+// @Summary Get a list of on-premise infra models
+// @Description Get a list of on-premise infra models.
+// @Tags [API] On-Premise Infra Migration Models
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ResGetOnPremModels "(sample) This is a list of models"
+// @Success 200 {object} GetOnPremInfraModelsResp "(sample) This is a list of models"
 // @Failure 404 {object} object "model not found"
-// @Router /model/onprem [get]
-func GetOnPremModels(c echo.Context) error {
+// @Router /onpreminfra [get]
+func GetOnPremInfraModels(c echo.Context) error {
 
 	// GetWithPrefix returns the values for a given key prefix.
 	valueList, exists := lkvstore.GetWithPrefix("")
 	if exists {
-		fmt.Printf("Loaded values : %v\n", valueList)
+		// fmt.Printf("Loaded values : %v\n", valueList)
 		return c.JSON(http.StatusOK, valueList)
 	} else {
 		newErr := fmt.Errorf("Failed to Find Any Model : [%s]\n", c.Param("id"))
@@ -56,30 +68,30 @@ func GetOnPremModels(c echo.Context) error {
 	}
 }
 
-type ResGetOnPremModel struct {
-	MyOnPremModel
+type GetOnPremInfraModelResp struct {
+	OnPremInfraModelRespInfo
 }
 
-// GetOnPremModel godoc
-// @Summary Get a specific model
-// @Description Get a specific model.
-// @Tags [API] Cloud Migration Models (TBD)
+// GetOnPremInfraModel godoc
+// @Summary Get a specific on-premise infra model
+// @Description Get a specific on-premise infra model.
+// @Tags [API] On-Premise Infra Migration Models
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Model ID"
-// @Success 200 {object} ResGetOnPremModel "(Sample) a model"
+// @Success 200 {object} GetOnPremInfraModelResp "(Sample) a model"
 // @Failure 404 {object} object "model not found"
-// @Router /model/onprem/{id} [get]
-func GetOnPremModel(c echo.Context) error {
+// @Router /onpreminfra/{id} [get]
+func GetOnPremInfraModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
 		return c.JSON(http.StatusBadRequest, "Invalid ID!!")
 	}
-	fmt.Printf("### MyOnPremModel ID to Get : [%s]", c.Param("id"))
+	fmt.Printf("### OnPrem Model ID to Get : [%s]\n", c.Param("id"))
 
 	// Verify loaded data without prefix
 	value, exists := lkvstore.Get(c.Param("id"))
 	if exists {
-		fmt.Printf("Loaded value for '%s': %v\n", c.Param("id"), value)
+		// fmt.Printf("Loaded value for [%s]: %v\n", c.Param("id"), value)
 		return c.JSON(http.StatusOK, value)
 	} else {
 		newErr := fmt.Errorf("Failed to Find the Model : [%s]\n", c.Param("id"))
@@ -89,32 +101,32 @@ func GetOnPremModel(c echo.Context) error {
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyOnPremModel
-type ReqCreateOnPremModel struct {
-	MyOnPremModel
+type CreateOnPremInfraModelReq struct {
+	OnPremInfraModelReqInfo
 }
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyOnPremModel
-type ResCreateOnPremModel struct {
-	MyOnPremModel
+type CreateOnPremInfraModelResp struct {
+	OnPremInfraModelRespInfo
 }
 
-// CreateOnPremModel godoc
-// @Summary Create a new model
-// @Description Create a new model with the given information.
-// @Tags [API] Cloud Migration Models (TBD)
+// CreateOnPremInfraModel godoc
+// @Summary Create a new on-premise infra model
+// @Description Create a new on-premise infra model with the given information.
+// @Tags [API] On-Premise Infra Migration Models
 // @Accept  json
 // @Produce  json
-// @Param Model body ReqCreateOnPremModel true "model information"
-// @Success 201 {object} ResCreateOnPremModel "(Sample) This is a sample description for success response in Swagger UI"
+// @Param Model body CreateOnPremInfraModelReq true "model information"
+// @Success 201 {object} CreateOnPremInfraModelResp "(Sample) This is a sample description for success response in Swagger UI"
 // @Failure 400 {object} object "Invalid Request"
-// @Router /model/onprem [post]
-func CreateOnPremModel(c echo.Context) error {
-	model := new(ReqCreateOnPremModel)
+// @Router /onpreminfra [post]
+func CreateOnPremInfraModel(c echo.Context) error {
+	model := new(CreateOnPremInfraModelResp)
 	if err := c.Bind(model); err != nil {
 		return c.JSON(http.StatusBadRequest, "Invalid Request")
 	}
-	// fmt.Println("### MyOnPremModel",)
+	// fmt.Println("### OnPremModel",)
 	// spew.Dump(model)
 
 	// # Incase of int type of ID
@@ -126,6 +138,7 @@ func CreateOnPremModel(c echo.Context) error {
     }
 	model.Id = randomNum
 	model.CreateTime = getSeoulCurrentTime()
+	model.IsCloudInfraModel = false
 
 	// Convert Int to String type
 	strNum := strconv.Itoa(randomNum)
@@ -145,28 +158,28 @@ func CreateOnPremModel(c echo.Context) error {
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyOnPremModel
-type ReqUpdateOnPremModel struct {
-	MyOnPremModel
+type UpdateOnPremInfraModelReq struct {
+	OnPremInfraModelReqInfo
 }
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyOnPremModel
-type ResUpdateOnPremModel struct {
-	MyOnPremModel
+type UpdateOnPremInfraModelResp struct {
+	OnPremInfraModelRespInfo
 }
 
-// UpdateOnPremModel godoc
-// @Summary Update a model
-// @Description Update a model with the given information.
-// @Tags [API] Cloud Migration Models (TBD)
+// UpdateOnPremInfraModel godoc
+// @Summary Update a on-premise infra model
+// @Description Update a on-premise infra model with the given information.
+// @Tags [API] On-Premise Infra Migration Models
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Model ID"
-// @Param Model body ReqUpdateOnPremModel true "Model information to update"
-// @Success 201 {object} ResUpdateOnPremModel "(Sample) This is a sample description for success response in Swagger UI"
+// @Param Model body UpdateOnPremInfraModelReq true "Model information to update"
+// @Success 201 {object} UpdateOnPremInfraModelResp "(Sample) This is a sample description for success response in Swagger UI"
 // @Failure 400 {object} object "Invalid Request"
-// @Router /model/onprem/{id} [put]
-func UpdateOnPremModel(c echo.Context) error {
+// @Router /onpreminfra/{id} [put]
+func UpdateOnPremInfraModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
 		return c.JSON(http.StatusBadRequest, "Invalid ID!!")
 	}
@@ -176,12 +189,12 @@ func UpdateOnPremModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid ID format")
 	}
 
-	updateModel := new(ReqUpdateOnPremModel)
+	updateModel := new(UpdateOnPremInfraModelResp)
 	// Verify loaded data without prefix
 	_, exists := lkvstore.Get(c.Param("id"))
 	if exists {
-		fmt.Printf("Succeeded in Finding the model : '%s'\n", c.Param("id"))
-		fmt.Printf("### MyOnPremModel ID to Update : [%s]", c.Param("id"))
+		fmt.Printf("Succeeded in Finding the model : [%s]\n", c.Param("id"))
+		fmt.Printf("### OnPrem Model ID to Update : [%s]\n", c.Param("id"))
 
 		// updateModel = new(ReqUpdateOnPremModel)
 		if err := c.Bind(updateModel); err != nil {
@@ -215,32 +228,32 @@ func UpdateOnPremModel(c echo.Context) error {
 }
 
 // [Note]
-// No RequestBody required for "DELETE /model/{id}"
+// No RequestBody required for "DELETE /onpreminfra/{id}"
 
 // [Note]
-// No ResponseBody required for "DELETE /model/{id}"
+// No ResponseBody required for "DELETE /onpreminfra/{id}"
 
-// DeleteOnPremModel godoc
-// @Summary Delete a model
-// @Description Delete a model with the given information.
-// @Tags [API] Cloud Migration Models (TBD)
+// DeleteOnPremInfraModel godoc
+// @Summary Delete a on-premise infra model
+// @Description Delete a on-premise infra model with the given information.
+// @Tags [API] On-Premise Infra Migration Models
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Model ID"
 // @Success 200 {string} string "Model deletion successful"
 // @Failure 400 {object} object "Invalid Request"
 // @Failure 404 {object} object "Model Not Found"
-// @Router /model/onprem/{id} [delete]
-func DeleteOnPremModel(c echo.Context) error {
+// @Router /onpreminfra/{id} [delete]
+func DeleteOnPremInfraModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
 		return c.JSON(http.StatusBadRequest, "Invalid ID!!")
 	}
-	fmt.Printf("### Model ID to Delete : [%s]", c.Param("id"))
+	fmt.Printf("### OnPrem Model ID to Delete : [%s]\n", c.Param("id"))
 
 	// Verify loaded data without prefix
 	_, exists := lkvstore.Get(c.Param("id"))
 	if exists {
-		fmt.Printf("Succeeded in Finding the model : '%s'\n", c.Param("id"))
+		fmt.Printf("Succeeded in Finding the model : [%s]\n", c.Param("id"))
 		lkvstore.Delete(c.Param("id"))
 	} else {
 		newErr := fmt.Errorf("Failed to Find the Model : [%s]\n", c.Param("id"))
@@ -261,42 +274,58 @@ func DeleteOnPremModel(c echo.Context) error {
 // ### Cloud Infra Model
 // ##############################################################################################
 
-type MyCloudModel struct {
-	Id   			int    					`json:"id"`
-	IsTargetModel	bool	  				`json:"istargetmodel"`	
-	Name 			string  				`json:"name"`
-	Description 	string 					`json:"description"`
-	Version			string  				`json:"version"`
-	CreateTime		string					`json:"createtime"`
-	UpdateTime		string					`json:"updatetime"`
-	CSP				string					`json:"csp"`
-	Region			string					`json:"region"`
-	Zone			string					`json:"zone"`
-	CloudInfra		tbmodel.TbMciDynamicReq `json:"cloudinfra" validate:"required"`
+type CloudInfraModelReqInfo struct {
+	UserId 				string    				`json:"userid"`
+	IsTargetModel		bool	  				`json:"istargetmodel"`
+	IsInitModel			bool	  				`json:"isinitmodel"`
+	Name 				string  				`json:"name"`
+	Description 		string 					`json:"description"`
+	Version				string  				`json:"version"`
+	CSP					string					`json:"csp"`
+	Region				string					`json:"region"`
+	Zone				string					`json:"zone"`
+	CloudInfra			tbmodel.TbMciDynamicReq `json:"cloudinfra" validate:"required"`
+}
+
+type CloudInfraModelRespInfo struct {
+	Id   				int    					`json:"id"`
+	UserId 				string    				`json:"userid"`
+	IsTargetModel		bool	  				`json:"istargetmodel"`
+	IsInitModel			bool	  				`json:"isinitmodel"`
+	Name 				string  				`json:"name"`
+	Description 		string 					`json:"description"`
+	Version				string  				`json:"version"`
+	CreateTime			string					`json:"createtime"`
+	UpdateTime			string					`json:"updatetime"`
+	CSP					string					`json:"csp"`
+	Region				string					`json:"region"`
+	Zone				string					`json:"zone"`
+	IsCloudInfraModel	bool					`json:"iscloudinframodel"`
+	CloudInfra			tbmodel.TbMciDynamicReq `json:"cloudinfra" validate:"required"`
 }
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
 // Need to add '--parseDependency --parseInternal' in order to apply imported structures
 
-type ResGetCloudModels struct {
-	Models []MyCloudModel `json:"models"`
+type GetCloudInfraModelsResp struct {
+	Models []CloudInfraModelRespInfo `json:"models"`
 }
 
-// GetCloudModels godoc
-// @Summary Get a list of models
-// @Description Get a list of models.
-// @Tags [API] Cloud Migration Models (TBD)
+// GetCloudInfraModels godoc
+// @Summary Get a list of cloud infra models
+// @Description Get a list of cloud infra models.
+// @Tags [API] Cloud Infra Migration Models
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ResGetCloudModels "(sample) This is a list of models"
+// @Success 200 {object} GetCloudInfraModelsResp "(sample) This is a list of models"
 // @Failure 404 {object} object "model not found"
-// @Router /model/cloud [get]
-func GetCloudModels(c echo.Context) error {
+// @Router /cloudinfra [get]
+func GetCloudInfraModels(c echo.Context) error {
 
 	// GetWithPrefix returns the values for a given key prefix.
 	valueList, exists := lkvstore.GetWithPrefix("")
 	if exists {
-		fmt.Printf("Loaded values : %v\n", valueList)
+		// fmt.Printf("Loaded values : %v\n", valueList)
 		return c.JSON(http.StatusOK, valueList)
 	} else {
 		newErr := fmt.Errorf("Failed to Find Any Model : [%s]\n", c.Param("id"))
@@ -304,30 +333,30 @@ func GetCloudModels(c echo.Context) error {
 	}
 }
 
-type ResGetCloudModel struct {
-	MyCloudModel
+type GetCloudInfraModelResp struct {
+	CloudInfraModelRespInfo
 }
 
-// GetCloudModel godoc
-// @Summary Get a specific model
-// @Description Get a specific model.
-// @Tags [API] Cloud Migration Models (TBD)
+// GetCloudInfraModel godoc
+// @Summary Get a specific cloud infra model
+// @Description Get a specific cloud infra model.
+// @Tags [API] Cloud Infra Migration Models
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Model ID"
-// @Success 200 {object} ResGetCloudModel "(Sample) a model"
+// @Success 200 {object} GetCloudInfraModelResp "(Sample) a model"
 // @Failure 404 {object} object "model not found"
-// @Router /model/cloud/{id} [get]
-func GetCloudModel(c echo.Context) error {
+// @Router /cloudinfra/{id} [get]
+func GetCloudInfraModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
 		return c.JSON(http.StatusBadRequest, "Invalid ID!!")
 	}
-	fmt.Printf("### MyCloudModel ID to Get : [%s]", c.Param("id"))
+	fmt.Printf("### Cloud Model ID to Get : [%s]\n", c.Param("id"))
 
 	// Verify loaded data without prefix
 	value, exists := lkvstore.Get(c.Param("id"))
 	if exists {
-		fmt.Printf("Loaded value for '%s': %v\n", c.Param("id"), value)
+		// fmt.Printf("Loaded value for [%s]: %v\n", c.Param("id"), value)
 		return c.JSON(http.StatusOK, value)
 	} else {
 		newErr := fmt.Errorf("Failed to Find the Model : [%s]\n", c.Param("id"))
@@ -337,32 +366,32 @@ func GetCloudModel(c echo.Context) error {
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyCloudModel
-type ReqCreateCloudModel struct {
-	MyCloudModel
+type CreateCloudInfraModelReq struct {
+	CloudInfraModelReqInfo
 }
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyCloudModel
-type ResCreateCloudModel struct {
-	MyCloudModel
+type CreateCloudInfraModelResp struct {
+	CloudInfraModelRespInfo
 }
 
-// CreateCloudModel godoc
-// @Summary Create a new model
-// @Description Create a new model with the given information.
-// @Tags [API] Cloud Migration Models (TBD)
+// CreateCloudInfraModel godoc
+// @Summary Create a new cloud infra model
+// @Description Create a new cloud infra model with the given information.
+// @Tags [API] Cloud Infra Migration Models
 // @Accept  json
 // @Produce  json
-// @Param Model body ReqCreateCloudModel true "model information"
-// @Success 201 {object} ResCreateCloudModel "(Sample) This is a sample description for success response in Swagger UI"
+// @Param Model body CreateCloudInfraModelReq true "model information"
+// @Success 201 {object} CreateCloudInfraModelResp "(Sample) This is a sample description for success response in Swagger UI"
 // @Failure 400 {object} object "Invalid Request"
-// @Router /model/cloud [post]
-func CreateCloudModel(c echo.Context) error {
-	model := new(ReqCreateCloudModel)
+// @Router /cloudinfra [post]
+func CreateCloudInfraModel(c echo.Context) error {
+	model := new(CreateCloudInfraModelResp)
 	if err := c.Bind(model); err != nil {
 		return c.JSON(http.StatusBadRequest, "Invalid Request")
 	}
-	// fmt.Println("### MyCloudModel",)
+	// fmt.Println("### CreateCloudInfraModelResp",)
 	// spew.Dump(model)
 
 	// # Incase of int type of ID
@@ -374,6 +403,7 @@ func CreateCloudModel(c echo.Context) error {
     }
 	model.Id = randomNum
 	model.CreateTime = getSeoulCurrentTime()
+	model.IsCloudInfraModel = true
 
 	// Convert Int to String type
 	strNum := strconv.Itoa(randomNum)
@@ -393,28 +423,28 @@ func CreateCloudModel(c echo.Context) error {
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyCloudModel
-type ReqUpdateCloudModel struct {
-	MyCloudModel
+type UpdateCloudInfraModelReq struct {
+	CloudInfraModelReqInfo
 }
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyCloudModel
-type ResUpdateCloudModel struct {
-	MyCloudModel
+type UpdateCloudInfraModelResp struct {
+	CloudInfraModelRespInfo
 }
 
-// UpdateCloudModel godoc
-// @Summary Update a model
-// @Description Update a model with the given information.
-// @Tags [API] Cloud Migration Models (TBD)
+// UpdateCloudInfraModel godoc
+// @Summary Update a cloud infra model
+// @Description Update a cloud infra model with the given information.
+// @Tags [API] Cloud Infra Migration Models
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Model ID"
-// @Param Model body ReqUpdateCloudModel true "Model information to update"
-// @Success 201 {object} ResUpdateCloudModel "(Sample) This is a sample description for success response in Swagger UI"
+// @Param Model body UpdateCloudInfraModelReq true "Model information to update"
+// @Success 201 {object} UpdateCloudInfraModelResp "(Sample) This is a sample description for success response in Swagger UI"
 // @Failure 400 {object} object "Invalid Request"
-// @Router /model/cloud/{id} [put]
-func UpdateCloudModel(c echo.Context) error {
+// @Router /cloudinfra/{id} [put]
+func UpdateCloudInfraModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
 		return c.JSON(http.StatusBadRequest, "Invalid ID!!")
 	}
@@ -424,22 +454,21 @@ func UpdateCloudModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid ID format")
 	}
 
-	updateModel := new(ReqUpdateCloudModel)
+	updateModel := new(UpdateCloudInfraModelResp)
 	// Verify loaded data without prefix
 	_, exists := lkvstore.Get(c.Param("id"))
 	if exists {
-		fmt.Printf("Succeeded in Finding the model : '%s'\n", c.Param("id"))
-		fmt.Printf("### MyCloudModel ID to Update : [%s]", c.Param("id"))
+		fmt.Printf("Succeeded in Finding the model : [%s]\n", c.Param("id"))
+		fmt.Printf("### Cloud Model ID to Update : [%s]\n", c.Param("id"))
 
-		// updateModel = new(ReqUpdateCloudModel)
 		if err := c.Bind(updateModel); err != nil {
 			return c.JSON(http.StatusBadRequest, "Invalid Request")
 		}	
 		updateModel.Id = id
 		updateModel.UpdateTime = getSeoulCurrentTime()
 
-		// fmt.Println("### MyCloudModel",)		
-		// spew.Dump(updateCloudModel)
+		// fmt.Println("### updateModel",)		
+		// spew.Dump(updateModel)
 
 		// Convert to String type
 		strNum := strconv.Itoa(id)
@@ -463,32 +492,32 @@ func UpdateCloudModel(c echo.Context) error {
 }
 
 // [Note]
-// No RequestBody required for "DELETE /model/{id}"
+// No RequestBody required for "DELETE /cloudinfra/{id}"
 
 // [Note]
-// No ResponseBody required for "DELETE /model/{id}"
+// No ResponseBody required for "DELETE /cloudinfra/{id}"
 
-// DeleteCloudModel godoc
-// @Summary Delete a model
-// @Description Delete a model with the given information.
-// @Tags [API] Cloud Migration Models (TBD)
+// DeleteCloudInfraModel godoc
+// @Summary Delete a cloud infra model
+// @Description Delete a cloud infra model with the given information.
+// @Tags [API] Cloud Infra Migration Models
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Model ID"
 // @Success 200 {string} string "Model deletion successful"
 // @Failure 400 {object} object "Invalid Request"
 // @Failure 404 {object} object "Model Not Found"
-// @Router /model/cloud/{id} [delete]
-func DeleteCloudModel(c echo.Context) error {
+// @Router /cloudinfra/{id} [delete]
+func DeleteCloudInfraModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
 		return c.JSON(http.StatusBadRequest, "Invalid ID!!")
 	}
-	fmt.Printf("### Model ID to Delete : [%s]", c.Param("id"))
+	fmt.Printf("### Model ID to Delete : [%s]\n", c.Param("id"))
 
 	// Verify loaded data without prefix
 	_, exists := lkvstore.Get(c.Param("id"))
 	if exists {
-		fmt.Printf("Succeeded in Finding the model : '%s'\n", c.Param("id"))
+		fmt.Printf("Succeeded in Finding the model : [%s]\n", c.Param("id"))
 		lkvstore.Delete(c.Param("id"))
 	} else {
 		newErr := fmt.Errorf("Failed to Find the Model : [%s]\n", c.Param("id"))
