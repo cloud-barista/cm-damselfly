@@ -165,18 +165,19 @@ func RunServer(port string) {
 	groupBase := e.Group("/damselfly")
 
 	// for model API, set a router group which has "/damselfly/model" as prefix
-	gModel := groupBase.Group("/model")
-	gModel.POST("/onprem", handler.CreateOnPremModel)
-	gModel.GET("/onprem", handler.GetOnPremModels)
-	gModel.GET("/onprem/:id", handler.GetOnPremModel)
-	gModel.PUT("/onprem/:id", handler.UpdateOnPremModel)
-	gModel.DELETE("/onprem/:id", handler.DeleteOnPremModel)
+	gModel := groupBase.Group("")
+	// gModel := groupBase.Group("/model")
+	gModel.POST("/onpreminfra", handler.CreateOnPremInfraModel)
+	gModel.GET("/onpreminfra", handler.GetOnPremInfraModels)
+	gModel.GET("/onpreminfra/:id", handler.GetOnPremInfraModel)
+	gModel.PUT("/onpreminfra/:id", handler.UpdateOnPremInfraModel)
+	gModel.DELETE("/onpreminfra/:id", handler.DeleteOnPremInfraModel)
 
-	gModel.POST("/cloud", handler.CreateCloudModel)
-	gModel.GET("/cloud", handler.GetCloudModels)
-	gModel.GET("/cloud/:id", handler.GetCloudModel)
-	gModel.PUT("/cloud/:id", handler.UpdateCloudModel)
-	gModel.DELETE("/cloud/:id", handler.DeleteCloudModel)
+	gModel.POST("/cloudinfra", handler.CreateCloudInfraModel)
+	gModel.GET("/cloudinfra", handler.GetCloudInfraModels)
+	gModel.GET("/cloudinfra/:id", handler.GetCloudInfraModel)
+	gModel.PUT("/cloudinfra/:id", handler.UpdateCloudInfraModel)
+	gModel.DELETE("/cloudinfra/:id", handler.DeleteCloudInfraModel)
 
 	// Run Damselfly API server
 	selfEndpoint := viper.GetString("damselfly.self.endpoint")
