@@ -90,5 +90,8 @@ make run
 - Swagger web UI URL<BR>
   - https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-damselfly/refs/heads/main/api/swagger.yaml
 
-- DB to store (The user migration model is stored to K/V DB as a file in the following location.)
+- Default DB to store path (The user migration model is stored to K/V DB as a file in the following location.)
   - ./cloud-barista/cm-damselfly/.damselfly/lkvstore.db
+
+- Default log file path
+  - ./cloud-barista/cm-damselfly/cmd/cm-damselfly/log/damselfly.log  

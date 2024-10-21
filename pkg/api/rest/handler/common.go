@@ -6,6 +6,9 @@ import (
     "math/big"
 	"crypto/rand"
 	"encoding/base64"
+    "bufio"
+	"os"
+	"strings"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -80,4 +83,24 @@ func getSeoulCurrentTime() string {
 	loc, _ := time.LoadLocation("Asia/Seoul")
 	currentTime := time.Now().In(loc)	
 	return currentTime.Format("2006-01-02 15:04:05")
+}
+
+func getModuleVersion(moduleName string) (string, error) {
+	file, err := os.Open("./../../go.mod")
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, moduleName) {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				return parts[1], nil
+			}
+		}
+	}
+	return "", fmt.Errorf("Module [%s] not found", moduleName)
 }

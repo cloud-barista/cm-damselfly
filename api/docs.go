@@ -23,9 +23,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/cloudinfra": {
+        "/cloudmodel": {
             "get": {
-                "description": "Get a list of cloud infra models.",
+                "description": "Get a list of cloud models.",
                 "consumes": [
                     "application/json"
                 ],
@@ -33,14 +33,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Cloud Infra Migration Models"
+                    "[API] Cloud Migration Models"
                 ],
-                "summary": "Get a list of cloud infra models",
+                "summary": "Get a list of cloud models",
                 "responses": {
                     "200": {
                         "description": "(sample) This is a list of models",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.GetCloudInfraModelsResp"
+                            "$ref": "#/definitions/pkg_api_rest_handler.GetCloudModelsResp"
                         }
                     },
                     "404": {
@@ -52,7 +52,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new cloud infra model with the given information.",
+                "description": "Create a new cloud model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -60,9 +60,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Cloud Infra Migration Models"
+                    "[API] Cloud Migration Models"
                 ],
-                "summary": "Create a new cloud infra model",
+                "summary": "Create a new cloud model",
                 "parameters": [
                     {
                         "description": "model information",
@@ -70,7 +70,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.CreateCloudInfraModelReq"
+                            "$ref": "#/definitions/pkg_api_rest_handler.CreateCloudModelReq"
                         }
                     }
                 ],
@@ -78,7 +78,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.CreateCloudInfraModelResp"
+                            "$ref": "#/definitions/pkg_api_rest_handler.CreateCloudModelResp"
                         }
                     },
                     "400": {
@@ -90,9 +90,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/cloudinfra/{id}": {
+        "/cloudmodel/{id}": {
             "get": {
-                "description": "Get a specific cloud infra model.",
+                "description": "Get a specific cloud model.",
                 "consumes": [
                     "application/json"
                 ],
@@ -100,12 +100,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Cloud Infra Migration Models"
+                    "[API] Cloud Migration Models"
                 ],
-                "summary": "Get a specific cloud infra model",
+                "summary": "Get a specific cloud model",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Model ID",
                         "name": "id",
                         "in": "path",
@@ -116,7 +116,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(Sample) a model",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.GetCloudInfraModelResp"
+                            "$ref": "#/definitions/pkg_api_rest_handler.GetCloudModelResp"
                         }
                     },
                     "404": {
@@ -128,7 +128,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a cloud infra model with the given information.",
+                "description": "Update a cloud model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -136,12 +136,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Cloud Infra Migration Models"
+                    "[API] Cloud Migration Models"
                 ],
-                "summary": "Update a cloud infra model",
+                "summary": "Update a cloud model",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Model ID",
                         "name": "id",
                         "in": "path",
@@ -153,7 +153,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateCloudInfraModelReq"
+                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateCloudModelReq"
                         }
                     }
                 ],
@@ -161,7 +161,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateCloudInfraModelResp"
+                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateCloudModelResp"
                         }
                     },
                     "400": {
@@ -173,7 +173,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a cloud infra model with the given information.",
+                "description": "Delete a cloud model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -181,12 +181,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Cloud Infra Migration Models"
+                    "[API] Cloud Migration Models"
                 ],
-                "summary": "Delete a cloud infra model",
+                "summary": "Delete a cloud model",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Model ID",
                         "name": "id",
                         "in": "path",
@@ -250,9 +250,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/onpreminfra": {
+        "/onpremmodel": {
             "get": {
-                "description": "Get a list of on-premise infra models.",
+                "description": "Get a list of on-premise models.",
                 "consumes": [
                     "application/json"
                 ],
@@ -260,14 +260,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] On-Premise Infra Migration Models"
+                    "[API] On-Premise Migration Models"
                 ],
-                "summary": "Get a list of on-premise infra models",
+                "summary": "Get a list of on-premise models",
                 "responses": {
                     "200": {
                         "description": "(sample) This is a list of models",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.GetOnPremInfraModelsResp"
+                            "$ref": "#/definitions/pkg_api_rest_handler.GetOnPremModelsResp"
                         }
                     },
                     "404": {
@@ -279,7 +279,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new on-premise infra model with the given information.",
+                "description": "Create a new on-premise model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -287,9 +287,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] On-Premise Infra Migration Models"
+                    "[API] On-Premise Migration Models"
                 ],
-                "summary": "Create a new on-premise infra model",
+                "summary": "Create a new on-premise model",
                 "parameters": [
                     {
                         "description": "model information",
@@ -297,7 +297,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.CreateOnPremInfraModelReq"
+                            "$ref": "#/definitions/pkg_api_rest_handler.CreateOnPremModelReq"
                         }
                     }
                 ],
@@ -305,7 +305,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.CreateOnPremInfraModelResp"
+                            "$ref": "#/definitions/pkg_api_rest_handler.CreateOnPremModelResp"
                         }
                     },
                     "400": {
@@ -317,9 +317,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/onpreminfra/{id}": {
+        "/onpremmodel/{id}": {
             "get": {
-                "description": "Get a specific on-premise infra model.",
+                "description": "Get a specific on-premise model.",
                 "consumes": [
                     "application/json"
                 ],
@@ -327,12 +327,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] On-Premise Infra Migration Models"
+                    "[API] On-Premise Migration Models"
                 ],
-                "summary": "Get a specific on-premise infra model",
+                "summary": "Get a specific on-premise model",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Model ID",
                         "name": "id",
                         "in": "path",
@@ -343,7 +343,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(Sample) a model",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.GetOnPremInfraModelResp"
+                            "$ref": "#/definitions/pkg_api_rest_handler.GetOnPremModelResp"
                         }
                     },
                     "404": {
@@ -355,7 +355,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a on-premise infra model with the given information.",
+                "description": "Update a on-premise model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -363,12 +363,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] On-Premise Infra Migration Models"
+                    "[API] On-Premise Migration Models"
                 ],
-                "summary": "Update a on-premise infra model",
+                "summary": "Update a on-premise model",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Model ID",
                         "name": "id",
                         "in": "path",
@@ -380,7 +380,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateOnPremInfraModelReq"
+                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateOnPremModelReq"
                         }
                     }
                 ],
@@ -388,7 +388,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateOnPremInfraModelResp"
+                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateOnPremModelResp"
                         }
                     },
                     "400": {
@@ -400,7 +400,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a on-premise infra model with the given information.",
+                "description": "Delete a on-premise model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -408,12 +408,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] On-Premise Infra Migration Models"
+                    "[API] On-Premise Migration Models"
                 ],
-                "summary": "Delete a on-premise infra model",
+                "summary": "Delete a on-premise model",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Model ID",
                         "name": "id",
                         "in": "path",
@@ -866,7 +866,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.CloudInfraModelRespInfo": {
+        "pkg_api_rest_handler.CloudModelRespInfo": {
             "type": "object",
             "required": [
                 "cloudinfra"
@@ -874,6 +874,9 @@ const docTemplate = `{
             "properties": {
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "cloudmodelversion": {
+                    "type": "string"
                 },
                 "createtime": {
                     "type": "string"
@@ -885,9 +888,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "iscloudinframodel": {
+                "iscloudmodel": {
                     "type": "boolean"
                 },
                 "isinitmodel": {
@@ -895,9 +898,6 @@ const docTemplate = `{
                 },
                 "istargetmodel": {
                     "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
                 },
                 "region": {
                     "type": "string"
@@ -908,7 +908,10 @@ const docTemplate = `{
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 },
                 "zone": {
@@ -916,7 +919,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.CreateCloudInfraModelReq": {
+        "pkg_api_rest_handler.CreateCloudModelReq": {
             "type": "object",
             "required": [
                 "cloudinfra"
@@ -937,16 +940,16 @@ const docTemplate = `{
                 "istargetmodel": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "region": {
                     "type": "string"
                 },
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 },
                 "zone": {
@@ -954,7 +957,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.CreateCloudInfraModelResp": {
+        "pkg_api_rest_handler.CreateCloudModelResp": {
             "type": "object",
             "required": [
                 "cloudinfra"
@@ -962,6 +965,9 @@ const docTemplate = `{
             "properties": {
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "cloudmodelversion": {
+                    "type": "string"
                 },
                 "createtime": {
                     "type": "string"
@@ -973,9 +979,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "iscloudinframodel": {
+                "iscloudmodel": {
                     "type": "boolean"
                 },
                 "isinitmodel": {
@@ -983,9 +989,6 @@ const docTemplate = `{
                 },
                 "istargetmodel": {
                     "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
                 },
                 "region": {
                     "type": "string"
@@ -996,7 +999,10 @@ const docTemplate = `{
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 },
                 "zone": {
@@ -1004,7 +1010,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.CreateOnPremInfraModelReq": {
+        "pkg_api_rest_handler.CreateOnPremModelReq": {
             "type": "object",
             "required": [
                 "onpreminfra"
@@ -1016,21 +1022,21 @@ const docTemplate = `{
                 "isinitmodel": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
                 },
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 }
             }
         },
-        "pkg_api_rest_handler.CreateOnPremInfraModelResp": {
+        "pkg_api_rest_handler.CreateOnPremModelResp": {
             "type": "object",
             "required": [
                 "onpreminfra"
@@ -1043,19 +1049,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "iscloudinframodel": {
+                "iscloudmodel": {
                     "type": "boolean"
                 },
                 "isinitmodel": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
+                "istargetmodel": {
+                    "type": "boolean"
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "onpremmodelversion": {
+                    "type": "string"
                 },
                 "updatetime": {
                     "type": "string"
@@ -1063,12 +1072,15 @@ const docTemplate = `{
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 }
             }
         },
-        "pkg_api_rest_handler.GetCloudInfraModelResp": {
+        "pkg_api_rest_handler.GetCloudModelResp": {
             "type": "object",
             "required": [
                 "cloudinfra"
@@ -1076,6 +1088,9 @@ const docTemplate = `{
             "properties": {
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "cloudmodelversion": {
+                    "type": "string"
                 },
                 "createtime": {
                     "type": "string"
@@ -1087,9 +1102,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "iscloudinframodel": {
+                "iscloudmodel": {
                     "type": "boolean"
                 },
                 "isinitmodel": {
@@ -1097,9 +1112,6 @@ const docTemplate = `{
                 },
                 "istargetmodel": {
                     "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
                 },
                 "region": {
                     "type": "string"
@@ -1110,7 +1122,10 @@ const docTemplate = `{
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 },
                 "zone": {
@@ -1118,18 +1133,18 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.GetCloudInfraModelsResp": {
+        "pkg_api_rest_handler.GetCloudModelsResp": {
             "type": "object",
             "properties": {
                 "models": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pkg_api_rest_handler.CloudInfraModelRespInfo"
+                        "$ref": "#/definitions/pkg_api_rest_handler.CloudModelRespInfo"
                     }
                 }
             }
         },
-        "pkg_api_rest_handler.GetOnPremInfraModelResp": {
+        "pkg_api_rest_handler.GetOnPremModelResp": {
             "type": "object",
             "required": [
                 "onpreminfra"
@@ -1142,19 +1157,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "iscloudinframodel": {
+                "iscloudmodel": {
                     "type": "boolean"
                 },
                 "isinitmodel": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
+                "istargetmodel": {
+                    "type": "boolean"
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "onpremmodelversion": {
+                    "type": "string"
                 },
                 "updatetime": {
                     "type": "string"
@@ -1162,23 +1180,26 @@ const docTemplate = `{
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 }
             }
         },
-        "pkg_api_rest_handler.GetOnPremInfraModelsResp": {
+        "pkg_api_rest_handler.GetOnPremModelsResp": {
             "type": "object",
             "properties": {
                 "models": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pkg_api_rest_handler.OnPremInfraModelRespInfo"
+                        "$ref": "#/definitions/pkg_api_rest_handler.OnPremModelRespInfo"
                     }
                 }
             }
         },
-        "pkg_api_rest_handler.OnPremInfraModelRespInfo": {
+        "pkg_api_rest_handler.OnPremModelRespInfo": {
             "type": "object",
             "required": [
                 "onpreminfra"
@@ -1191,19 +1212,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "iscloudinframodel": {
+                "iscloudmodel": {
                     "type": "boolean"
                 },
                 "isinitmodel": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
+                "istargetmodel": {
+                    "type": "boolean"
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "onpremmodelversion": {
+                    "type": "string"
                 },
                 "updatetime": {
                     "type": "string"
@@ -1211,7 +1235,10 @@ const docTemplate = `{
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 }
             }
@@ -1232,7 +1259,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.UpdateCloudInfraModelReq": {
+        "pkg_api_rest_handler.UpdateCloudModelReq": {
             "type": "object",
             "required": [
                 "cloudinfra"
@@ -1253,16 +1280,16 @@ const docTemplate = `{
                 "istargetmodel": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "region": {
                     "type": "string"
                 },
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 },
                 "zone": {
@@ -1270,7 +1297,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.UpdateCloudInfraModelResp": {
+        "pkg_api_rest_handler.UpdateCloudModelResp": {
             "type": "object",
             "required": [
                 "cloudinfra"
@@ -1278,6 +1305,9 @@ const docTemplate = `{
             "properties": {
                 "cloudinfra": {
                     "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "cloudmodelversion": {
+                    "type": "string"
                 },
                 "createtime": {
                     "type": "string"
@@ -1289,9 +1319,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "iscloudinframodel": {
+                "iscloudmodel": {
                     "type": "boolean"
                 },
                 "isinitmodel": {
@@ -1299,9 +1329,6 @@ const docTemplate = `{
                 },
                 "istargetmodel": {
                     "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
                 },
                 "region": {
                     "type": "string"
@@ -1312,7 +1339,10 @@ const docTemplate = `{
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 },
                 "zone": {
@@ -1320,7 +1350,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pkg_api_rest_handler.UpdateOnPremInfraModelReq": {
+        "pkg_api_rest_handler.UpdateOnPremModelReq": {
             "type": "object",
             "required": [
                 "onpreminfra"
@@ -1332,21 +1362,21 @@ const docTemplate = `{
                 "isinitmodel": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
                 },
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 }
             }
         },
-        "pkg_api_rest_handler.UpdateOnPremInfraModelResp": {
+        "pkg_api_rest_handler.UpdateOnPremModelResp": {
             "type": "object",
             "required": [
                 "onpreminfra"
@@ -1359,19 +1389,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "iscloudinframodel": {
+                "iscloudmodel": {
                     "type": "boolean"
                 },
                 "isinitmodel": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
+                "istargetmodel": {
+                    "type": "boolean"
                 },
                 "onpreminfra": {
                     "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "onpremmodelversion": {
+                    "type": "string"
                 },
                 "updatetime": {
                     "type": "string"
@@ -1379,7 +1412,10 @@ const docTemplate = `{
                 "userid": {
                     "type": "string"
                 },
-                "version": {
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
                     "type": "string"
                 }
             }
