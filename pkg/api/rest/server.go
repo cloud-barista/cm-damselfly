@@ -167,6 +167,9 @@ func RunServer(port string) {
 	// for model API, set a router group which has "/damselfly/model" as prefix
 	gModel := groupBase.Group("")
 	// gModel := groupBase.Group("/model")
+
+	gModel.GET("/model/:isTargetModel", handler.GetModels)
+
 	gModel.POST("/onpremmodel", handler.CreateOnPremModel)
 	gModel.GET("/onpremmodel", handler.GetOnPremModels)
 	gModel.GET("/onpremmodel/:id", handler.GetOnPremModel)
