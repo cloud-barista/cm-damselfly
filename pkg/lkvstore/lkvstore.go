@@ -83,26 +83,78 @@ func LoadLkvStore() error {
 
 // Get returns the value for a given key.
 func Get(key string) (interface{}, bool) {
-	return lkvstore.Load(key)
+	value, ok := lkvstore.Load(key)
+	if !ok {
+		return nil, false
+	}
+
+	var result interface{}
+
+	switch v := value.(type) {
+	case string:
+		// Unmarshal JSON if value is string
+		if err := json.Unmarshal([]byte(v), &result); err != nil {
+			return nil, false // Stop when failing to unmarshal
+		}
+	case map[string]interface{}:
+		// already map type
+		result = v
+	default:
+		// unknown type
+		result = v
+	}
+
+	return result, true
+
 }
 
 // GetWithPrefix returns the values for a given key prefix.
 func GetWithPrefix(keyPrefix string) ([]interface{}, bool) {
 	var results []interface{}
 	var exists bool
+
 	lkvstore.Range(func(key, value interface{}) bool {
 		if strings.HasPrefix(key.(string), keyPrefix) {
-			results = append(results, value)
+			var result interface{}
+
+			switch v := value.(type) {
+			case string:
+				// Unmarshal JSON if value is string
+				if err := json.Unmarshal([]byte(v), &result); err != nil {
+					return false // Stop when failing to unmarshal
+				}
+			case map[string]interface{}:
+				// already map type
+				result = v
+			default:
+				// unknown type
+				result = v
+			}
+
+			results = append(results, result)
 			exists = true
 		}
 		return true
 	})
-	return results, exists
+
+	if !exists {
+		return nil, false
+	}
+
+	return results, true
 }
 
 // Put the key-value pair.
-func Put(key string, value interface{}) {
-	lkvstore.Store(key, value)
+func Put(key string, value interface{}) error {
+	// Marshal the value to JSON
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to marshal value: %w", err)
+	}
+
+	// Store the JSON string
+	lkvstore.Store(key, string(jsonValue))
+	return nil
 }
 
 // Delete the key-value pair for a given key.

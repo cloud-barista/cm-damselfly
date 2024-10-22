@@ -2,8 +2,9 @@ package model
 
 import (
 	"encoding/json"
-	"sync"
 	"os"
+	"sync"
+
 	"github.com/sirupsen/logrus"
 
 	cblog "github.com/cloud-barista/cb-log"
