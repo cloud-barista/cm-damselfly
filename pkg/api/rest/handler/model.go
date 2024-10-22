@@ -3,44 +3,141 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	// "strconv"
+	// "reflect"
+	"strconv"
 	"strings"
 	"github.com/labstack/echo/v4"
-
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/rs/zerolog/log"
+	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
-	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	onprem "github.com/cloud-barista/cm-model/infra/onprem"
 )
+
+// ##############################################################################################
+// ### On-premise and Cloud Migration Model
+// ##############################################################################################
+
+type ModelRespInfo struct {
+	Id   					string    				`json:"id"`
+	UserId 					string    				`json:"userId"`
+	IsInitUserModel			bool	  				`json:"isInitUserModel"`
+	UserModelName 			string  				`json:"userModelName"`
+	Description 			string 					`json:"description"`
+	UserModelVer			string  				`json:"userModelVersion"`	
+	CreateTime				string					`json:"createTime"`
+	UpdateTime				string					`json:"updateTime"`
+	IsTargetModel			bool	  				`json:"isTargetModel"`
+	IsCloudModel			bool					`json:"isCloudModel"`
+	OnPremModelVer			string 					`json:"onpremModelVersion"`
+	CloudModelVer			string 					`json:"cloudModelVersion"`
+	CSP						string					`json:"csp"`
+	Region					string					`json:"region"`
+	Zone					string					`json:"zone"`
+	OnPremInfraModel		onprem.OnPremInfra 		`json:"onpremiseInfraModel" validate:"required"`
+	CloudInfraModel			tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+}
+// Caution!!)
+// Init Swagger : ]# swag init --parseDependency --parseInternal
+// Need to add '--parseDependency --parseInternal' in order to apply imported structures
+
+type GetModelsResp struct {
+	Models []ModelRespInfo `json:"models"`
+}
+
+// GetModels godoc
+// @Summary Get a list of all user models
+// @Description Get a list of all user models.
+// @Tags [API] Migration Models
+// @Accept  json
+// @Produce  json
+// @Param isTargetModel path bool true "Is TargetModel ?"
+// @Success 200 {object} GetModelsResp "(sample) This is a list of models"
+// @Failure 404 {object} object "model not found"
+// @Router /model/{isTargetModel} [get]
+func GetModels(c echo.Context) error {
+	param := c.Param("isTargetModel")
+	// fmt.Printf("# The value of 'isTargetModel' parameter : [%v]", isTargetModel)	
+
+	if strings.EqualFold(param, "true") || strings.EqualFold(param, "false") {
+		// if strings.EqualFold(param, "true") {
+		// 	fmt.Printf("# Models to Get : Target models")
+		// } else {
+		// 	fmt.Printf("# Models to Get : Source models")
+		// }		
+	} else {
+		return c.JSON(http.StatusBadRequest, "Invalid type of parameter!!")
+	}
+
+	// Convert the string to a boolean
+	isTargetmodel, err := strconv.ParseBool(param)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "Invalid boolean value")
+	}
+
+	var models []map[string]interface{}
+	modelList, exists := lkvstore.GetWithPrefix("")
+	if exists {
+		if isTargetmodel { // Only Tareget models
+			for _, model := range modelList {
+				if model, ok := model.(map[string]interface{}); ok {
+					if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == true {
+						models = append(models, model)
+					}
+				}
+			}
+		} else { // Only Source models
+			for _, model := range modelList {
+				if model, ok := model.(map[string]interface{}); ok {
+					if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == false {
+						models = append(models, model)
+					}
+				}
+			}
+		}
+
+		if len(models) < 1 {			
+			msg := "Failed to Find Any Model"
+			log.Debug().Msg(msg)
+
+			newErr := fmt.Errorf(msg)
+			return c.JSON(http.StatusNotFound, newErr)
+		}
+
+		return c.JSON(http.StatusOK, models)
+	} else {
+		newErr := fmt.Errorf("Failed to Find Any Model from DB\n")
+		return c.JSON(http.StatusNotFound, newErr)
+	}
+}
 
 // ##############################################################################################
 // ### On-premise Migration Model
 // ##############################################################################################
 
 type OnPremModelReqInfo struct {
-	UserId 					string    			`json:"userid"`
-	IsInitModel				bool	  			`json:"isinitmodel"`
-	UserModelName 			string  			`json:"usermodelname"`
+	UserId 					string    			`json:"userId"`
+	IsInitUserModel			bool	  			`json:"isInitUserModel"`
+	UserModelName 			string  			`json:"userModelName"`
 	Description 			string 				`json:"description"`
-	UserModelVer			string  			`json:"usermodelversion"`
-	OnPremInfra 			onprem.OnPremInfra 	`json:"onpreminfra" validate:"required"`
+	UserModelVer			string  			`json:"userModelVersion"`
+	OnPremInfraModel 		onprem.OnPremInfra 	`json:"onpremiseInfraModel" validate:"required"`
 }
 
 type OnPremModelRespInfo struct {
 	Id   					string    			`json:"id"`
-	UserId 					string    			`json:"userid"`
-	IsInitModel				bool	  			`json:"isinitmodel"`
-	UserModelName 			string  			`json:"usermodelname"`
+	UserId 					string    			`json:"userId"`
+	IsInitUserModel			bool	  			`json:"isInitUserModel"`
+	UserModelName 			string  			`json:"userModelName"`
 	Description 			string 				`json:"description"`
-	UserModelVer			string  			`json:"usermodelversion"`
-	OnPremModelVer			string 				`json:"onpremmodelversion"`
-	CreateTime				string				`json:"createtime"`
-	UpdateTime				string				`json:"updatetime"`
-	IsTargetModel			bool	  			`json:"istargetmodel"`
-	IsCloudModel			bool				`json:"iscloudmodel"`
-	OnPremInfra 			onprem.OnPremInfra 	`json:"onpreminfra" validate:"required"`
+	UserModelVer			string  			`json:"userModelVersion"`
+	OnPremModelVer			string 				`json:"onpremModelVersion"`
+	CreateTime				string				`json:"createTime"`
+	UpdateTime				string				`json:"updateTime"`
+	IsTargetModel			bool	  			`json:"isTargetModel"`
+	IsCloudModel			bool				`json:"isCloudModel"`
+	OnPremInfraModel 		onprem.OnPremInfra 	`json:"onpremiseInfraModel" validate:"required"`
 }
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
@@ -60,33 +157,32 @@ type GetOnPremModelsResp struct {
 // @Failure 404 {object} object "model not found"
 // @Router /onpremmodel [get]
 func GetOnPremModels(c echo.Context) error {
-	// GetWithPrefix returns the values for a given key prefix.
 	modelList, exists := lkvstore.GetWithPrefix("")
 	if exists {
 		// # Returns Only On-prem Models
 		var onpremModels []map[string]interface{}
 		for _, model := range modelList {
 			if model, ok := model.(map[string]interface{}); ok {
-				if isCloudModel, exists := model["iscloudmodel"]; exists && isCloudModel == false {
+				if isCloudModel, exists := model["isCloudModel"]; exists && isCloudModel == false {
 
-					if id, exists := model["id"]; exists {
-						// fmt.Printf("Loaded value-1 for [%s]: %v\n", c.Param("id"), model)
-						if id, ok := id.(string); ok {							
-							log.Debug().Msgf("# Model ID to Add : [%s]\n", id)
-						} else {
-							msg := ("'id' is not a string type")
-							log.Error().Msg(msg)
+					// if id, exists := model["id"]; exists {
+					// 	// fmt.Printf("Loaded value-1 for [%s]: %v\n", c.Param("id"), model)
+					// 	if id, ok := id.(string); ok {							
+					// 		log.Debug().Msgf("# Model ID to Add : [%s]\n", id)
+					// 	} else {
+					// 		msg := ("'id' is not a string type")
+					// 		log.Error().Msg(msg)
 
-							newErr := fmt.Errorf("'id' is not a string type")
-							return c.JSON(http.StatusNotFound, newErr)
-						}
-					} else {
-						msg := ("'id' does not exist")
-						log.Error().Msg(msg)
+					// 		newErr := fmt.Errorf("'id' is not a string type")
+					// 		return c.JSON(http.StatusNotFound, newErr)
+					// 	}
+					// } else {
+					// 	msg := ("'id' does not exist")
+					// 	log.Error().Msg(msg)
 
-						newErr := fmt.Errorf("'id' does not exist")
-						return c.JSON(http.StatusNotFound, newErr)
-					}
+					// 	newErr := fmt.Errorf("'id' does not exist")
+					// 	return c.JSON(http.StatusNotFound, newErr)
+					// }
 
 					onpremModels = append(onpremModels, model)
 				}
@@ -137,7 +233,7 @@ func GetOnPremModel(c echo.Context) error {
 		for _, model := range modelList {
 			if model, ok := model.(map[string]interface{}); ok {
 
-				if isCloudModel, exists := model["iscloudmodel"]; exists && isCloudModel == false {
+				if isCloudModel, exists := model["isCloudModel"]; exists && isCloudModel == false {
 
 					if id, exists := model["id"]; exists {
 						// fmt.Printf("Loaded value-1 for [%s]: %v\n", c.Param("id"), model)
@@ -178,7 +274,7 @@ func GetOnPremModel(c echo.Context) error {
 				// 	msg := ("'id' does not exist")
 				// 	log.Error().Msg(msg)
 
-				// 	newErr := fmt.Errorf("'iscloudmodel' does not exist")
+				// 	newErr := fmt.Errorf("'isCloudModel' does not exist")
 				// 	return c.JSON(http.StatusNotFound, newErr)
 				// }
 				
@@ -188,7 +284,7 @@ func GetOnPremModel(c echo.Context) error {
 
 				// 	fmt.Printf("Loaded value-2 for [%s]: %v\n", c.Param("id"), model)
 
-				// 	if isCloudModel, exists := model["iscloudmodel"]; exists {
+				// 	if isCloudModel, exists := model["isCloudModel"]; exists {
 				// 		if isCloudModelBool, ok := isCloudModel.(bool); ok {
 				// 			if isCloudModelBool {
 				// 				newErr := fmt.Errorf("The Given ID is Not a On-premise Model ID : [%s]", c.Param("id"))
@@ -201,17 +297,17 @@ func GetOnPremModel(c echo.Context) error {
 				// 				return c.JSON(http.StatusNotFound, newErr)
 				// 			}
 				// 		} else {
-				// 			msg := ("'iscloudmodel' is not a boolean type")
+				// 			msg := ("'isCloudModel' is not a boolean type")
 				// 			log.Error().Msg(msg)
 
-				// 			newErr := fmt.Errorf("'iscloudmodel' is not a boolean type")
+				// 			newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
 				// 			return c.JSON(http.StatusNotFound, newErr)
 				// 		}
 				// 	} else {
-				// 		msg := ("'iscloudmodel' does not exist")
+				// 		msg := ("'isCloudModel' does not exist")
 				// 		log.Error().Msg(msg)
 
-				// 		newErr := fmt.Errorf("'iscloudmodel' does not exist")
+				// 		newErr := fmt.Errorf("'isCloudModel' does not exist")
 				// 		return c.JSON(http.StatusNotFound, newErr)
 				// 	}
 				// } else {
@@ -237,7 +333,7 @@ func GetOnPremModel(c echo.Context) error {
 
 		if model, ok := model.(map[string]interface{}); ok {
 			// Check if the model is a on-premise model
-			if isCloudModel, exists := model["iscloudmodel"]; exists {
+			if isCloudModel, exists := model["isCloudModel"]; exists {
 				if isCloudModelBool, ok := isCloudModel.(bool); ok {
 					if isCloudModelBool {
 						newErr := fmt.Errorf("The Given ID is Not a On-premise Model ID : [%s]", c.Param("id"))
@@ -246,11 +342,11 @@ func GetOnPremModel(c echo.Context) error {
 						fmt.Println("This model is a On-premise Model!!")
 					}
 				} else {
-					newErr := fmt.Errorf("'iscloudmodel' is not a boolean type")
+					newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				newErr := fmt.Errorf("'iscloudmodel' does not exist")
+				newErr := fmt.Errorf("'isCloudModel' does not exist")
 				return c.JSON(http.StatusNotFound, newErr)
 			}
 		}
@@ -320,7 +416,7 @@ func CreateOnPremModel(c echo.Context) error {
 	// Save the model to the key-value store
 	lkvstore.Put(randomStr, model)
 
-	// Save the current state of the key-value store to file
+	// # Save the current state of the key-value store to file
 	if err := lkvstore.SaveLkvStore(); err != nil {
 		fmt.Printf("Failed to Save the lkvstore to file. : [%v]\n", err)
 	} else {
@@ -357,14 +453,9 @@ func UpdateOnPremModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
 		return c.JSON(http.StatusBadRequest, "Invalid ID!!")
 	}
-
 	reqId := c.Param("id")
 
 	updateModel := new(UpdateOnPremModelResp)
-
-	// if err := c.Bind(updateModel); err != nil {
-	// 	return c.JSON(http.StatusBadRequest, "Invalid Request")
-	// }
 
 	model, exists := lkvstore.Get(reqId)
 	if exists {
@@ -377,7 +468,7 @@ func UpdateOnPremModel(c echo.Context) error {
 
 		if model, ok := model.(map[string]interface{}); ok {
 			// Check if the model is a on-premise model
-			if isCloudModel, exists := model["iscloudmodel"]; exists {
+			if isCloudModel, exists := model["isCloudModel"]; exists {
 				if isCloudModelBool, ok := isCloudModel.(bool); ok {
 					if isCloudModelBool {
 						log.Error().Msg("The Given ID is Not a On-premise Model ID!!")
@@ -388,38 +479,38 @@ func UpdateOnPremModel(c echo.Context) error {
 						fmt.Println("This model is a On-premise Model!!")
 					}
 				} else {
-					msg := "'iscloudmodel' is not a boolean type"
+					msg := "'isCloudModel' is not a boolean type"
 					log.Error().Msg(msg)
 
 					newErr := fmt.Errorf(msg)
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				msg := "'iscloudmodel' does not exist"
+				msg := "'isCloudModel' does not exist"
 				log.Error().Msg(msg)
 
-				newErr := fmt.Errorf("'iscloudmodel' does not exist")
+				newErr := fmt.Errorf("'isCloudModel' does not exist")
 				return c.JSON(http.StatusNotFound, newErr)
 			}
 		}
 
 		if model, ok := model.(map[string]interface{}); ok {
-			if onPremModelVer, exists := model["onpremmodelversion"]; exists {
+			if onPremModelVer, exists := model["onpremModelVersion"]; exists {
 				if onpremModelVerStr, ok := onPremModelVer.(string); ok {					
 					updateModel.OnPremModelVer = onpremModelVerStr
 					fmt.Printf("### onpremModelVerStr : [%s]\n", onpremModelVerStr)
 				} else {
-					msg := "'onpremmodelversion' is not a string type of value"
+					msg := "'onpremModelVersion' is not a string type of value"
 					log.Error().Msg(msg)
 
-					newErr := fmt.Errorf("'onpremmodelversion' is not a string type of value")
+					newErr := fmt.Errorf("'onpremModelVersion' is not a string type of value")
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				msg := "'onpremmodelversion' does not exist"
+				msg := "'onpremModelVersion' does not exist"
 				log.Error().Msg(msg)
 
-				fmt.Println("'onpremmodelversion' does not exist")				
+				fmt.Println("'onpremModelVersion' does not exist")				
 			}
 
 		} 
@@ -430,19 +521,19 @@ func UpdateOnPremModel(c echo.Context) error {
 
 
 		if model, ok := model.(map[string]interface{}); ok {
-			if createTime, exists := model["createtime"]; exists {
+			if createTime, exists := model["createTime"]; exists {
 				if createTimeStr, ok := createTime.(string); ok {
 					// fmt.Printf("### createTimeStr : [%s]\n", createTimeStr)
 					updateModel.CreateTime = createTimeStr
 				} else {
-					newErr := fmt.Errorf("'createtime' is not a string type of value")
+					newErr := fmt.Errorf("'createTime' is not a string type of value")
 					return newErr
 					// return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				fmt.Println("'createtime' does not exist")
+				fmt.Println("'createTime' does not exist")
 
-				newErr := fmt.Errorf("'createtime' does not exist")
+				newErr := fmt.Errorf("'createTime' does not exist")
 				return newErr
 			}
 		}
@@ -467,7 +558,7 @@ func UpdateOnPremModel(c echo.Context) error {
 		// Save the model to the key-value store
 		lkvstore.Put(reqId, updateModel)
 
-		// Save the current state of the key-value store to file
+		// # Save the current state of the key-value store to file
 		if err := lkvstore.SaveLkvStore(); err != nil {
 			newErr := fmt.Errorf("Failed to Save the lkvstore to file. : [%v]", err)
 			return c.JSON(http.StatusNotFound, newErr)
@@ -526,7 +617,7 @@ func DeleteOnPremModel(c echo.Context) error {
 
 		if model, ok := model.(map[string]interface{}); ok {
 			// Check if the model is a on-premise model
-			if isCloudModel, exists := model["iscloudmodel"]; exists {
+			if isCloudModel, exists := model["isCloudModel"]; exists {
 				if isCloudModelBool, ok := isCloudModel.(bool); ok {
 					if isCloudModelBool {
 						newErr := fmt.Errorf("The Given ID is Not a On-premise Model ID : [%s]", c.Param("id"))
@@ -535,11 +626,11 @@ func DeleteOnPremModel(c echo.Context) error {
 						fmt.Println("This model is a Cloud Model!!")
 					}
 				} else {
-					newErr := fmt.Errorf("'iscloudmodel' is not a boolean type")
+					newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				newErr := fmt.Errorf("'iscloudmodel' does not exist")
+				newErr := fmt.Errorf("'isCloudModel' does not exist")
 				return c.JSON(http.StatusNotFound, newErr)
 			}
 		}
@@ -550,7 +641,7 @@ func DeleteOnPremModel(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, newErr)
 	}
 
-	// Save the current state of the key-value store to file
+	// # Save the current state of the key-value store to file
 	if err := lkvstore.SaveLkvStore(); err != nil {
 		newErr := fmt.Errorf("Failed to Save the lkvstore to file. : [%v]", err)
 		return c.JSON(http.StatusNotFound, newErr)
@@ -566,34 +657,34 @@ func DeleteOnPremModel(c echo.Context) error {
 // ##############################################################################################
 
 type CloudModelReqInfo struct {
-	UserId 					string    				`json:"userid"`
-	IsTargetModel			bool	  				`json:"istargetmodel"`
-	IsInitModel				bool	  				`json:"isinitmodel"`
-	UserModelName 			string  				`json:"usermodelname"`
+	UserId 					string    				`json:"userId"`
+	IsTargetModel			bool	  				`json:"isTargetModel"`
+	IsInitUserModel			bool	  				`json:"isInitUserModel"`
+	UserModelName 			string  				`json:"userModelName"`
 	Description 			string 					`json:"description"`
-	UserModelVer			string  				`json:"usermodelversion"`
+	UserModelVer			string  				`json:"userModelVersion"`
 	CSP						string					`json:"csp"`
 	Region					string					`json:"region"`
 	Zone					string					`json:"zone"`
-	CloudInfra				tbmodel.TbMciDynamicReq `json:"cloudinfra" validate:"required"`
+	CloudInfraModel			tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
 }
 
 type CloudModelRespInfo struct {
 	Id   					string  				`json:"id"`
-	UserId 					string    				`json:"userid"`
-	IsTargetModel			bool	  				`json:"istargetmodel"`
-	IsInitModel				bool	  				`json:"isinitmodel"`
-	UserModelName 			string  				`json:"usermodelname"`
+	UserId 					string    				`json:"userId"`
+	IsTargetModel			bool	  				`json:"isTargetModel"`
+	IsInitUserModel			bool	  				`json:"isInitUserModel"`
+	UserModelName 			string  				`json:"userModelName"`
 	Description 			string 					`json:"description"`
-	UserModelVer			string  				`json:"usermodelversion"`
-	CreateTime				string					`json:"createtime"`
-	UpdateTime				string					`json:"updatetime"`
+	UserModelVer			string  				`json:"userModelVersion"`
+	CreateTime				string					`json:"createTime"`
+	UpdateTime				string					`json:"updateTime"`
 	CSP						string					`json:"csp"`
 	Region					string					`json:"region"`
 	Zone					string					`json:"zone"`
-	IsCloudModel			bool					`json:"iscloudmodel"`
-	CloudModelVer			string 					`json:"cloudmodelversion"`
-	CloudInfra				tbmodel.TbMciDynamicReq `json:"cloudinfra" validate:"required"`
+	IsCloudModel			bool					`json:"isCloudModel"`
+	CloudModelVer			string 					`json:"cloudModelVersion"`
+	CloudInfraModel			tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
 }
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
@@ -613,22 +704,20 @@ type GetCloudModelsResp struct {
 // @Failure 404 {object} object "model not found"
 // @Router /cloudmodel [get]
 func GetCloudModels(c echo.Context) error {
-	// GetWithPrefix returns the values for a given key prefix.
 	modelList, exists := lkvstore.GetWithPrefix("")
 	if exists {
-		// fmt.Printf("Loaded values : %v\n", valueList)
-
-		// # Returns Only Cloud Models
+		//  Returns Only Cloud Models
 		var cloudModels []map[string]interface{}
 		for _, model := range modelList {
+			// fmt.Printf("\n# Model value : %v\n\n", model)
 			if model, ok := model.(map[string]interface{}); ok {
-				if isCloudModel, exists := model["iscloudmodel"]; exists && isCloudModel == true {
+				if isCloudModel, exists := model["isCloudModel"]; exists && isCloudModel == true {
 					cloudModels = append(cloudModels, model)
 				}
-			}			
+			}	
 		}
 
-		if len(cloudModels) < 1 {			
+		if len(cloudModels) < 1 {
 			msg := "Failed to Find Any Model"
 			log.Debug().Msg(msg)
 
@@ -665,11 +754,11 @@ func GetCloudModel(c echo.Context) error {
 
 	model, exists := lkvstore.Get(c.Param("id"))
 	if exists {
-		// fmt.Printf("Loaded value for [%s]: %v\n", c.Param("id"), model)
+		fmt.Printf("\n# Loaded value for [%s]: %v\n\n", c.Param("id"), model)
 
 		if model, ok := model.(map[string]interface{}); ok {
 			// Check if the model is a on-premise model
-			if isCloudModel, exists := model["iscloudmodel"]; exists {
+			if isCloudModel, exists := model["isCloudModel"]; exists {
 				if isCloudModelBool, ok := isCloudModel.(bool); ok {
 					if isCloudModelBool {
 						fmt.Println("This model is a Cloud Model!!")						
@@ -678,11 +767,11 @@ func GetCloudModel(c echo.Context) error {
 						return c.JSON(http.StatusNotFound, newErr)
 					}
 				} else {
-					newErr := fmt.Errorf("'iscloudmodel' is not a boolean type")
+					newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				newErr := fmt.Errorf("'iscloudmodel' does not exist")
+				newErr := fmt.Errorf("'isCloudModel' does not exist")
 				return c.JSON(http.StatusNotFound, newErr)
 			}
 		}
@@ -751,7 +840,7 @@ func CreateCloudModel(c echo.Context) error {
 	// Save the model to the key-value store
 	lkvstore.Put(randomStr, model)
 
-	// Save the current state of the key-value store to file
+	// # Save the current state of the key-value store to file
 	if err := lkvstore.SaveLkvStore(); err != nil {
 		newErr := fmt.Errorf("Failed to Save the lkvstore to file. : [%v]", err)
 		return c.JSON(http.StatusNotFound, newErr)
@@ -789,24 +878,27 @@ func UpdateCloudModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
 		return c.JSON(http.StatusBadRequest, "Invalid ID!!")
 	}
-
 	reqId := c.Param("id")
 
 	updateModel := new(UpdateCloudModelResp)
-	// Verify loaded data without prefix
+
+	if err := c.Bind(updateModel); err != nil {
+		return c.JSON(http.StatusBadRequest, "Invalid Request")
+	}
+	// fmt.Printf("New Req Values for [%s]: %v\n\n", c.Param("id"), updateModel)
+
 	model, exists := lkvstore.Get(reqId)
 	if exists {
 		fmt.Printf("Succeeded in Finding the model : [%s]\n", reqId)
-		fmt.Printf("### Cloud Model ID to Update : [%s]\n", reqId)
+		// fmt.Printf("# Cloud Model ID to Update : [%s]\n", reqId)
+		// fmt.Printf("Values from DB [%s]: %v\n\n", c.Param("id"), model)	
 
-		if err := c.Bind(updateModel); err != nil {
-			return c.JSON(http.StatusBadRequest, "Invalid Request")
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
+		if cloudModel, ok := model.(map[string]interface{}); ok {
 			// Check if the model is a on-premise model
-			if isCloudModel, exists := model["iscloudmodel"]; exists {
+			if isCloudModel, exists := cloudModel["isCloudModel"]; exists {
 				if isCloudModelBool, ok := isCloudModel.(bool); ok {
+					fmt.Printf("The value of isCloudModel is: %v\n", isCloudModel)
+
 					if isCloudModelBool {
 						fmt.Println("This model is a Cloud Model!!")						
 					} else {
@@ -814,37 +906,37 @@ func UpdateCloudModel(c echo.Context) error {
 						return c.JSON(http.StatusNotFound, newErr)
 					}
 				} else {
-					newErr := fmt.Errorf("'iscloudmodel' is not a boolean type")
+					newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				newErr := fmt.Errorf("'iscloudmodel' does not exist")
+				newErr := fmt.Errorf("'isCloudModel' does not exist")
 				return c.JSON(http.StatusNotFound, newErr)
 			}
 		}
 
 		if model, ok := model.(map[string]interface{}); ok {
-			if cloudModelVer, exists := model["cloudmodelversion"]; exists {
+			if cloudModelVer, exists := model["cloudModelVersion"]; exists {
 				if cloudModelVerStr, ok := cloudModelVer.(string); ok {
 					updateModel.CloudModelVer = cloudModelVerStr
 					fmt.Printf("### cloudModelVerStr : [%s]\n", cloudModelVerStr)
 				} else {
-					fmt.Println("'cloudmodelversion' is not a string type of value")
+					fmt.Println("'cloudModelVersion' is not a string type of value")
 				}
 			} else {
-				fmt.Println("'cloudmodelversion' does not exist")
+				fmt.Println("'cloudModelVersion' does not exist")
 			}
 		}
 
 		if model, ok := model.(map[string]interface{}); ok {
-			if createTime, exists := model["createtime"]; exists {
+			if createTime, exists := model["createTime"]; exists {
 				if createTimeStr, ok := createTime.(string); ok {
 					updateModel.CreateTime = createTimeStr
 				} else {
-					fmt.Println("'createtime' is not a string type of value")
+					fmt.Println("'createTime' is not a string type of value")
 				}
 			} else {
-				fmt.Println("'createtime' does not exist")
+				fmt.Println("'createTime' does not exist")
 			}
 		}
 		
@@ -869,7 +961,7 @@ func UpdateCloudModel(c echo.Context) error {
 		// Save the model to the key-value store
 		lkvstore.Put(reqId, updateModel)
 		
-		// Save the current state of the key-value store to file
+		// # Save the current state of the key-value store to file
 		if err := lkvstore.SaveLkvStore(); err != nil {
 			newErr := fmt.Errorf("Failed to Save the lkvstore to file. : [%v]", err)
 			return c.JSON(http.StatusNotFound, newErr)
@@ -921,7 +1013,7 @@ func DeleteCloudModel(c echo.Context) error {
 		fmt.Printf("Succeeded in Finding the model : [%s]\n", c.Param("id"))
 
 		if model, ok := model.(map[string]interface{}); ok {
-			if isCloudModel, exists := model["iscloudmodel"]; exists {
+			if isCloudModel, exists := model["isCloudModel"]; exists {
 				if isCloudModelBool, ok := isCloudModel.(bool); ok && isCloudModelBool {
 					fmt.Println("This model is a Cloud Model!!")
 				} else {
@@ -929,7 +1021,7 @@ func DeleteCloudModel(c echo.Context) error {
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				fmt.Println("'iscloudmodel' does not exist")
+				fmt.Println("'isCloudModel' does not exist")
 			}
 		}
 
@@ -939,7 +1031,7 @@ func DeleteCloudModel(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, newErr)
 	}
 
-	// Save the current state of the key-value store to file
+	// # Save the current state of the key-value store to file
 	if err := lkvstore.SaveLkvStore(); err != nil {
 		newErr := fmt.Errorf("Failed to Save the lkvstore to file. : [%v]", err)
 		return c.JSON(http.StatusNotFound, newErr)
