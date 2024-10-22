@@ -40,7 +40,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(sample) This is a list of models",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.GetCloudModelsResp"
+                            "$ref": "#/definitions/handler.GetCloudModelsResp"
                         }
                     },
                     "404": {
@@ -70,7 +70,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.CreateCloudModelReq"
+                            "$ref": "#/definitions/handler.CreateCloudModelReq"
                         }
                     }
                 ],
@@ -78,7 +78,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.CreateCloudModelResp"
+                            "$ref": "#/definitions/handler.CreateCloudModelResp"
                         }
                     },
                     "400": {
@@ -116,7 +116,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(Sample) a model",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.GetCloudModelResp"
+                            "$ref": "#/definitions/handler.GetCloudModelResp"
                         }
                     },
                     "404": {
@@ -153,7 +153,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateCloudModelReq"
+                            "$ref": "#/definitions/handler.UpdateCloudModelReq"
                         }
                     }
                 ],
@@ -161,7 +161,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateCloudModelResp"
+                            "$ref": "#/definitions/handler.UpdateCloudModelResp"
                         }
                     },
                     "400": {
@@ -232,19 +232,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                            "$ref": "#/definitions/handler.ResHTTPVersion"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                            "$ref": "#/definitions/handler.ResHTTPVersion"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResHTTPVersion"
+                            "$ref": "#/definitions/handler.ResHTTPVersion"
                         }
                     }
                 }
@@ -267,7 +267,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(sample) This is a list of models",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.GetOnPremModelsResp"
+                            "$ref": "#/definitions/handler.GetOnPremModelsResp"
                         }
                     },
                     "404": {
@@ -297,7 +297,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.CreateOnPremModelReq"
+                            "$ref": "#/definitions/handler.CreateOnPremModelReq"
                         }
                     }
                 ],
@@ -305,7 +305,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.CreateOnPremModelResp"
+                            "$ref": "#/definitions/handler.CreateOnPremModelResp"
                         }
                     },
                     "400": {
@@ -343,7 +343,7 @@ const docTemplate = `{
                     "200": {
                         "description": "(Sample) a model",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.GetOnPremModelResp"
+                            "$ref": "#/definitions/handler.GetOnPremModelResp"
                         }
                     },
                     "404": {
@@ -380,7 +380,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateOnPremModelReq"
+                            "$ref": "#/definitions/handler.UpdateOnPremModelReq"
                         }
                     }
                 ],
@@ -388,7 +388,7 @@ const docTemplate = `{
                     "201": {
                         "description": "(Sample) This is a sample description for success response in Swagger UI",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.UpdateOnPremModelResp"
+                            "$ref": "#/definitions/handler.UpdateOnPremModelResp"
                         }
                     },
                     "400": {
@@ -459,13 +459,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResReadyz"
+                            "$ref": "#/definitions/handler.ResReadyz"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/pkg_api_rest_handler.ResReadyz"
+                            "$ref": "#/definitions/handler.ResReadyz"
                         }
                     }
                 }
@@ -473,6 +473,560 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.CloudModelRespInfo": {
+            "type": "object",
+            "required": [
+                "cloudinfra"
+            ],
+            "properties": {
+                "cloudinfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "cloudmodelversion": {
+                    "type": "string"
+                },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iscloudmodel": {
+                    "type": "boolean"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateCloudModelReq": {
+            "type": "object",
+            "required": [
+                "cloudinfra"
+            ],
+            "properties": {
+                "cloudinfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateCloudModelResp": {
+            "type": "object",
+            "required": [
+                "cloudinfra"
+            ],
+            "properties": {
+                "cloudinfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "cloudmodelversion": {
+                    "type": "string"
+                },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iscloudmodel": {
+                    "type": "boolean"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateOnPremModelReq": {
+            "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateOnPremModelResp": {
+            "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
+            "properties": {
+                "createtime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iscloudmodel": {
+                    "type": "boolean"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "onpremmodelversion": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.GetCloudModelResp": {
+            "type": "object",
+            "required": [
+                "cloudinfra"
+            ],
+            "properties": {
+                "cloudinfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "cloudmodelversion": {
+                    "type": "string"
+                },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iscloudmodel": {
+                    "type": "boolean"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.GetCloudModelsResp": {
+            "type": "object",
+            "properties": {
+                "models": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CloudModelRespInfo"
+                    }
+                }
+            }
+        },
+        "handler.GetOnPremModelResp": {
+            "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
+            "properties": {
+                "createtime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iscloudmodel": {
+                    "type": "boolean"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "onpremmodelversion": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.GetOnPremModelsResp": {
+            "type": "object",
+            "properties": {
+                "models": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.OnPremModelRespInfo"
+                    }
+                }
+            }
+        },
+        "handler.OnPremModelRespInfo": {
+            "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
+            "properties": {
+                "createtime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iscloudmodel": {
+                    "type": "boolean"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "onpremmodelversion": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ResHTTPVersion": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ResReadyz": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateCloudModelReq": {
+            "type": "object",
+            "required": [
+                "cloudinfra"
+            ],
+            "properties": {
+                "cloudinfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateCloudModelResp": {
+            "type": "object",
+            "required": [
+                "cloudinfra"
+            ],
+            "properties": {
+                "cloudinfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                },
+                "cloudmodelversion": {
+                    "type": "string"
+                },
+                "createtime": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iscloudmodel": {
+                    "type": "boolean"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateOnPremModelReq": {
+            "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateOnPremModelResp": {
+            "type": "object",
+            "required": [
+                "onpreminfra"
+            ],
+            "properties": {
+                "createtime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iscloudmodel": {
+                    "type": "boolean"
+                },
+                "isinitmodel": {
+                    "type": "boolean"
+                },
+                "istargetmodel": {
+                    "type": "boolean"
+                },
+                "onpreminfra": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
+                },
+                "onpremmodelversion": {
+                    "type": "string"
+                },
+                "updatetime": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "string"
+                },
+                "usermodelname": {
+                    "type": "string"
+                },
+                "usermodelversion": {
+                    "type": "string"
+                }
+            }
+        },
         "model.TbMciDynamicReq": {
             "type": "object",
             "required": [
@@ -863,560 +1417,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/onprem.RouteProperty"
                     }
-                }
-            }
-        },
-        "pkg_api_rest_handler.CloudModelRespInfo": {
-            "type": "object",
-            "required": [
-                "cloudinfra"
-            ],
-            "properties": {
-                "cloudinfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                },
-                "cloudmodelversion": {
-                    "type": "string"
-                },
-                "createtime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "iscloudmodel": {
-                    "type": "boolean"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.CreateCloudModelReq": {
-            "type": "object",
-            "required": [
-                "cloudinfra"
-            ],
-            "properties": {
-                "cloudinfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.CreateCloudModelResp": {
-            "type": "object",
-            "required": [
-                "cloudinfra"
-            ],
-            "properties": {
-                "cloudinfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                },
-                "cloudmodelversion": {
-                    "type": "string"
-                },
-                "createtime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "iscloudmodel": {
-                    "type": "boolean"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.CreateOnPremModelReq": {
-            "type": "object",
-            "required": [
-                "onpreminfra"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "onpreminfra": {
-                    "$ref": "#/definitions/onprem.OnPremInfra"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.CreateOnPremModelResp": {
-            "type": "object",
-            "required": [
-                "onpreminfra"
-            ],
-            "properties": {
-                "createtime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "iscloudmodel": {
-                    "type": "boolean"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "onpreminfra": {
-                    "$ref": "#/definitions/onprem.OnPremInfra"
-                },
-                "onpremmodelversion": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.GetCloudModelResp": {
-            "type": "object",
-            "required": [
-                "cloudinfra"
-            ],
-            "properties": {
-                "cloudinfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                },
-                "cloudmodelversion": {
-                    "type": "string"
-                },
-                "createtime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "iscloudmodel": {
-                    "type": "boolean"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.GetCloudModelsResp": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pkg_api_rest_handler.CloudModelRespInfo"
-                    }
-                }
-            }
-        },
-        "pkg_api_rest_handler.GetOnPremModelResp": {
-            "type": "object",
-            "required": [
-                "onpreminfra"
-            ],
-            "properties": {
-                "createtime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "iscloudmodel": {
-                    "type": "boolean"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "onpreminfra": {
-                    "$ref": "#/definitions/onprem.OnPremInfra"
-                },
-                "onpremmodelversion": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.GetOnPremModelsResp": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pkg_api_rest_handler.OnPremModelRespInfo"
-                    }
-                }
-            }
-        },
-        "pkg_api_rest_handler.OnPremModelRespInfo": {
-            "type": "object",
-            "required": [
-                "onpreminfra"
-            ],
-            "properties": {
-                "createtime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "iscloudmodel": {
-                    "type": "boolean"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "onpreminfra": {
-                    "$ref": "#/definitions/onprem.OnPremInfra"
-                },
-                "onpremmodelversion": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.ResHTTPVersion": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.ResReadyz": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.UpdateCloudModelReq": {
-            "type": "object",
-            "required": [
-                "cloudinfra"
-            ],
-            "properties": {
-                "cloudinfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.UpdateCloudModelResp": {
-            "type": "object",
-            "required": [
-                "cloudinfra"
-            ],
-            "properties": {
-                "cloudinfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                },
-                "cloudmodelversion": {
-                    "type": "string"
-                },
-                "createtime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "iscloudmodel": {
-                    "type": "boolean"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.UpdateOnPremModelReq": {
-            "type": "object",
-            "required": [
-                "onpreminfra"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "onpreminfra": {
-                    "$ref": "#/definitions/onprem.OnPremInfra"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
-                }
-            }
-        },
-        "pkg_api_rest_handler.UpdateOnPremModelResp": {
-            "type": "object",
-            "required": [
-                "onpreminfra"
-            ],
-            "properties": {
-                "createtime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "iscloudmodel": {
-                    "type": "boolean"
-                },
-                "isinitmodel": {
-                    "type": "boolean"
-                },
-                "istargetmodel": {
-                    "type": "boolean"
-                },
-                "onpreminfra": {
-                    "$ref": "#/definitions/onprem.OnPremInfra"
-                },
-                "onpremmodelversion": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "string"
-                },
-                "usermodelname": {
-                    "type": "string"
-                },
-                "usermodelversion": {
-                    "type": "string"
                 }
             }
         }
