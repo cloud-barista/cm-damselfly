@@ -23,4 +23,4 @@
 cmd/cm-damselfly/cm-damselfly
 
 # Ignore DB file (it's temporally used)
-.damselfly/*
+db/*
