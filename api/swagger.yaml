@@ -1,5 +1,428 @@
 basePath: /damselfly
 definitions:
+  handler.CloudModelRespInfo:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.CreateCloudModelReq:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+      csp:
+        type: string
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      region:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.CreateCloudModelResp:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.CreateOnPremModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      onpremiseInfraModel:
+        $ref: '#/definitions/onprem.OnPremInfra'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.CreateOnPremModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onprem.OnPremInfra'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.GetCloudModelResp:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.GetCloudModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.CloudModelRespInfo'
+        type: array
+    type: object
+  handler.GetModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.ModelRespInfo'
+        type: array
+    type: object
+  handler.GetModelsVersionResp:
+    properties:
+      modelsVersion:
+        $ref: '#/definitions/handler.ModelsVersionRespInfo'
+    type: object
+  handler.GetOnPremModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onprem.OnPremInfra'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.GetOnPremModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.OnPremModelRespInfo'
+        type: array
+    type: object
+  handler.ModelRespInfo:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onprem.OnPremInfra'
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    - onpremiseInfraModel
+    type: object
+  handler.ModelsVersionRespInfo:
+    properties:
+      cloudModelVersion:
+        type: string
+      onpremModelVersion:
+        type: string
+    type: object
+  handler.OnPremModelRespInfo:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onprem.OnPremInfra'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.ResHTTPVersion:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.ResReadyz:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.UpdateCloudModelReq:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+      csp:
+        type: string
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      region:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.UpdateCloudModelResp:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.UpdateOnPremModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      onpremiseInfraModel:
+        $ref: '#/definitions/onprem.OnPremInfra'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.UpdateOnPremModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onprem.OnPremInfra'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
   model.TbMciDynamicReq:
     properties:
       description:
@@ -296,417 +719,6 @@ definitions:
           $ref: '#/definitions/onprem.RouteProperty'
         type: array
     type: object
-  pkg_api_rest_handler.CloudModelRespInfo:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  pkg_api_rest_handler.CreateCloudModelReq:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-      csp:
-        type: string
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      region:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  pkg_api_rest_handler.CreateCloudModelResp:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  pkg_api_rest_handler.CreateOnPremModelReq:
-    properties:
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      onpremiseInfraModel:
-        $ref: '#/definitions/onprem.OnPremInfra'
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  pkg_api_rest_handler.CreateOnPremModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onprem.OnPremInfra'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  pkg_api_rest_handler.GetCloudModelResp:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  pkg_api_rest_handler.GetCloudModelsResp:
-    properties:
-      models:
-        items:
-          $ref: '#/definitions/pkg_api_rest_handler.CloudModelRespInfo'
-        type: array
-    type: object
-  pkg_api_rest_handler.GetModelsResp:
-    properties:
-      models:
-        items:
-          $ref: '#/definitions/pkg_api_rest_handler.ModelRespInfo'
-        type: array
-    type: object
-  pkg_api_rest_handler.GetOnPremModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onprem.OnPremInfra'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  pkg_api_rest_handler.GetOnPremModelsResp:
-    properties:
-      models:
-        items:
-          $ref: '#/definitions/pkg_api_rest_handler.OnPremModelRespInfo'
-        type: array
-    type: object
-  pkg_api_rest_handler.ModelRespInfo:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onprem.OnPremInfra'
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    - onpremiseInfraModel
-    type: object
-  pkg_api_rest_handler.OnPremModelRespInfo:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onprem.OnPremInfra'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  pkg_api_rest_handler.ResHTTPVersion:
-    properties:
-      message:
-        type: string
-    type: object
-  pkg_api_rest_handler.ResReadyz:
-    properties:
-      message:
-        type: string
-    type: object
-  pkg_api_rest_handler.UpdateCloudModelReq:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-      csp:
-        type: string
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      region:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  pkg_api_rest_handler.UpdateCloudModelResp:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  pkg_api_rest_handler.UpdateOnPremModelReq:
-    properties:
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      onpremiseInfraModel:
-        $ref: '#/definitions/onprem.OnPremInfra'
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  pkg_api_rest_handler.UpdateOnPremModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onprem.OnPremInfra'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
 info:
   contact:
     email: contact-to-cloud-barista@googlegroups.com
@@ -730,14 +742,14 @@ paths:
         "200":
           description: (sample) This is a list of models
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.GetCloudModelsResp'
+            $ref: '#/definitions/handler.GetCloudModelsResp'
         "404":
           description: model not found
           schema:
             type: object
       summary: Get a list of cloud models
       tags:
-      - '[API] Cloud Migration Models'
+      - '[API] Cloud Migration User Models'
     post:
       consumes:
       - application/json
@@ -748,7 +760,7 @@ paths:
         name: Model
         required: true
         schema:
-          $ref: '#/definitions/pkg_api_rest_handler.CreateCloudModelReq'
+          $ref: '#/definitions/handler.CreateCloudModelReq'
       produces:
       - application/json
       responses:
@@ -756,14 +768,14 @@ paths:
           description: (Sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.CreateCloudModelResp'
+            $ref: '#/definitions/handler.CreateCloudModelResp'
         "400":
           description: Invalid Request
           schema:
             type: object
       summary: Create a new cloud model
       tags:
-      - '[API] Cloud Migration Models'
+      - '[API] Cloud Migration User Models'
   /cloudmodel/{id}:
     delete:
       consumes:
@@ -792,7 +804,7 @@ paths:
             type: object
       summary: Delete a cloud model
       tags:
-      - '[API] Cloud Migration Models'
+      - '[API] Cloud Migration User Models'
     get:
       consumes:
       - application/json
@@ -809,14 +821,14 @@ paths:
         "200":
           description: (Sample) a model
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.GetCloudModelResp'
+            $ref: '#/definitions/handler.GetCloudModelResp'
         "404":
           description: model not found
           schema:
             type: object
       summary: Get a specific cloud model
       tags:
-      - '[API] Cloud Migration Models'
+      - '[API] Cloud Migration User Models'
     put:
       consumes:
       - application/json
@@ -832,7 +844,7 @@ paths:
         name: Model
         required: true
         schema:
-          $ref: '#/definitions/pkg_api_rest_handler.UpdateCloudModelReq'
+          $ref: '#/definitions/handler.UpdateCloudModelReq'
       produces:
       - application/json
       responses:
@@ -840,14 +852,14 @@ paths:
           description: (Sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.UpdateCloudModelResp'
+            $ref: '#/definitions/handler.UpdateCloudModelResp'
         "400":
           description: Invalid Request
           schema:
             type: object
       summary: Update a cloud model
       tags:
-      - '[API] Cloud Migration Models'
+      - '[API] Cloud Migration User Models'
   /httpVersion:
     get:
       consumes:
@@ -860,15 +872,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.ResHTTPVersion'
+            $ref: '#/definitions/handler.ResHTTPVersion'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.ResHTTPVersion'
+            $ref: '#/definitions/handler.ResHTTPVersion'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.ResHTTPVersion'
+            $ref: '#/definitions/handler.ResHTTPVersion'
       summary: Check HTTP version of incoming request
       tags:
       - '[Admin] System management'
@@ -889,12 +901,33 @@ paths:
         "200":
           description: (sample) This is a list of models
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.GetModelsResp'
+            $ref: '#/definitions/handler.GetModelsResp'
         "404":
           description: model not found
           schema:
             type: object
       summary: Get a list of all user models
+      tags:
+      - '[API] Migration User Models'
+  /model/version:
+    get:
+      consumes:
+      - application/json
+      description: Get the versions of all models(schemata of on-premise/cloud migration
+        models)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: (sample) This is the versions of all models(schemata)
+          schema:
+            $ref: '#/definitions/handler.GetModelsVersionResp'
+        "404":
+          description: verson of models not found
+          schema:
+            type: object
+      summary: Get the versions of all models(schemata of on-premise/cloud migration
+        models)
       tags:
       - '[API] Migration Models'
   /onpremmodel:
@@ -908,14 +941,14 @@ paths:
         "200":
           description: (sample) This is a list of models
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.GetOnPremModelsResp'
+            $ref: '#/definitions/handler.GetOnPremModelsResp'
         "404":
           description: model not found
           schema:
             type: object
       summary: Get a list of on-premise models
       tags:
-      - '[API] On-Premise Migration Models'
+      - '[API] On-Premise Migration User Models'
     post:
       consumes:
       - application/json
@@ -926,7 +959,7 @@ paths:
         name: Model
         required: true
         schema:
-          $ref: '#/definitions/pkg_api_rest_handler.CreateOnPremModelReq'
+          $ref: '#/definitions/handler.CreateOnPremModelReq'
       produces:
       - application/json
       responses:
@@ -934,14 +967,14 @@ paths:
           description: (Sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.CreateOnPremModelResp'
+            $ref: '#/definitions/handler.CreateOnPremModelResp'
         "400":
           description: Invalid Request
           schema:
             type: object
       summary: Create a new on-premise model
       tags:
-      - '[API] On-Premise Migration Models'
+      - '[API] On-Premise Migration User Models'
   /onpremmodel/{id}:
     delete:
       consumes:
@@ -970,7 +1003,7 @@ paths:
             type: object
       summary: Delete a on-premise model
       tags:
-      - '[API] On-Premise Migration Models'
+      - '[API] On-Premise Migration User Models'
     get:
       consumes:
       - application/json
@@ -987,14 +1020,14 @@ paths:
         "200":
           description: (Sample) a model
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.GetOnPremModelResp'
+            $ref: '#/definitions/handler.GetOnPremModelResp'
         "404":
           description: model not found
           schema:
             type: object
       summary: Get a specific on-premise model
       tags:
-      - '[API] On-Premise Migration Models'
+      - '[API] On-Premise Migration User Models'
     put:
       consumes:
       - application/json
@@ -1010,7 +1043,7 @@ paths:
         name: Model
         required: true
         schema:
-          $ref: '#/definitions/pkg_api_rest_handler.UpdateOnPremModelReq'
+          $ref: '#/definitions/handler.UpdateOnPremModelReq'
       produces:
       - application/json
       responses:
@@ -1018,14 +1051,14 @@ paths:
           description: (Sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.UpdateOnPremModelResp'
+            $ref: '#/definitions/handler.UpdateOnPremModelResp'
         "400":
           description: Invalid Request
           schema:
             type: object
       summary: Update a on-premise model
       tags:
-      - '[API] On-Premise Migration Models'
+      - '[API] On-Premise Migration User Models'
   /readyz:
     get:
       consumes:
@@ -1037,11 +1070,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.ResReadyz'
+            $ref: '#/definitions/handler.ResReadyz'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/pkg_api_rest_handler.ResReadyz'
+            $ref: '#/definitions/handler.ResReadyz'
       summary: Check Damselfly is ready
       tags:
       - '[Admin] System management'
