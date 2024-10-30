@@ -68,30 +68,45 @@ go version
 git clone https://github.com/cloud-barista/cm-damselfly.git ${HOME}/cm-damselfly
 ```
 
-#### Build and Run
+#### Build and Run with docker compose
+- Open ubuntu firewall TCP 8088 port on the system to access to the API(If need)
 ```bash
-
-# Open ubuntu firewall TCP 8088 port to access to the API(If need)
 sudo ufw allow 8088/tcp
-
-pwd
-/home/(user)/go/src/github.com/cloud-barista/cm-damselfly
-
-# Build and Create Swagger API docs
-make
-# included : swag init --parseDependency --parseInternal
-
-# Run Damselfly and API server
-make run
 ```
+
+- Ensure that Docker and Docker Compose are installed on your system
+```bash
+docker --version
+docker compose version
+```
+
+- Run CM-Damselfly and related components
+
+```bash
+cd [DAMSELFLY_ROOT]
+sudo docker compose up
+```
+- With the `-d` option runs the container in the background
+
+```bash
+cd [DAMSELFLY_ROOT]
+sudo docker compose up -d
+```
+
+- Stop CM-Damselfly
+```bash
+sudo docker compose down cm-damselfly
+```
+
+#### Default API URL and File Path
 - Swagger API URL<BR>
   - http://localhost:8088/damselfly/api (username: default / password: default)
 
 - Swagger web UI URL<BR>
   - https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-damselfly/refs/heads/main/api/swagger.yaml
 
-- Default DB to store path (The user migration model is stored to K/V DB as a file in the following location.)
-  - ./cloud-barista/cm-damselfly/.damselfly/lkvstore.db
+- Default DB file path (The user migration model is stored to K/V DB as a file in the following location.)
+  - ./cloud-barista/cm-damselfly/db/damselfly.db
 
 - Default log file path
-  - ./cloud-barista/cm-damselfly/cmd/cm-damselfly/log/damselfly.log  
+  - ./cloud-barista/cm-damselfly/log/damselfly.log
