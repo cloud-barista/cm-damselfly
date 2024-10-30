@@ -4,7 +4,8 @@ go 1.23.0
 
 require (
 	github.com/cloud-barista/cb-tumblebug v0.9.16
-	github.com/cloud-barista/cm-model v0.0.2
+	github.com/cloud-barista/cm-model v0.0.3
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
@@ -16,7 +17,6 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect

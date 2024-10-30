@@ -1,18 +1,20 @@
 package main
 
 import (
-	"os"
 	"flag"
 	"fmt"
+	"os"
 	"strconv"
 	"sync"
+
+	"path/filepath"
 
 	"github.com/cloud-barista/cm-damselfly/pkg/config"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	"github.com/cloud-barista/cm-damselfly/pkg/logger"
+	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"path/filepath"
 
 	restServer "github.com/cloud-barista/cm-damselfly/pkg/api/rest"
 )
@@ -24,25 +26,23 @@ func init() {
 
 	// Initialize the logger
 	logger := logger.NewLogger(logger.Config{
-		LogLevel:    viper.GetString("damselfly.loglevel"),
-		LogWriter:   viper.GetString("damselfly.logwriter"),
-		LogFilePath: viper.GetString("damselfly.logfile.path"),
-		MaxSize:     viper.GetInt("damselfly.logfile.maxsize"),
-		MaxBackups:  viper.GetInt("damselfly.logfile.maxbackups"),
-		MaxAge:      viper.GetInt("damselfly.logfile.maxage"),
-		Compress:    viper.GetBool("damselfly.logfile.compress"),
+		LogLevel:    config.Damselfly.LogLevel,
+		LogWriter:   config.Damselfly.LogWriter,
+		LogFilePath: config.Damselfly.LogFile.Path,
+		MaxSize:     config.Damselfly.LogFile.MaxSize,
+		MaxBackups:  config.Damselfly.LogFile.MaxBackups,
+		MaxAge:      config.Damselfly.LogFile.MaxAge,
+		Compress:    config.Damselfly.LogFile.Compress,
 	})
 
 	// Set a global logger
 	log.Logger = *logger
 
 	// Initialize the local key-value store with the specified file path
-	prjRoot := viper.GetString("damselfly.root")
-	dbFilePath := viper.GetString("damselfly.lkvstore.path")
-	dbFileFullPath := prjRoot + dbFilePath // Caution) Need to Modify!!
+	dbFilePath := config.Damselfly.LKVStore.Path
 
 	lkvstore.Init(lkvstore.Config{
-		DbFilePath: dbFileFullPath,
+		DbFilePath: dbFilePath,
 	})
 
 }
@@ -66,18 +66,15 @@ func main() {
 	log.Info().Msg("Preparing to run CM-Damselfly")
 
 	// Initialize the local key-value store with the specified file path
-	prjRoot := viper.GetString("damselfly.root")
-
-	dbFilePath := viper.GetString("damselfly.lkvstore.path")
-	dbFileFullPath := prjRoot + dbFilePath // Caution) Need to Modify!!
+	dbFilePath := config.Damselfly.LKVStore.Path
 
 	// Ensure the DB file directory exists before creating the log file
-	dir := filepath.Dir(dbFileFullPath)
+	dir := filepath.Dir(dbFilePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		// Create the directory if it does not exist
 		err = os.MkdirAll(dir, 0755) // Set permissions as needed
 		if err != nil {
-			log.Error().Msgf("Failed to Create the DB Directory: : [%v]", err)	
+			log.Error().Msgf("Failed to Create the DB Directory: : [%v]", err)
 		}
 	}
 
@@ -108,6 +105,23 @@ func main() {
 		log.Fatal().Msgf("%s is not a valid port number. Please retry with a valid port number (ex: -port=[1-65535]).", *port)
 	}
 	log.Debug().Msgf("port number: %s", *port)
+
+	// Watch config file changes
+	go func() {
+		viper.WatchConfig()
+		viper.OnConfigChange(func(e fsnotify.Event) {
+			log.Debug().Str("file", e.Name).Msg("config file changed")
+			err := viper.ReadInConfig()
+			if err != nil { // Handle errors reading the config file
+				log.Fatal().Err(err).Msg("fatal error in config file")
+			}
+			err = viper.Unmarshal(&config.RuntimeConfig)
+			if err != nil {
+				log.Panic().Err(err).Msg("error unmarshaling runtime configuration")
+			}
+			config.Damselfly = config.RuntimeConfig.Damselfly
+		})
+	}()
 
 	// Launch API servers (REST)
 	wg := new(sync.WaitGroup)

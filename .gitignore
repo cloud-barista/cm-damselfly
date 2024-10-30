@@ -23,4 +23,6 @@
 cmd/cm-damselfly/cm-damselfly
 
 # Ignore DB file (it's temporally used)
-db/*
+*.db
+
+container-volume/

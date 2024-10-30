@@ -15,8 +15,8 @@ github.com/chzyer/readline v1.5.0/go.mod h1:x22KAscuvRqlLoK9CsoYsmxoXZMMFVyOl86c
 github.com/chzyer/test v0.0.0-20210722231415-061457976a23/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cloud-barista/cb-tumblebug v0.9.16 h1:BRpYn+HOpJzC20oD5VMipyslMqePSc0Dx/GR/tefmOc=
 github.com/cloud-barista/cb-tumblebug v0.9.16/go.mod h1:NId135dY2nPhzV69+v1AFLlIjFTD400smoht73lG58c=
-github.com/cloud-barista/cm-model v0.0.2 h1:6qxrkENlGurVs20rywKoT7L8OlvK4KWegIpJHaPJN3M=
-github.com/cloud-barista/cm-model v0.0.2/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
+github.com/cloud-barista/cm-model v0.0.3 h1:sYowqaUMw77j2Hmz8nt/pjEA6lfMkGkZ31jNDDPN0Tk=
+github.com/cloud-barista/cm-model v0.0.3/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
