@@ -37,11 +37,11 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Installing necessary packages and cleaning up
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# # Installing necessary packages and cleaning up
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     ca-certificates \
+#     && apt-get clean \
+#     && rm -rf /var/lib/apt/lists/*
 
 ## Copy the Pre-built binary and necessary files from the previous stage
 COPY --from=builder /go/src/github.com/cloud-barista/cm-damselfly/api/ /app/api/

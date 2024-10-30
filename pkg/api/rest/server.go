@@ -24,7 +24,7 @@ import (
 	"github.com/cloud-barista/cm-damselfly/pkg/api/rest/handler"
 	mw "github.com/cloud-barista/cm-damselfly/pkg/api/rest/middleware"
 	"github.com/cloud-barista/cm-damselfly/pkg/common"
-	"github.com/spf13/viper"
+	"github.com/cloud-barista/cm-damselfly/pkg/config"
 
 	"crypto/subtle"
 	"fmt"
@@ -103,7 +103,7 @@ func RunServer(port string) {
 	e.HideBanner = true
 	//e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
 
-	allowedOrigins := viper.GetString("damselfly.api.allow.origins")
+	allowedOrigins := config.Damselfly.API.Allow.Origins
 	if allowedOrigins == "" {
 		log.Fatal().Msg("allow_ORIGINS env variable for CORS is " + allowedOrigins +
 			". Please provide a proper value and source setup.env again. EXITING...")
@@ -115,10 +115,10 @@ func RunServer(port string) {
 	}))
 
 	// Conditions to prevent abnormal operation due to typos (e.g., ture, falss, etc.)
-	enableAuth := viper.GetString("damselfly.api.auth.enabled") == "true"
+	enableAuth := config.Damselfly.API.Auth.Enabled
 
-	apiUser := viper.GetString("damselfly.api.username")
-	apiPass := viper.GetString("damselfly.api.password")
+	apiUser := config.Damselfly.API.Username
+	apiPass := config.Damselfly.API.Password
 
 	if enableAuth {
 		e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
@@ -184,7 +184,7 @@ func RunServer(port string) {
 	gModel.DELETE("/cloudmodel/:id", handler.DeleteCloudModel)
 
 	// Run Damselfly API server
-	selfEndpoint := viper.GetString("damselfly.self.endpoint")
+	selfEndpoint := config.Damselfly.Self.Endpoint
 	apidashboard := " http://" + selfEndpoint + "/damselfly/api"
 
 	if enableAuth {

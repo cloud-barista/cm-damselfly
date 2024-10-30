@@ -3,14 +3,17 @@ package handler
 import (
 	"fmt"
 	"net/http"
+
 	// "reflect"
 	// "encoding/json"
 	"strconv"
 	"strings"
+
 	"github.com/labstack/echo/v4"
+
 	// "github.com/davecgh/go-spew/spew"
-	"github.com/rs/zerolog/log"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
+	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	onprem "github.com/cloud-barista/cm-model/infra/onprem"
@@ -21,24 +24,25 @@ import (
 // ##############################################################################################
 
 type ModelRespInfo struct {
-	Id   					string    				`json:"id"`
-	UserId 					string    				`json:"userId"`
-	IsInitUserModel			bool	  				`json:"isInitUserModel"`
-	UserModelName 			string  				`json:"userModelName"`
-	Description 			string 					`json:"description"`
-	UserModelVer			string  				`json:"userModelVersion"`	
-	CreateTime				string					`json:"createTime"`
-	UpdateTime				string					`json:"updateTime"`
-	IsTargetModel			bool	  				`json:"isTargetModel"`
-	IsCloudModel			bool					`json:"isCloudModel"`
-	OnPremModelVer			string 					`json:"onpremModelVersion"`
-	CloudModelVer			string 					`json:"cloudModelVersion"`
-	CSP						string					`json:"csp"`
-	Region					string					`json:"region"`
-	Zone					string					`json:"zone"`
-	OnPremInfraModel		onprem.OnPremInfra 		`json:"onpremiseInfraModel" validate:"required"`
-	CloudInfraModel			tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	Id               string                  `json:"id"`
+	UserId           string                  `json:"userId"`
+	IsInitUserModel  bool                    `json:"isInitUserModel"`
+	UserModelName    string                  `json:"userModelName"`
+	Description      string                  `json:"description"`
+	UserModelVer     string                  `json:"userModelVersion"`
+	CreateTime       string                  `json:"createTime"`
+	UpdateTime       string                  `json:"updateTime"`
+	IsTargetModel    bool                    `json:"isTargetModel"`
+	IsCloudModel     bool                    `json:"isCloudModel"`
+	OnPremModelVer   string                  `json:"onpremModelVersion"`
+	CloudModelVer    string                  `json:"cloudModelVersion"`
+	CSP              string                  `json:"csp"`
+	Region           string                  `json:"region"`
+	Zone             string                  `json:"zone"`
+	OnpremInfraModel onprem.OnpremInfra      `json:"onpremiseInfraModel" validate:"required"`
+	CloudInfraModel  tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
 }
+
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
 // Need to add '--parseDependency --parseInternal' in order to apply imported structures
@@ -59,14 +63,14 @@ type GetModelsResp struct {
 // @Router /model/{isTargetModel} [get]
 func GetModels(c echo.Context) error {
 	param := c.Param("isTargetModel")
-	// fmt.Printf("# The value of 'isTargetModel' parameter : [%v]", isTargetModel)	
+	// fmt.Printf("# The value of 'isTargetModel' parameter : [%v]", isTargetModel)
 
 	if strings.EqualFold(param, "true") || strings.EqualFold(param, "false") {
 		// if strings.EqualFold(param, "true") {
 		// 	fmt.Printf("# Models to Get : Target models")
 		// } else {
 		// 	fmt.Printf("# Models to Get : Source models")
-		// }		
+		// }
 	} else {
 		return c.JSON(http.StatusBadRequest, "Invalid type of parameter!!")
 	}
@@ -98,7 +102,7 @@ func GetModels(c echo.Context) error {
 			}
 		}
 
-		if len(models) < 1 {			
+		if len(models) < 1 {
 			msg := "Failed to Find Any Model"
 			log.Debug().Msg(msg)
 
@@ -114,8 +118,8 @@ func GetModels(c echo.Context) error {
 }
 
 type ModelsVersionRespInfo struct {
-	OnPremModelVer			string 					`json:"onpremModelVersion"`
-	CloudModelVer			string 					`json:"cloudModelVersion"`
+	OnPremModelVer string `json:"onpremModelVersion"`
+	CloudModelVer  string `json:"cloudModelVersion"`
 }
 
 type GetModelsVersionResp struct {
@@ -135,7 +139,7 @@ func GetModelsVersion(c echo.Context) error {
 
 	onpremModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
 	if err != nil {
-		log.Error().Msgf("Failed to Get the Module Version : [%v]", err)		
+		log.Error().Msgf("Failed to Get the Module Version : [%v]", err)
 	}
 
 	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
@@ -160,28 +164,29 @@ func GetModelsVersion(c echo.Context) error {
 // ##############################################################################################
 
 type OnPremModelReqInfo struct {
-	UserId 					string    			`json:"userId"`
-	IsInitUserModel			bool	  			`json:"isInitUserModel"`
-	UserModelName 			string  			`json:"userModelName"`
-	Description 			string 				`json:"description"`
-	UserModelVer			string  			`json:"userModelVersion"`
-	OnPremInfraModel 		onprem.OnPremInfra 	`json:"onpremiseInfraModel" validate:"required"`
+	UserId           string             `json:"userId"`
+	IsInitUserModel  bool               `json:"isInitUserModel"`
+	UserModelName    string             `json:"userModelName"`
+	Description      string             `json:"description"`
+	UserModelVer     string             `json:"userModelVersion"`
+	OnpremInfraModel onprem.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
 }
 
 type OnPremModelRespInfo struct {
-	Id   					string    			`json:"id"`
-	UserId 					string    			`json:"userId"`
-	IsInitUserModel			bool	  			`json:"isInitUserModel"`
-	UserModelName 			string  			`json:"userModelName"`
-	Description 			string 				`json:"description"`
-	UserModelVer			string  			`json:"userModelVersion"`
-	OnPremModelVer			string 				`json:"onpremModelVersion"`
-	CreateTime				string				`json:"createTime"`
-	UpdateTime				string				`json:"updateTime"`
-	IsTargetModel			bool	  			`json:"isTargetModel"`
-	IsCloudModel			bool				`json:"isCloudModel"`
-	OnPremInfraModel 		onprem.OnPremInfra 	`json:"onpremiseInfraModel" validate:"required"`
+	Id               string             `json:"id"`
+	UserId           string             `json:"userId"`
+	IsInitUserModel  bool               `json:"isInitUserModel"`
+	UserModelName    string             `json:"userModelName"`
+	Description      string             `json:"description"`
+	UserModelVer     string             `json:"userModelVersion"`
+	OnPremModelVer   string             `json:"onpremModelVersion"`
+	CreateTime       string             `json:"createTime"`
+	UpdateTime       string             `json:"updateTime"`
+	IsTargetModel    bool               `json:"isTargetModel"`
+	IsCloudModel     bool               `json:"isCloudModel"`
+	OnpremInfraModel onprem.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
 }
+
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
 // Need to add '--parseDependency --parseInternal' in order to apply imported structures
@@ -210,7 +215,7 @@ func GetOnPremModels(c echo.Context) error {
 
 					// if id, exists := model["id"]; exists {
 					// 	// fmt.Printf("Loaded value-1 for [%s]: %v\n", c.Param("id"), model)
-					// 	if id, ok := id.(string); ok {							
+					// 	if id, ok := id.(string); ok {
 					// 		log.Debug().Msgf("# Model ID to Add : [%s]\n", id)
 					// 	} else {
 					// 		msg := ("'id' is not a string type")
@@ -232,7 +237,7 @@ func GetOnPremModels(c echo.Context) error {
 			}
 		}
 
-		if len(onpremModels) < 1 {			
+		if len(onpremModels) < 1 {
 			msg := "Failed to Find Any Model"
 			log.Debug().Msg(msg)
 
@@ -267,108 +272,108 @@ func GetOnPremModel(c echo.Context) error {
 	}
 	fmt.Printf("# Model ID to Get : [%s]\n", c.Param("id"))
 
-/*
-	// GetWithPrefix returns the values for a given key prefix.
-	modelList, exists := lkvstore.GetWithPrefix("")
-	if exists {
-		// # Returns Only On-prem Models
-		var onpremModel map[string]interface{}
-		for _, model := range modelList {
-			if model, ok := model.(map[string]interface{}); ok {
+	/*
+		// GetWithPrefix returns the values for a given key prefix.
+		modelList, exists := lkvstore.GetWithPrefix("")
+		if exists {
+			// # Returns Only On-prem Models
+			var onpremModel map[string]interface{}
+			for _, model := range modelList {
+				if model, ok := model.(map[string]interface{}); ok {
 
-				if isCloudModel, exists := model["isCloudModel"]; exists && isCloudModel == false {
+					if isCloudModel, exists := model["isCloudModel"]; exists && isCloudModel == false {
 
-					if id, exists := model["id"]; exists {
-						// fmt.Printf("Loaded value-1 for [%s]: %v\n", c.Param("id"), model)
-						if id, ok := id.(string); ok {
-							if id == c.Param("id") {
-								// fmt.Printf("Loaded value-2 for [%s]: %v\n", c.Param("id"), model)
-								onpremModel = model
-								return c.JSON(http.StatusOK, onpremModel)
+						if id, exists := model["id"]; exists {
+							// fmt.Printf("Loaded value-1 for [%s]: %v\n", c.Param("id"), model)
+							if id, ok := id.(string); ok {
+								if id == c.Param("id") {
+									// fmt.Printf("Loaded value-2 for [%s]: %v\n", c.Param("id"), model)
+									onpremModel = model
+									return c.JSON(http.StatusOK, onpremModel)
 
-								// 			if isCloudModelBool {
-								// 				newErr := fmt.Errorf("The Given ID is Not a On-premise Model ID : [%s]", c.Param("id"))
-								// 				return c.JSON(http.StatusNotFound, newErr)
-								// 			} else {
-								// 				msg := "This model is a On-premise Model!!"
-								// 				log.Error().Msg(msg)
-			
-								// 				newErr := fmt.Errorf(msg)
-								// 				return c.JSON(http.StatusNotFound, newErr)
-								// 			}
+									// 			if isCloudModelBool {
+									// 				newErr := fmt.Errorf("The Given ID is Not a On-premise Model ID : [%s]", c.Param("id"))
+									// 				return c.JSON(http.StatusNotFound, newErr)
+									// 			} else {
+									// 				msg := "This model is a On-premise Model!!"
+									// 				log.Error().Msg(msg)
 
+									// 				newErr := fmt.Errorf(msg)
+									// 				return c.JSON(http.StatusNotFound, newErr)
+									// 			}
+
+								}
+							} else {
+								msg := ("'id' is not a string type")
+								log.Error().Msg(msg)
+
+								newErr := fmt.Errorf("'id' is not a string type")
+								return c.JSON(http.StatusNotFound, newErr)
 							}
 						} else {
-							msg := ("'id' is not a string type")
+							msg := ("'id' does not exist")
 							log.Error().Msg(msg)
 
-							newErr := fmt.Errorf("'id' is not a string type")
+							newErr := fmt.Errorf("'id' does not exist")
 							return c.JSON(http.StatusNotFound, newErr)
 						}
-					} else {
-						msg := ("'id' does not exist")
-						log.Error().Msg(msg)
+					}
+					// else {
+					// 	msg := ("'id' does not exist")
+					// 	log.Error().Msg(msg)
 
-						newErr := fmt.Errorf("'id' does not exist")
-						return c.JSON(http.StatusNotFound, newErr)
-					}					
-				} 
-				// else {
-				// 	msg := ("'id' does not exist")
-				// 	log.Error().Msg(msg)
+					// 	newErr := fmt.Errorf("'isCloudModel' does not exist")
+					// 	return c.JSON(http.StatusNotFound, newErr)
+					// }
 
-				// 	newErr := fmt.Errorf("'isCloudModel' does not exist")
-				// 	return c.JSON(http.StatusNotFound, newErr)
-				// }
-				
-				// fmt.Printf("Loaded value-1 for [%s]: %v\n", c.Param("id"), model)
+					// fmt.Printf("Loaded value-1 for [%s]: %v\n", c.Param("id"), model)
 
-				// if Id, exists := model["id"]; exists && Id == c.Param("id") {
+					// if Id, exists := model["id"]; exists && Id == c.Param("id") {
 
-				// 	fmt.Printf("Loaded value-2 for [%s]: %v\n", c.Param("id"), model)
+					// 	fmt.Printf("Loaded value-2 for [%s]: %v\n", c.Param("id"), model)
 
-				// 	if isCloudModel, exists := model["isCloudModel"]; exists {
-				// 		if isCloudModelBool, ok := isCloudModel.(bool); ok {
-				// 			if isCloudModelBool {
-				// 				newErr := fmt.Errorf("The Given ID is Not a On-premise Model ID : [%s]", c.Param("id"))
-				// 				return c.JSON(http.StatusNotFound, newErr)
-				// 			} else {
-				// 				msg := "This model is a On-premise Model!!"
-				// 				log.Error().Msg(msg)
+					// 	if isCloudModel, exists := model["isCloudModel"]; exists {
+					// 		if isCloudModelBool, ok := isCloudModel.(bool); ok {
+					// 			if isCloudModelBool {
+					// 				newErr := fmt.Errorf("The Given ID is Not a On-premise Model ID : [%s]", c.Param("id"))
+					// 				return c.JSON(http.StatusNotFound, newErr)
+					// 			} else {
+					// 				msg := "This model is a On-premise Model!!"
+					// 				log.Error().Msg(msg)
 
-				// 				newErr := fmt.Errorf(msg)
-				// 				return c.JSON(http.StatusNotFound, newErr)
-				// 			}
-				// 		} else {
-				// 			msg := ("'isCloudModel' is not a boolean type")
-				// 			log.Error().Msg(msg)
+					// 				newErr := fmt.Errorf(msg)
+					// 				return c.JSON(http.StatusNotFound, newErr)
+					// 			}
+					// 		} else {
+					// 			msg := ("'isCloudModel' is not a boolean type")
+					// 			log.Error().Msg(msg)
 
-				// 			newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
-				// 			return c.JSON(http.StatusNotFound, newErr)
-				// 		}
-				// 	} else {
-				// 		msg := ("'isCloudModel' does not exist")
-				// 		log.Error().Msg(msg)
+					// 			newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
+					// 			return c.JSON(http.StatusNotFound, newErr)
+					// 		}
+					// 	} else {
+					// 		msg := ("'isCloudModel' does not exist")
+					// 		log.Error().Msg(msg)
 
-				// 		newErr := fmt.Errorf("'isCloudModel' does not exist")
-				// 		return c.JSON(http.StatusNotFound, newErr)
-				// 	}
-				// } else {
-				// 	onpremModel = model
-				// 	return c.JSON(http.StatusOK, onpremModel)
-				// }
+					// 		newErr := fmt.Errorf("'isCloudModel' does not exist")
+					// 		return c.JSON(http.StatusNotFound, newErr)
+					// 	}
+					// } else {
+					// 	onpremModel = model
+					// 	return c.JSON(http.StatusOK, onpremModel)
+					// }
+				}
 			}
+			// return c.JSON(http.StatusOK, onpremModel)
+
+			newErr := fmt.Errorf("Failed to Find the Model : [%s]\n", c.Param("id"))
+			return c.JSON(http.StatusNotFound, newErr)
+
+		} else {
+			newErr := fmt.Errorf("Failed to Find the Model : [%s]\n", c.Param("id"))
+			return c.JSON(http.StatusNotFound, newErr)
 		}
-		// return c.JSON(http.StatusOK, onpremModel)
-
-		newErr := fmt.Errorf("Failed to Find the Model : [%s]\n", c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-
-	} else {
-		newErr := fmt.Errorf("Failed to Find the Model : [%s]\n", c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-*/
+	*/
 
 	model, exists := lkvstore.Get(c.Param("id"))
 	if exists {
@@ -401,7 +406,6 @@ func GetOnPremModel(c echo.Context) error {
 	}
 }
 
-
 // [Note]
 // Struct Embedding is used to inherit the fields of MyOnPremModel
 type CreateOnPremModelReq struct {
@@ -433,12 +437,12 @@ func CreateOnPremModel(c echo.Context) error {
 	// fmt.Println("### OnPremModel",)
 	// spew.Dump(model)
 
-    randomStr, err := generateRandomString(15)
-    if err != nil {
-        fmt.Println("Error:", err)
-    } else {
-        fmt.Println("Random 15-length of string : ", randomStr)
-    }
+	randomStr, err := generateRandomString(15)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Random 15-length of string : ", randomStr)
+	}
 	model.Id = randomStr
 
 	model.CreateTime = getSeoulCurrentTime()
@@ -465,7 +469,7 @@ func CreateOnPremModel(c echo.Context) error {
 	} else {
 		fmt.Println("Succeeded in Saving the lkvstore to file.")
 	}
-	
+
 	return c.JSON(http.StatusCreated, model)
 }
 
@@ -539,7 +543,7 @@ func UpdateOnPremModel(c echo.Context) error {
 
 		if model, ok := model.(map[string]interface{}); ok {
 			if onPremModelVer, exists := model["onpremModelVersion"]; exists {
-				if onpremModelVerStr, ok := onPremModelVer.(string); ok {					
+				if onpremModelVerStr, ok := onPremModelVer.(string); ok {
 					updateModel.OnPremModelVer = onpremModelVerStr
 					fmt.Printf("### onpremModelVerStr : [%s]\n", onpremModelVerStr)
 				} else {
@@ -553,15 +557,14 @@ func UpdateOnPremModel(c echo.Context) error {
 				msg := "'onpremModelVersion' does not exist"
 				log.Error().Msg(msg)
 
-				fmt.Println("'onpremModelVersion' does not exist")				
+				fmt.Println("'onpremModelVersion' does not exist")
 			}
 
-		} 
+		}
 		// else {
 		// 	msg := "Error!! Error!! Error!! Error!! Error!!"
 		// 	log.Error().Msg(msg)
 		// }
-
 
 		if model, ok := model.(map[string]interface{}); ok {
 			if createTime, exists := model["createTime"]; exists {
@@ -608,19 +611,19 @@ func UpdateOnPremModel(c echo.Context) error {
 		} else {
 			fmt.Println("Succeeded in Saving the lkvstore to file.")
 		}
-		
+
 		// return c.JSON(http.StatusCreated, updateModel)
 		// => Not http.StatusCreated
 
 		// Get the model from the DB
 		model, exists := lkvstore.Get(reqId)
 		if exists {
-			// fmt.Printf("Loaded value for [%s]: %v\n", c.Param("id"), model)	
+			// fmt.Printf("Loaded value for [%s]: %v\n", c.Param("id"), model)
 			return c.JSON(http.StatusOK, model)
 		} else {
 			newErr := fmt.Errorf("Failed to Find the Model from DB : [%s]", reqId)
 			return c.JSON(http.StatusNotFound, newErr)
-		}		
+		}
 	} else {
 		msg := "Failed to Find the Model from DB : [%s]\n"
 		log.Error().Msg(msg)
@@ -700,35 +703,36 @@ func DeleteOnPremModel(c echo.Context) error {
 // ##############################################################################################
 
 type CloudModelReqInfo struct {
-	UserId 					string    				`json:"userId"`
-	IsTargetModel			bool	  				`json:"isTargetModel"`
-	IsInitUserModel			bool	  				`json:"isInitUserModel"`
-	UserModelName 			string  				`json:"userModelName"`
-	Description 			string 					`json:"description"`
-	UserModelVer			string  				`json:"userModelVersion"`
-	CSP						string					`json:"csp"`
-	Region					string					`json:"region"`
-	Zone					string					`json:"zone"`
-	CloudInfraModel			tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	UserId          string                  `json:"userId"`
+	IsTargetModel   bool                    `json:"isTargetModel"`
+	IsInitUserModel bool                    `json:"isInitUserModel"`
+	UserModelName   string                  `json:"userModelName"`
+	Description     string                  `json:"description"`
+	UserModelVer    string                  `json:"userModelVersion"`
+	CSP             string                  `json:"csp"`
+	Region          string                  `json:"region"`
+	Zone            string                  `json:"zone"`
+	CloudInfraModel tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
 }
 
 type CloudModelRespInfo struct {
-	Id   					string  				`json:"id"`
-	UserId 					string    				`json:"userId"`
-	IsTargetModel			bool	  				`json:"isTargetModel"`
-	IsInitUserModel			bool	  				`json:"isInitUserModel"`
-	UserModelName 			string  				`json:"userModelName"`
-	Description 			string 					`json:"description"`
-	UserModelVer			string  				`json:"userModelVersion"`
-	CreateTime				string					`json:"createTime"`
-	UpdateTime				string					`json:"updateTime"`
-	CSP						string					`json:"csp"`
-	Region					string					`json:"region"`
-	Zone					string					`json:"zone"`
-	IsCloudModel			bool					`json:"isCloudModel"`
-	CloudModelVer			string 					`json:"cloudModelVersion"`
-	CloudInfraModel			tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	Id              string                  `json:"id"`
+	UserId          string                  `json:"userId"`
+	IsTargetModel   bool                    `json:"isTargetModel"`
+	IsInitUserModel bool                    `json:"isInitUserModel"`
+	UserModelName   string                  `json:"userModelName"`
+	Description     string                  `json:"description"`
+	UserModelVer    string                  `json:"userModelVersion"`
+	CreateTime      string                  `json:"createTime"`
+	UpdateTime      string                  `json:"updateTime"`
+	CSP             string                  `json:"csp"`
+	Region          string                  `json:"region"`
+	Zone            string                  `json:"zone"`
+	IsCloudModel    bool                    `json:"isCloudModel"`
+	CloudModelVer   string                  `json:"cloudModelVersion"`
+	CloudInfraModel tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
 }
+
 // Caution!!)
 // Init Swagger : ]# swag init --parseDependency --parseInternal
 // Need to add '--parseDependency --parseInternal' in order to apply imported structures
@@ -757,7 +761,7 @@ func GetCloudModels(c echo.Context) error {
 				if isCloudModel, exists := model["isCloudModel"]; exists && isCloudModel == true {
 					cloudModels = append(cloudModels, model)
 				}
-			}	
+			}
 		}
 
 		if len(cloudModels) < 1 {
@@ -804,7 +808,7 @@ func GetCloudModel(c echo.Context) error {
 			if isCloudModel, exists := model["isCloudModel"]; exists {
 				if isCloudModelBool, ok := isCloudModel.(bool); ok {
 					if isCloudModelBool {
-						fmt.Println("This model is a Cloud Model!!")						
+						fmt.Println("This model is a Cloud Model!!")
 					} else {
 						newErr := fmt.Errorf("The Given ID is Not a Cloud Model ID : [%s]", c.Param("id"))
 						return c.JSON(http.StatusNotFound, newErr)
@@ -825,7 +829,6 @@ func GetCloudModel(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, newErr)
 	}
 }
-
 
 // [Note]
 // Struct Embedding is used to inherit the fields of MyCloudModel
@@ -858,12 +861,12 @@ func CreateCloudModel(c echo.Context) error {
 	// fmt.Println("### CreateCloudModelResp",)
 	// spew.Dump(model)
 
-    randomStr, err := generateRandomString(15)
-    if err != nil {
-        fmt.Println("Error:", err)
-    } else {
-        fmt.Println("Random 15-lenght of string:", randomStr)
-    }
+	randomStr, err := generateRandomString(15)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Random 15-lenght of string:", randomStr)
+	}
 	model.Id = randomStr
 
 	model.CreateTime = getSeoulCurrentTime()
@@ -934,7 +937,7 @@ func UpdateCloudModel(c echo.Context) error {
 	if exists {
 		fmt.Printf("Succeeded in Finding the model : [%s]\n", reqId)
 		// fmt.Printf("# Cloud Model ID to Update : [%s]\n", reqId)
-		// fmt.Printf("Values from DB [%s]: %v\n\n", c.Param("id"), model)	
+		// fmt.Printf("Values from DB [%s]: %v\n\n", c.Param("id"), model)
 
 		if cloudModel, ok := model.(map[string]interface{}); ok {
 			// Check if the model is a on-premise model
@@ -943,7 +946,7 @@ func UpdateCloudModel(c echo.Context) error {
 					fmt.Printf("The value of isCloudModel is: %v\n", isCloudModel)
 
 					if isCloudModelBool {
-						fmt.Println("This model is a Cloud Model!!")						
+						fmt.Println("This model is a Cloud Model!!")
 					} else {
 						newErr := fmt.Errorf("The Given ID is Not a Cloud Model ID : [%s]", reqId)
 						return c.JSON(http.StatusNotFound, newErr)
@@ -982,7 +985,7 @@ func UpdateCloudModel(c echo.Context) error {
 				fmt.Println("'createTime' does not exist")
 			}
 		}
-		
+
 		// cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
 		// if err != nil {
 		// 	fmt.Println("Error:", err)
@@ -995,7 +998,7 @@ func UpdateCloudModel(c echo.Context) error {
 		updateModel.UpdateTime = getSeoulCurrentTime()
 		updateModel.IsCloudModel = true
 
-		// fmt.Println("### updateModel",)		
+		// fmt.Println("### updateModel",)
 		// spew.Dump(updateModel)
 
 		// Convert to String type
@@ -1003,7 +1006,7 @@ func UpdateCloudModel(c echo.Context) error {
 
 		// Save the model to the key-value store
 		lkvstore.Put(reqId, updateModel)
-		
+
 		// # Save the current state of the key-value store to file
 		if err := lkvstore.SaveLkvStore(); err != nil {
 			newErr := fmt.Errorf("Failed to Save the lkvstore to file. : [%v]", err)
@@ -1015,7 +1018,7 @@ func UpdateCloudModel(c echo.Context) error {
 		// Get the model from the DB
 		model, exists := lkvstore.Get(reqId)
 		if exists {
-			// fmt.Printf("Loaded value for [%s]: %v\n", c.Param("id"), model)	
+			// fmt.Printf("Loaded value for [%s]: %v\n", c.Param("id"), model)
 			return c.JSON(http.StatusOK, model)
 		} else {
 			newErr := fmt.Errorf("Failed to Find the Model from DB : [%s]", reqId)
