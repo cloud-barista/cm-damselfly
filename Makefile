@@ -80,5 +80,17 @@ clean: ## Remove previous build
 	@cd cmd/$(MODULE_NAME) && $(GO) clean
 	@echo "Cleaned!"
 
+compose: swag ## Build and up services by docker compose
+	@echo "Building and starting services by docker compose..."
+	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up --build
+
+compose-up: ## Up services by docker compose
+	@echo "Starting services by docker compose..."
+	@cd deployments/docker-compose && docker compose up
+
+compose-down: ## Down services by docker compose
+	@echo "Removing services by docker compose..."
+	@cd deployments/docker-compose && docker compose down	
+
 help: ## Display this help screen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
