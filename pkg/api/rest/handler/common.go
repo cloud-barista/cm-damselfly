@@ -9,6 +9,9 @@ import (
     "bufio"
 	"os"
 	"strings"
+    "github.com/rs/zerolog/log"
+    "path/filepath"
+    "net"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -80,21 +83,46 @@ func generateUnique15DigitString() (int, error) {
 }
 
 func getSeoulCurrentTime() string {
-	loc, _ := time.LoadLocation("Asia/Seoul")
+	loc, err := time.LoadLocation("Asia/Seoul")
+    if err != nil {
+        log.Error().Msgf("Failed to Get the Time Value of the Location : [%v]", err)	
+    }
+
 	currentTime := time.Now().In(loc)	
 	return currentTime.Format("2006-01-02 15:04:05")
 }
 
 func getModuleVersion(moduleName string) (string, error) {
-	file, err := os.Open("./../../go.mod")
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
+    var goFile *os.File
+    if isRunningInContainer() {
+        wd, err := os.Getwd()
+        if err != nil {
+            return "", err
+        }        
+        goModPath := filepath.Join(wd, "go.mod")
 
-	scanner := bufio.NewScanner(file)
+        log.Debug().Msgf("go.mod file path : [%s]", goModPath)	
+
+        var openErr error
+        goFile, openErr = os.Open(goModPath)
+        if openErr != nil {
+            return "", openErr
+        }
+        defer goFile.Close()
+    } else {
+        var openErr error
+        goFile, openErr = os.Open("./../../go.mod")
+        if openErr != nil {
+            return "", openErr
+        }
+        defer goFile.Close()
+    }	
+
+	scanner := bufio.NewScanner(goFile)
 	for scanner.Scan() {
 		line := scanner.Text()
+        // log.Debug().Msgf("go.mod line : [%s]", line)	
+
 		if strings.Contains(line, moduleName) {
 			parts := strings.Fields(line)
 			if len(parts) >= 2 {
@@ -103,4 +131,29 @@ func getModuleVersion(moduleName string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("Module [%s] not found", moduleName)
+}
+
+func isRunningInContainer() bool {
+    interfaces, _ := net.Interfaces()
+    for _, iface := range interfaces {
+        // log.Debug().Msgf("iface.Name: [%v]", iface.Name)
+        if strings.HasPrefix(iface.Name, "docker") {
+            return true
+        }
+    }
+    return false
+
+    // file, err := os.Open("/proc/1/cgroup")
+    // if err != nil {
+    //     return false
+    // }
+    // defer file.Close()
+
+    // scanner := bufio.NewScanner(file)
+    // for scanner.Scan() {
+    //     if strings.Contains(scanner.Text(), "docker") || strings.Contains(scanner.Text(), "kubepods") {
+    //         return true
+    //     }
+    // }
+    // return false
 }

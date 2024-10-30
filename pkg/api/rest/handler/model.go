@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	// "reflect"
+	// "encoding/json"
 	"strconv"
 	"strings"
 	"github.com/labstack/echo/v4"
@@ -16,7 +17,7 @@ import (
 )
 
 // ##############################################################################################
-// ### On-premise and Cloud Migration Model
+// ### On-premise and Cloud Migration User Model
 // ##############################################################################################
 
 type ModelRespInfo struct {
@@ -49,7 +50,7 @@ type GetModelsResp struct {
 // GetModels godoc
 // @Summary Get a list of all user models
 // @Description Get a list of all user models.
-// @Tags [API] Migration Models
+// @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param isTargetModel path bool true "Is TargetModel ?"
@@ -112,8 +113,50 @@ func GetModels(c echo.Context) error {
 	}
 }
 
+type ModelsVersionRespInfo struct {
+	OnPremModelVer			string 					`json:"onpremModelVersion"`
+	CloudModelVer			string 					`json:"cloudModelVersion"`
+}
+
+type GetModelsVersionResp struct {
+	ModelsVersion ModelsVersionRespInfo `json:"modelsVersion"`
+}
+
+// GetModelsVersion godoc
+// @Summary Get the versions of all models(schemata of on-premise/cloud migration models)
+// @Description Get the versions of all models(schemata of on-premise/cloud migration models)
+// @Tags [API] Migration Models
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} GetModelsVersionResp "(sample) This is the versions of all models(schemata)"
+// @Failure 404 {object} object "verson of models not found"
+// @Router /model/version [get]
+func GetModelsVersion(c echo.Context) error {
+
+	onpremModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	if err != nil {
+		log.Error().Msgf("Failed to Get the Module Version : [%v]", err)		
+	}
+
+	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
+	if err != nil {
+		log.Error().Msgf("Failed to Get the Module Version : [%v]", err)
+	}
+
+	modelsVersionInfo := ModelsVersionRespInfo{
+		OnPremModelVer: onpremModelVer,
+		CloudModelVer:  cloudModelVer,
+	}
+
+	response := GetModelsVersionResp{
+		ModelsVersion: modelsVersionInfo,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
 // ##############################################################################################
-// ### On-premise Migration Model
+// ### On-premise Migration User Model
 // ##############################################################################################
 
 type OnPremModelReqInfo struct {
@@ -150,7 +193,7 @@ type GetOnPremModelsResp struct {
 // GetOnPremModels godoc
 // @Summary Get a list of on-premise models
 // @Description Get a list of on-premise models.
-// @Tags [API] On-Premise Migration Models
+// @Tags [API] On-Premise Migration User Models
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} GetOnPremModelsResp "(sample) This is a list of models"
@@ -211,7 +254,7 @@ type GetOnPremModelResp struct {
 // GetOnPremModel godoc
 // @Summary Get a specific on-premise model
 // @Description Get a specific on-premise model.
-// @Tags [API] On-Premise Migration Models
+// @Tags [API] On-Premise Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -374,7 +417,7 @@ type CreateOnPremModelResp struct {
 // CreateOnPremModel godoc
 // @Summary Create a new on-premise model
 // @Description Create a new on-premise model with the given information.
-// @Tags [API] On-Premise Migration Models
+// @Tags [API] On-Premise Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param Model body CreateOnPremModelReq true "model information"
@@ -441,7 +484,7 @@ type UpdateOnPremModelResp struct {
 // UpdateOnPremModel godoc
 // @Summary Update a on-premise model
 // @Description Update a on-premise model with the given information.
-// @Tags [API] On-Premise Migration Models
+// @Tags [API] On-Premise Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -596,7 +639,7 @@ func UpdateOnPremModel(c echo.Context) error {
 // DeleteOnPremModel godoc
 // @Summary Delete a on-premise model
 // @Description Delete a on-premise model with the given information.
-// @Tags [API] On-Premise Migration Models
+// @Tags [API] On-Premise Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -653,7 +696,7 @@ func DeleteOnPremModel(c echo.Context) error {
 }
 
 // ##############################################################################################
-// ### Cloud Migration Model
+// ### Cloud Migration User Model
 // ##############################################################################################
 
 type CloudModelReqInfo struct {
@@ -697,7 +740,7 @@ type GetCloudModelsResp struct {
 // GetCloudModels godoc
 // @Summary Get a list of cloud models
 // @Description Get a list of cloud models.
-// @Tags [API] Cloud Migration Models
+// @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} GetCloudModelsResp "(sample) This is a list of models"
@@ -739,7 +782,7 @@ type GetCloudModelResp struct {
 // GetCloudModel godoc
 // @Summary Get a specific cloud model
 // @Description Get a specific cloud model.
-// @Tags [API] Cloud Migration Models
+// @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -799,7 +842,7 @@ type CreateCloudModelResp struct {
 // CreateCloudModel godoc
 // @Summary Create a new cloud model
 // @Description Create a new cloud model with the given information.
-// @Tags [API] Cloud Migration Models
+// @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param Model body CreateCloudModelReq true "model information"
@@ -866,7 +909,7 @@ type UpdateCloudModelResp struct {
 // UpdateCloudModel godoc
 // @Summary Update a cloud model
 // @Description Update a cloud model with the given information.
-// @Tags [API] Cloud Migration Models
+// @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -993,7 +1036,7 @@ func UpdateCloudModel(c echo.Context) error {
 // DeleteCloudModel godoc
 // @Summary Delete a cloud model
 // @Description Delete a cloud model with the given information.
-// @Tags [API] Cloud Migration Models
+// @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"

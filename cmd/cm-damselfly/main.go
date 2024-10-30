@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"flag"
 	"fmt"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/cloud-barista/cm-damselfly/pkg/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
+	"path/filepath"
 
 	restServer "github.com/cloud-barista/cm-damselfly/pkg/api/rest"
 )
@@ -36,9 +38,11 @@ func init() {
 
 	// Initialize the local key-value store with the specified file path
 	prjRoot := viper.GetString("damselfly.root")
-	dbFilePath := prjRoot + "/.damselfly/lkvstore.db"
+	dbFilePath := viper.GetString("damselfly.lkvstore.path")
+	dbFileFullPath := prjRoot + dbFilePath // Caution) Need to Modify!!
+
 	lkvstore.Init(lkvstore.Config{
-		DbFilePath: dbFilePath,
+		DbFilePath: dbFileFullPath,
 	})
 
 }
@@ -60,6 +64,22 @@ func init() {
 
 func main() {
 	log.Info().Msg("Preparing to run CM-Damselfly")
+
+	// Initialize the local key-value store with the specified file path
+	prjRoot := viper.GetString("damselfly.root")
+
+	dbFilePath := viper.GetString("damselfly.lkvstore.path")
+	dbFileFullPath := prjRoot + dbFilePath // Caution) Need to Modify!!
+
+	// Ensure the DB file directory exists before creating the log file
+	dir := filepath.Dir(dbFileFullPath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		// Create the directory if it does not exist
+		err = os.MkdirAll(dir, 0755) // Set permissions as needed
+		if err != nil {
+			log.Error().Msgf("Failed to Create the DB Directory: : [%v]", err)	
+		}
+	}
 
 	// Load the state from the file back into the key-value store
 	if err := lkvstore.LoadLkvStore(); err != nil {

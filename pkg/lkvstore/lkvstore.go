@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"path/filepath"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -32,6 +34,16 @@ func SaveLkvStore() error {
 		return fmt.Errorf("db file path is not set")
 	}
 
+	// Ensure the DB file directory exists before creating the log file
+	dir := filepath.Dir(dbFilePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		// Create the directory if it does not exist
+		err = os.MkdirAll(dir, 0755) // Set permissions as needed
+		if err != nil {
+			log.Error().Msgf("Failed to Create the DB Directory: : [%v]", err)	
+		}
+	}
+			
 	file, err := os.Create(dbFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to create db file: %w", err)
