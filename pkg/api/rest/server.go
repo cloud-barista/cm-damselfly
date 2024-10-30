@@ -169,6 +169,7 @@ func RunServer(port string) {
 	// gModel := groupBase.Group("/model")
 
 	gModel.GET("/model/:isTargetModel", handler.GetModels)
+	gModel.GET("/model/version", handler.GetModelsVersion)
 
 	gModel.POST("/onpremmodel", handler.CreateOnPremModel)
 	gModel.GET("/onpremmodel", handler.GetOnPremModels)

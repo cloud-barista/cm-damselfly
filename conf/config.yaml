@@ -2,6 +2,10 @@
 damselfly:
   root: # To be set in runtime
 
+  ## Set internal DB config (lkvstore: local key-value store)
+  lkvstore:
+    path: /db/damselfly.db
+
   ## Logger configuration
   logfile:
     # Set log file path (default logfile path: ./damselfly.log)

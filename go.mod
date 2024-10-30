@@ -3,18 +3,14 @@ module github.com/cloud-barista/cm-damselfly
 go 1.23.0
 
 require (
-	github.com/cloud-barista/cb-log v0.7.0
 	github.com/cloud-barista/cb-tumblebug v0.9.16
 	github.com/cloud-barista/cm-model v0.0.2
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/rs/zerolog v1.33.0
-	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.19.0
 	github.com/swaggo/echo-swagger v1.4.1
 	github.com/swaggo/swag v1.16.3
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -44,7 +40,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
-	github.com/snowzach/rotatefilehook v0.0.0-20220211133110-53752135082d // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
@@ -63,6 +58,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	xorm.io/builder v0.3.13 // indirect
 	xorm.io/xorm v1.3.6 // indirect
