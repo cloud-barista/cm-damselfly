@@ -13,8 +13,8 @@ github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0
 github.com/chzyer/logex v1.2.0/go.mod h1:9+9sk7u7pGNWYMkh0hdiL++6OeibzJccyQU4p4MedaY=
 github.com/chzyer/readline v1.5.0/go.mod h1:x22KAscuvRqlLoK9CsoYsmxoXZMMFVyOl86cAH8qUic=
 github.com/chzyer/test v0.0.0-20210722231415-061457976a23/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
-github.com/cloud-barista/cb-tumblebug v0.9.16 h1:BRpYn+HOpJzC20oD5VMipyslMqePSc0Dx/GR/tefmOc=
-github.com/cloud-barista/cb-tumblebug v0.9.16/go.mod h1:NId135dY2nPhzV69+v1AFLlIjFTD400smoht73lG58c=
+github.com/cloud-barista/cb-tumblebug v0.10.0 h1:WpdwVaDrfsIrTrNl3SlV6ncY97Ekp0goYorVDTNjd28=
+github.com/cloud-barista/cb-tumblebug v0.10.0/go.mod h1:G5U23uALL84Qu2N7qpQJmZQ+2wBrh7rhV0WKk1weGZE=
 github.com/cloud-barista/cm-model v0.0.3 h1:sYowqaUMw77j2Hmz8nt/pjEA6lfMkGkZ31jNDDPN0Tk=
 github.com/cloud-barista/cm-model v0.0.3/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=

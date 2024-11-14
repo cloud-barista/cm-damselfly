@@ -116,6 +116,7 @@ sudo docker compose down cm-damselfly
 | cm-damselfly | cm-model<BR>(OnpremInfraModel) | cb-tumblebug<BR>(CloudInfraModel) |
 |--------|--------|--------|
 | v0.2.0 | v0.0.3 | v0.9.16 |
+| v0.2.1 | v0.0.3 | v0.10.0 |
 
 #### CM-Damselfly APIs user guide
 - Discussion link : [How to use and test CM-Damselfly APIs (with test examples)](https://github.com/cloud-barista/cm-damselfly/discussions/25)

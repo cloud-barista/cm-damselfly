@@ -3,7 +3,7 @@ module github.com/cloud-barista/cm-damselfly
 go 1.23.0
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.9.16
+	github.com/cloud-barista/cb-tumblebug v0.10.0
 	github.com/cloud-barista/cm-model v0.0.3
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/labstack/echo/v4 v4.12.0
