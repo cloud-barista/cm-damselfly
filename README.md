@@ -110,3 +110,12 @@ sudo docker compose down cm-damselfly
 
 - Default log file path
   - ./cloud-barista/cm-damselfly/log/damselfly.log
+
+#### Versions of packages applied to the released Damselfly
+
+| cm-damselfly | cm-model<BR>(OnpremInfraModel) | cb-tumblebug<BR>(CloudInfraModel) |
+|--------|--------|--------|
+| v0.2.0 | v0.0.3 | v0.9.16 |
+
+#### CM-Damselfly APIs user guide
+- Discussion link : [How to use and test CM-Damselfly APIs (with test examples)](https://github.com/cloud-barista/cm-damselfly/discussions/25)
