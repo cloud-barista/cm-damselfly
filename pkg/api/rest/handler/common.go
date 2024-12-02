@@ -84,14 +84,15 @@ func generateUnique15DigitString() (int, error) {
 	return result, nil
 }
 
-func getSeoulCurrentTime() string {
+func getSeoulCurrentTime() (string, error) {
 	loc, err := time.LoadLocation("Asia/Seoul")
 	if err != nil {
 		log.Error().Msgf("Failed to Get the Time Value of the Location : [%v]", err)
+		return "", err
 	}
 
 	currentTime := time.Now().In(loc)
-	return currentTime.Format("2006-01-02 15:04:05")
+	return currentTime.Format("2006-01-02 15:04:05"), nil
 }
 
 func getModuleVersion(moduleName string) (string, error) {
