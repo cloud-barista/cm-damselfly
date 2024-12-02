@@ -80,22 +80,33 @@ docker --version
 docker compose version
 ```
 
-- Run CM-Damselfly and related components
-
+- Run CM-Damselfly container and related components
 ```bash
 cd [DAMSELFLY_ROOT]
 sudo docker compose up
 ```
-- With the `-d` option runs the container in the background
 
+- With the `-d` option runs the container in the background (in detached mode)
 ```bash
 cd [DAMSELFLY_ROOT]
 sudo docker compose up -d
 ```
 
+- Build the current Damselfly source code into a container image
+```bash
+cd [DAMSELFLY_ROOT]
+sudo docker compose up -d --build
+```
+
 - Stop CM-Damselfly
 ```bash
 sudo docker compose down cm-damselfly
+```
+
+- The easiest way to run the container
+```bash
+cd [DAMSELFLY_ROOT]
+sudo make compose-up
 ```
 
 #### Default API URL and File Path
@@ -106,10 +117,10 @@ sudo docker compose down cm-damselfly
   - https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-damselfly/refs/heads/main/api/swagger.yaml
 
 - Default DB file path (The user migration model is stored to K/V DB as a file in the following location.)
-  - ./cloud-barista/cm-damselfly/db/damselfly.db
+  - ./cm-damselfly/cmd/cm-damselfly/db/damselfly.db
 
 - Default log file path
-  - ./cloud-barista/cm-damselfly/log/damselfly.log
+  - ./cm-damselfly/cmd/cm-damselfly/log/damselfly.log
 
 #### Versions of packages applied to the released Damselfly
 
