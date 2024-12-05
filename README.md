@@ -1,7 +1,7 @@
 # Computing Infrastructure Migration Model
 
 This repository provides computing infrastructure migration features.
-This is a sub-system of [Cloud-Barista platform](https://github.com/cloud-barista/docs), and intended to deploy a multi-cloud infra as a target computing infrastructure.
+This is a sub-system of [Cloud-Barista platform](https://cloud-barista.github.io/technology/), and intended to deploy a multi-cloud infra as a target computing infrastructure.
 
 ## Overview
 
@@ -14,13 +14,11 @@ As a Cloud Computing Infrastructure Migration Framework (codename: cm-damselply)
 - Operating system (OS): 
     - Ubuntu 22.04
 - Languages: 
-    - Go: 1.23.0
+    - Go 1.23.0
 
 ## How to run CM-Damselfly
 
-### Source code based installation and execution
-
-#### Configure build environment
+### Configure build environment
 
 1. Install dependencies
 
@@ -34,8 +32,7 @@ sudo apt install make gcc git
 ```
 2. Install Go
 
-Note - **Install the stable version of Go**.
-For example, install Go v1.23.0
+**_NOTE :_** Install the stable version of Go. For example, Go v1.23.0
 
 ```bash
 # Set Go version
@@ -61,14 +58,14 @@ go version
 
 ```
 
-#### Download the source code
+### Download the source code
 
 ```bash
 # Clone CM-Damselfly repository
 git clone https://github.com/cloud-barista/cm-damselfly.git ${HOME}/cm-damselfly
 ```
 
-#### Build and Run with docker compose
+### Build and Run with docker compose
 - Open ubuntu firewall TCP 8088 port on the system to access to the API(If need)
 ```bash
 sudo ufw allow 8088/tcp
@@ -109,25 +106,27 @@ cd [DAMSELFLY_ROOT]
 sudo make compose-up
 ```
 
-#### Default API URL and File Path
+### Default REST API URL and DB/log file path
 - Swagger API URL<BR>
   - http://localhost:8088/damselfly/api (username: default / password: default)
 
 - Swagger web UI URL<BR>
   - https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-damselfly/refs/heads/main/api/swagger.yaml
 
-- Default DB file path (The user migration model is stored to K/V DB as a file in the following location.)
+- Default DB file path (The created and updated user migration models are stored to K/V DB as a file in the following location.)
   - ./cm-damselfly/cmd/cm-damselfly/db/damselfly.db
 
 - Default log file path
   - ./cm-damselfly/cmd/cm-damselfly/log/damselfly.log
 
-#### Versions of packages applied to the released Damselfly
+### Versions of packages applied to the released Damselfly
 
 | cm-damselfly | cm-model<BR>(OnpremInfraModel) | cb-tumblebug<BR>(CloudInfraModel) |
 |--------|--------|--------|
 | v0.2.0 | v0.0.3 | v0.9.16 |
 | v0.2.1 | v0.0.3 | v0.10.0 |
+| v0.2.2 | v0.0.3 | v0.10.0 |
+| v0.3.0 | v0.0.3 | v0.10.3 |
 
-#### CM-Damselfly APIs user guide
+### CM-Damselfly REST API user guide
 - Discussion link : [How to use and test CM-Damselfly APIs (with test examples)](https://github.com/cloud-barista/cm-damselfly/discussions/25)
