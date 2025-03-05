@@ -103,8 +103,7 @@ func getModuleVersion(moduleName string) (string, error) {
 			return "", err
 		}
 		goModPath := filepath.Join(wd, "go.mod")
-
-		log.Debug().Msgf("go.mod file path : [%s]", goModPath)
+		// log.Debug().Msgf("go.mod file path : [%s]", goModPath)
 
 		var openErr error
 		goFile, openErr = os.Open(goModPath)
