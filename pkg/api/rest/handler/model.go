@@ -4,21 +4,18 @@ import (
 	"fmt"
 	"net/http"
 	"errors"
-
-	// "reflect"
-	// "encoding/json"
 	"strconv"
 	"strings"
-
 	"github.com/labstack/echo/v4"
-
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	"github.com/rs/zerolog/log"
+
 	model "github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
 
-	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
-	onprem "github.com/cloud-barista/cm-model/infra/onprem"
+	onpreminfra "github.com/cloud-barista/cm-model/infra/onprem"
+	cloudinfra  "github.com/cloud-barista/cm-model/infra/cloud"
+	software    "github.com/cloud-barista/cm-model/sw"
 )
 
 // ##############################################################################################
@@ -41,8 +38,9 @@ type ModelRespInfo struct {
 	CSP              string                  `json:"csp"`
 	Region           string                  `json:"region"`
 	Zone             string                  `json:"zone"`
-	OnpremInfraModel onprem.OnpremInfra      `json:"onpremiseInfraModel" validate:"required"`
-	CloudInfraModel  tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	OnpremInfraModel onpreminfra.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	CloudInfraModel  cloudinfra.CloudInfra 	 `json:"cloudInfraModel" validate:"required"`
+	SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -143,7 +141,7 @@ type GetModelsVersionResp struct {
 // @Router /model/version [get]
 func GetModelsVersion(c echo.Context) error {
 
-	onpremModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
 	if err != nil {
 		newErr := fmt.Errorf("failed to get the 'cm-model' module version : [%v]", err)
 		log.Error().Msg(newErr.Error())
@@ -154,20 +152,20 @@ func GetModelsVersion(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
-	if err != nil {
-		newErr := fmt.Errorf("failed to get the 'cb-tumblebug' module version : [%v]", err)
-		log.Error().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
-	}
+	// cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
+	// if err != nil {
+	// 	newErr := fmt.Errorf("failed to get the 'cb-tumblebug' module version : [%v]", err)
+	// 	log.Error().Msg(newErr.Error())
+	// 	res := model.Response{
+	// 		Success: false,
+	// 		Text:    newErr.Error(),
+	// 	}
+	// 	return c.JSON(http.StatusInternalServerError, res)
+	// }
 
 	modelsVersionInfo := ModelsVersionRespInfo{
-		OnPremModelVer: onpremModelVer,
-		CloudModelVer:  cloudModelVer,
+		OnPremModelVer: modelVer,
+		// CloudModelVer:  cloudModelVer,
 	}
 	res := GetModelsVersionResp{
 		ModelsVersion: modelsVersionInfo,
@@ -185,7 +183,8 @@ type OnPremModelReqInfo struct {
 	UserModelName    string             `json:"userModelName"`
 	Description      string             `json:"description"`
 	UserModelVer     string             `json:"userModelVersion"`
-	OnpremInfraModel onprem.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	OnpremInfraModel onpreminfra.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 type OnPremModelRespInfo struct {
@@ -200,7 +199,8 @@ type OnPremModelRespInfo struct {
 	UpdateTime       string             `json:"updateTime"`
 	IsTargetModel    bool               `json:"isTargetModel"`
 	IsCloudModel     bool               `json:"isCloudModel"`
-	OnpremInfraModel onprem.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	OnpremInfraModel onpreminfra.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -481,16 +481,6 @@ func CreateOnPremModel(c echo.Context) error {
 
 	randomStr, err := generateRandomString(15)
 	if err != nil {
-
-
-
-
-
-
-
-
-
-		
 		msg := "Failed to Generate a random string!!"
 		log.Error().Msg(msg)
 		newErr := errors.New(msg)
@@ -814,7 +804,8 @@ type CloudModelReqInfo struct {
 	CSP             string                  `json:"csp"`
 	Region          string                  `json:"region"`
 	Zone            string                  `json:"zone"`
-	CloudInfraModel tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	CloudInfraModel  cloudinfra.CloudInfra 	`json:"cloudInfraModel" validate:"required"`
+	SoftwareModel    software.Software	    `json:"softwareModel" validate:"required"`	
 }
 
 type CloudModelRespInfo struct {
@@ -832,7 +823,8 @@ type CloudModelRespInfo struct {
 	Zone            string                  `json:"zone"`
 	IsCloudModel    bool                    `json:"isCloudModel"`
 	CloudModelVer   string                  `json:"cloudModelVersion"`
-	CloudInfraModel tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	CloudInfraModel  cloudinfra.CloudInfra 	`json:"cloudInfraModel" validate:"required"`
+	SoftwareModel    software.Software	 	`json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -1073,11 +1065,6 @@ func UpdateCloudModel(c echo.Context) error {
 		log.Error().Msg(msg)
 		newErr := errors.New(msg)
 		return c.JSON(http.StatusBadRequest, newErr)
-
-
-
-
-
 
 
 
