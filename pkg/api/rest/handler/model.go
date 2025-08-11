@@ -4,21 +4,17 @@ import (
 	"fmt"
 	"net/http"
 	"errors"
-
-	// "reflect"
-	// "encoding/json"
 	"strconv"
 	"strings"
-
 	"github.com/labstack/echo/v4"
-
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	"github.com/rs/zerolog/log"
-	model "github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
 
-	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
-	onprem "github.com/cloud-barista/cm-model/infra/onprem"
+	model "github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
+	onpremisemodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+	// softwaremodel "github.com/cloud-barista/cm-model/sw"
 )
 
 // ##############################################################################################
@@ -26,23 +22,24 @@ import (
 // ##############################################################################################
 
 type ModelRespInfo struct {
-	Id               string                  `json:"id"`
-	UserId           string                  `json:"userId"`
-	IsInitUserModel  bool                    `json:"isInitUserModel"`
-	UserModelName    string                  `json:"userModelName"`
-	Description      string                  `json:"description"`
-	UserModelVer     string                  `json:"userModelVersion"`
-	CreateTime       string                  `json:"createTime"`
-	UpdateTime       string                  `json:"updateTime"`
-	IsTargetModel    bool                    `json:"isTargetModel"`
-	IsCloudModel     bool                    `json:"isCloudModel"`
-	OnPremModelVer   string                  `json:"onpremModelVersion"`
-	CloudModelVer    string                  `json:"cloudModelVersion"`
-	CSP              string                  `json:"csp"`
-	Region           string                  `json:"region"`
-	Zone             string                  `json:"zone"`
-	OnpremInfraModel onprem.OnpremInfra      `json:"onpremiseInfraModel" validate:"required"`
-	CloudInfraModel  tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	Id               string                  		`json:"id"`
+	UserId           string                  		`json:"userId"`
+	IsInitUserModel  bool                    		`json:"isInitUserModel"`
+	UserModelName    string                  		`json:"userModelName"`
+	Description      string                  		`json:"description"`
+	UserModelVer     string                  		`json:"userModelVersion"`
+	CreateTime       string                  	   	`json:"createTime"`
+	UpdateTime       string                  	   	`json:"updateTime"`
+	IsTargetModel    bool                    	   	`json:"isTargetModel"`
+	IsCloudModel     bool                    	   	`json:"isCloudModel"`
+	OnPremModelVer   string                  	   	`json:"onpremModelVersion"`
+	CloudModelVer    string                  	   	`json:"cloudModelVersion"`
+	CSP              string                  	   	`json:"csp"`
+	Region           string                  	   	`json:"region"`
+	Zone             string                  	   	`json:"zone"`
+	OnpremInfraModel onpremisemodel.OnpremInfra   	`json:"onpremiseInfraModel" validate:"required"`
+	CloudInfraModel  cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
+	// SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -84,7 +81,7 @@ func GetModels(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	// Convert the string to a boolean
+	// Convert the string to a boolean	
 	isTargetmodel, err := strconv.ParseBool(param)
 	if err != nil {
 		newErr := fmt.Errorf("invalid request : [%v]", err)
@@ -143,7 +140,7 @@ type GetModelsVersionResp struct {
 // @Router /model/version [get]
 func GetModelsVersion(c echo.Context) error {
 
-	onpremModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
 	if err != nil {
 		newErr := fmt.Errorf("failed to get the 'cm-model' module version : [%v]", err)
 		log.Error().Msg(newErr.Error())
@@ -166,7 +163,7 @@ func GetModelsVersion(c echo.Context) error {
 	}
 
 	modelsVersionInfo := ModelsVersionRespInfo{
-		OnPremModelVer: onpremModelVer,
+		OnPremModelVer: modelVer,
 		CloudModelVer:  cloudModelVer,
 	}
 	res := GetModelsVersionResp{
@@ -180,27 +177,29 @@ func GetModelsVersion(c echo.Context) error {
 // ##############################################################################################
 
 type OnPremModelReqInfo struct {
-	UserId           string             `json:"userId"`
-	IsInitUserModel  bool               `json:"isInitUserModel"`
-	UserModelName    string             `json:"userModelName"`
-	Description      string             `json:"description"`
-	UserModelVer     string             `json:"userModelVersion"`
-	OnpremInfraModel onprem.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	UserId           string             		`json:"userId"`
+	IsInitUserModel  bool               		`json:"isInitUserModel"`
+	UserModelName    string             		`json:"userModelName"`
+	Description      string             		`json:"description"`
+	UserModelVer     string             		`json:"userModelVersion"`
+	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	// SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 type OnPremModelRespInfo struct {
-	Id               string             `json:"id"`
-	UserId           string             `json:"userId"`
-	IsInitUserModel  bool               `json:"isInitUserModel"`
-	UserModelName    string             `json:"userModelName"`
-	Description      string             `json:"description"`
-	UserModelVer     string             `json:"userModelVersion"`
-	OnPremModelVer   string             `json:"onpremModelVersion"`
-	CreateTime       string             `json:"createTime"`
-	UpdateTime       string             `json:"updateTime"`
-	IsTargetModel    bool               `json:"isTargetModel"`
-	IsCloudModel     bool               `json:"isCloudModel"`
-	OnpremInfraModel onprem.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	Id               string             		`json:"id"`
+	UserId           string             		`json:"userId"`
+	IsInitUserModel  bool               		`json:"isInitUserModel"`
+	UserModelName    string             		`json:"userModelName"`
+	Description      string             		`json:"description"`
+	UserModelVer     string             		`json:"userModelVersion"`
+	OnPremModelVer   string             		`json:"onpremModelVersion"`
+	CreateTime       string             		`json:"createTime"`
+	UpdateTime       string             		`json:"updateTime"`
+	IsTargetModel    bool               		`json:"isTargetModel"`
+	IsCloudModel     bool               		`json:"isCloudModel"`
+	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+	// SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -481,16 +480,6 @@ func CreateOnPremModel(c echo.Context) error {
 
 	randomStr, err := generateRandomString(15)
 	if err != nil {
-
-
-
-
-
-
-
-
-
-		
 		msg := "Failed to Generate a random string!!"
 		log.Error().Msg(msg)
 		newErr := errors.New(msg)
@@ -730,14 +719,9 @@ func UpdateOnPremModel(c echo.Context) error {
 // @Produce  json
 // @Param id path string true "Model ID"
 // @Success 200 {string} string "Successfully Deleted the On-Premise Migration User Model"
-
-
-// @Failure 404 {object} model.Response
-// @Failure 500 {object} model.Response
-
-
 // @Failure 400 {object} object "Invalid Request"
 // @Failure 404 {object} object "Model Not Found"
+// @Failure 500 {object} model.Response
 // @Router /onpremmodel/{id} [delete]
 func DeleteOnPremModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
@@ -805,34 +789,36 @@ func DeleteOnPremModel(c echo.Context) error {
 // ##############################################################################################
 
 type CloudModelReqInfo struct {
-	UserId          string                  `json:"userId"`
-	IsTargetModel   bool                    `json:"isTargetModel"`
-	IsInitUserModel bool                    `json:"isInitUserModel"`
-	UserModelName   string                  `json:"userModelName"`
-	Description     string                  `json:"description"`
-	UserModelVer    string                  `json:"userModelVersion"`
-	CSP             string                  `json:"csp"`
-	Region          string                  `json:"region"`
-	Zone            string                  `json:"zone"`
-	CloudInfraModel tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	UserId          string                  		`json:"userId"`
+	IsTargetModel   bool                    		`json:"isTargetModel"`
+	IsInitUserModel bool                    		`json:"isInitUserModel"`
+	UserModelName   string                  		`json:"userModelName"`
+	Description     string                  		`json:"description"`
+	UserModelVer    string                  		`json:"userModelVersion"`
+	CSP             string                  		`json:"csp"`
+	Region          string                  		`json:"region"`
+	Zone            string                  		`json:"zone"`
+	CloudInfraModel cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
+	// SoftwareModel    software.Software	    `json:"softwareModel" validate:"required"`	
 }
 
 type CloudModelRespInfo struct {
-	Id              string                  `json:"id"`
-	UserId          string                  `json:"userId"`
-	IsTargetModel   bool                    `json:"isTargetModel"`
-	IsInitUserModel bool                    `json:"isInitUserModel"`
-	UserModelName   string                  `json:"userModelName"`
-	Description     string                  `json:"description"`
-	UserModelVer    string                  `json:"userModelVersion"`
-	CreateTime      string                  `json:"createTime"`
-	UpdateTime      string                  `json:"updateTime"`
-	CSP             string                  `json:"csp"`
-	Region          string                  `json:"region"`
-	Zone            string                  `json:"zone"`
-	IsCloudModel    bool                    `json:"isCloudModel"`
-	CloudModelVer   string                  `json:"cloudModelVersion"`
-	CloudInfraModel tbmodel.TbMciDynamicReq `json:"cloudInfraModel" validate:"required"`
+	Id              string                  		`json:"id"`
+	UserId          string                  		`json:"userId"`
+	IsTargetModel   bool                    		`json:"isTargetModel"`
+	IsInitUserModel bool                   			`json:"isInitUserModel"`
+	UserModelName   string                  		`json:"userModelName"`
+	Description     string                  		`json:"description"`
+	UserModelVer    string                  		`json:"userModelVersion"`
+	CreateTime      string                  		`json:"createTime"`
+	UpdateTime      string                  		`json:"updateTime"`
+	CSP             string                  		`json:"csp"`
+	Region          string                  		`json:"region"`
+	Zone            string                  		`json:"zone"`
+	IsCloudModel    bool                    		`json:"isCloudModel"`
+	CloudModelVer   string                  		`json:"cloudModelVersion"`	
+	CloudInfraModel cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
+	// SoftwareModel    software.Software	 	`json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -1075,13 +1061,6 @@ func UpdateCloudModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, newErr)
 
 
-
-
-
-
-
-
-
 		err := fmt.Errorf("invalid request")
 		log.Warn().Msg(err.Error())
 		res := model.Response{
@@ -1130,7 +1109,9 @@ func UpdateCloudModel(c echo.Context) error {
 		if model, ok := model.(map[string]interface{}); ok {
 			if cloudModelVer, exists := model["cloudModelVersion"]; exists {
 				if cloudModelVerStr, ok := cloudModelVer.(string); ok {
+
 					updateModel.CloudModelVer = cloudModelVerStr
+
 					log.Info().Msgf("# cloudModelVer : [%s]", cloudModelVerStr)
 				} else {
 					log.Info().Msg("'cloudModelVersion' is not a string type of value")
@@ -1231,8 +1212,9 @@ func UpdateCloudModel(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
-// @Success 201 {object} UpdateCloudModelResp "Successfully deleted!!"
-// @Failure 404 {object} model.Response
+// @Success 200 {string} string "Successfully Deleted the Cloud Migration User Model"
+// @Failure 400 {object} object "Invalid Request"
+// @Failure 404 {object} object "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /cloudmodel/{id} [delete]
 func DeleteCloudModel(c echo.Context) error {
