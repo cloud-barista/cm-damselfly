@@ -1,890 +1,513 @@
 basePath: /damselfly
 definitions:
-  Onpreminframodel.CpuProperty:
+  cloudmodel.ImageStatus:
+    enum:
+    - Available
+    - Unavailable
+    - Deprecated
+    - NA
+    type: string
+    x-enum-varnames:
+    - ImageAvailable
+    - ImageUnavailable
+    - ImageDeprecated
+    - ImageNA
+  cloudmodel.KeyValue:
     properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  cloudmodel.MciCmdReq:
+    properties:
+      command:
+        example:
+        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
+          is: $client_ip'
+        items:
+          type: string
+        type: array
+      userName:
+        example: cb-user
+        type: string
+    required:
+    - command
+    type: object
+  cloudmodel.OSArchitecture:
+    enum:
+    - arm32
+    - arm64
+    - arm64_mac
+    - x86_32
+    - x86_64
+    - x86_32_mac
+    - x86_64_mac
+    - s390x
+    - NA
+    - ""
+    type: string
+    x-enum-varnames:
+    - ARM32
+    - ARM64
+    - ARM64_MAC
+    - X86_32
+    - X86_64
+    - X86_32_MAC
+    - X86_64_MAC
+    - S390X
+    - ArchitectureNA
+    - ArchitectureUnknown
+  cloudmodel.OSPlatform:
+    enum:
+    - Linux/UNIX
+    - Windows
+    - NA
+    type: string
+    x-enum-varnames:
+    - Linux_UNIX
+    - Windows
+    - PlatformNA
+  cloudmodel.RecommendedVmInfra:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbSecurityGroupReq'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.TbSshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.TbVNetReq'
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.TbMciReq'
+      targetVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbImageInfo'
+        type: array
+      targetVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbSpecInfo'
+        type: array
+    type: object
+  cloudmodel.TbFirewallRuleInfo:
+    properties:
+      CIDR:
+        example: 0.0.0.0/0
+        type: string
+      Direction:
+        enum:
+        - inbound
+        - outbound
+        example: inbound
+        type: string
+      Ports:
+        example: 1-65535,22,5555
+        type: string
+      Protocol:
+        enum:
+        - TCP
+        - UDP
+        - ICMP
+        - ALL
+        example: TCP
+        type: string
+    required:
+    - Direction
+    - Protocol
+    type: object
+  cloudmodel.TbImageInfo:
+    properties:
+      connectionName:
+        type: string
+      creationDate:
+        type: string
+      cspImageName:
+        example: csp-06eb41e14121c550a
+        type: string
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      fetchedTime:
+        type: string
+      id:
+        example: aws-ap-southeast-1
+        type: string
+      imageStatus:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.ImageStatus'
+        description: Available, Deprecated, NA
+        example: Available
+      infraType:
+        description: vm|k8s|kubernetes|container, etc.
+        type: string
+      isGPUImage:
+        default: false
+        type: boolean
+      isKubernetesImage:
+        default: false
+        type: boolean
+      name:
+        example: aws-ap-southeast-1
+        type: string
+      namespace:
+        description: Composite primary key
+        example: default
+        type: string
+      osArchitecture:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSArchitecture'
+        description: arm64, x86_64 etc.
+        example: x86_64
+      osDiskSizeGB:
+        description: 10, 50, 100 etc.
+        example: 50
+        type: number
+      osDiskType:
+        description: ebs, HDD, etc.
+        example: HDD
+        type: string
+      osDistribution:
+        description: Ubuntu 22.04~, CentOS 8 etc.
+        example: Ubuntu 22.04~
+        type: string
+      osPlatform:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSPlatform'
+        description: Linux/UNIX, Windows, NA
+        example: Linux/UNIX
+      osType:
+        example: ubuntu 22.04
+        type: string
+      providerName:
+        type: string
+      regionList:
+        description: Array field for supporting multiple regions
+        items:
+          type: string
+        type: array
+      systemLabel:
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        example: wef12awefadf1221edcf
+        type: string
+    type: object
+  cloudmodel.TbMciReq:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        example: mci01
+        type: string
+      placementAlgo:
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.TbVmReq'
+        type: array
+    required:
+    - name
+    - vm
+    type: object
+  cloudmodel.TbSecurityGroupReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is required to register object from CSP (option=register)
+        example: 'required for option=register only. ex: csp-06eb41e14121c550a'
+        type: string
+      description:
+        type: string
+      firewallRules:
+        description: validate:"required"`
+        items:
+          $ref: '#/definitions/cloudmodel.TbFirewallRuleInfo'
+        type: array
+      name:
+        type: string
+      vNetId:
+        type: string
+    required:
+    - connectionName
+    - name
+    - vNetId
+    type: object
+  cloudmodel.TbSpecInfo:
+    properties:
+      acceleratorCount:
+        type: integer
+      acceleratorMemoryGB:
+        type: number
+      acceleratorModel:
+        type: string
+      acceleratorType:
+        type: string
       architecture:
         example: x86_64
         type: string
-      cores:
-        description: Number of physical cores per CPU
-        example: 18
-        type: integer
-      cpus:
-        description: Number of physical CPUs (sockets)
-        example: 2
-        type: integer
-      maxSpeed:
-        description: Maximum speed in GHz
-        example: 3.6
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      connectionName:
+        type: string
+      costPerHour:
         type: number
-      model:
-        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+      cspSpecName:
+        description: CspSpecName is name of the spec given by CSP
+        example: csp-06eb41e14121c550a
         type: string
-      threads:
-        description: Number of logical CPUs (threads) per CPU with hyper-threading
-          enabled
-        example: 36
-        type: integer
-      vendor:
-        example: GenuineIntel
+      description:
         type: string
-    required:
-    - cores
-    - cpus
-    - threads
-    type: object
-  Onpreminframodel.DiskProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      label:
-        type: string
-      totalSize:
-        description: Unit GiB
-        example: 1024
-        type: integer
-      type:
-        description: SSD, HDD
-        example: SSD
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - label
-    - totalSize
-    - type
-    type: object
-  Onpreminframodel.FirewallRuleProperty:
-    properties:
-      action:
-        description: allow, deny
-        type: string
-      direction:
-        description: inbound, outbound
-        type: string
-      dstCIDR:
-        type: string
-      dstPorts:
-        type: string
-      protocol:
-        description: TCP, UDP, ICMP
-        type: string
-      srcCIDR:
-        type: string
-      srcPorts:
-        type: string
-    type: object
-  Onpreminframodel.MemoryProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      totalSize:
-        description: Unit GiB
-        example: 128
-        type: integer
-      type:
-        example: DDR4
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - totalSize
-    - type
-    type: object
-  Onpreminframodel.NetworkInterfaceProperty:
-    properties:
-      ipv4CidrBlocks:
-        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
-          of inet addr, Bcast, and Mask
+      details:
         items:
-          type: string
+          $ref: '#/definitions/cloudmodel.KeyValue'
         type: array
-      ipv6CidrBlocks:
-        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
-        items:
-          type: string
-        type: array
-      macAddress:
-        description: MAC address
+      diskSizeGB:
+        type: number
+      evaluationScore01:
+        type: number
+      evaluationScore02:
+        type: number
+      evaluationScore03:
+        type: number
+      evaluationScore04:
+        type: number
+      evaluationScore05:
+        type: number
+      evaluationScore06:
+        type: number
+      evaluationScore07:
+        type: number
+      evaluationScore08:
+        type: number
+      evaluationScore09:
+        type: number
+      evaluationScore10:
+        type: number
+      evaluationStatus:
         type: string
-      mtu:
-        description: Maximum Transmission Unit (MTU) in bytes
-        type: integer
-      name:
-        description: Interface name (e.g., eth0, ens01, enp0s3)
-        type: string
-      state:
-        description: Interface state (e.g., UP, DOWN)
-        type: string
-    required:
-    - name
-    type: object
-  Onpreminframodel.NetworkProperty:
-    properties:
-      ipv4Networks:
-        example:
-        - 172.26.240.0/20
-        items:
-          type: string
-        type: array
-      ipv6Networks:
-        description: TBD
-        items:
-          type: string
-        type: array
-    type: object
-  Onpreminframodel.OnpremInfra:
-    properties:
-      network:
-        $ref: '#/definitions/Onpreminframodel.NetworkProperty'
-      servers:
-        items:
-          $ref: '#/definitions/Onpreminframodel.ServerProperty'
-        type: array
-    required:
-    - servers
-    type: object
-  Onpreminframodel.OsProperty:
-    properties:
       id:
-        example: ubuntu
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
         type: string
-      idLike:
-        example: debian
+      infraType:
+        description: InfraType can be one of vm|k8s|kubernetes|container, etc.
         type: string
-      name:
-        example: Ubuntu
-        type: string
-      prettyName:
-        description: Pretty name
-        example: Ubuntu 22.04.3 LTS
-        type: string
-      version:
-        description: Full version string
-        example: 22.04.3 LTS (Jammy Jellyfish)
-        type: string
-      versionCodename:
-        example: jammy
-        type: string
-      versionId:
-        example: "22.04"
-        type: string
-    required:
-    - prettyName
-    type: object
-  Onpreminframodel.RouteProperty:
-    properties:
-      destination:
-        description: Destination network, expressed in CIDR format
-        type: string
-      gateway:
-        description: Gateway address to which packets are forwarded
-        type: string
-      interface:
-        description: Network interface associated with the route
-        type: string
-      linkState:
-        description: Link state of the route (e.g., UP, DOWN)
-        type: string
-      metric:
-        description: Metric value indicating the priority of the route
-        type: integer
-      protocol:
-        description: Protocol used to set the route (e.g., kernel, static)
-        type: string
-      scope:
-        description: Scope of the route (e.g., global, link, host)
-        type: string
-      source:
-        description: Optionally stores the source address (used for policy-based routing)
-        type: string
-    type: object
-  Onpreminframodel.ServerProperty:
-    properties:
-      cpu:
-        $ref: '#/definitions/Onpreminframodel.CpuProperty'
-      dataDisks:
-        items:
-          $ref: '#/definitions/Onpreminframodel.DiskProperty'
-        type: array
-      firewallRules:
-        items:
-          $ref: '#/definitions/Onpreminframodel.FirewallRuleProperty'
-        type: array
-      hostname:
-        type: string
-      interfaces:
-        items:
-          $ref: '#/definitions/Onpreminframodel.NetworkInterfaceProperty'
-        type: array
-      memory:
-        $ref: '#/definitions/Onpreminframodel.MemoryProperty'
-      os:
-        $ref: '#/definitions/Onpreminframodel.OsProperty'
-      rootDisk:
-        $ref: '#/definitions/Onpreminframodel.DiskProperty'
-      routingTable:
-        items:
-          $ref: '#/definitions/Onpreminframodel.RouteProperty'
-        type: array
-    type: object
-  Softwaremodel.ContainerConfig:
-    properties:
-      extra_config:
-        additionalProperties:
-          type: string
-        description: Additional container configuration.
-        type: object
-      image:
-        additionalProperties:
-          type: string
-        description: container image info.
-        type: object
-      network:
-        additionalProperties:
-          type: string
-        description: e.g., bridge, host, overlay, etc.
-        type: object
-      volume:
-        additionalProperties:
-          type: string
-        description: volume details or mount point info.
-        type: object
-    type: object
-  Softwaremodel.Environment:
-    properties:
-      config:
-        additionalProperties:
-          type: string
-        description: can include additional details such as network settings, credentials,
-          etc.
-        type: object
-      os:
-        $ref: '#/definitions/Softwaremodel.OperatingSystem'
-      provider:
-        description: (if cloud) aws, azure, gcp, etc.
-        type: string
-      region:
-        type: string
-      type:
-        description: e.g., "on-premise" or "cloud"
-        type: string
-      zone:
-        type: string
-    type: object
-  Softwaremodel.KubernetesConfig:
-    properties:
-      cluster:
-        additionalProperties:
-          type: string
-        description: cluster name or identifier.
-        type: object
-      extra_config:
-        additionalProperties:
-          type: string
-        description: Additional Kubernetes configuration.
-        type: object
-      network:
-        additionalProperties:
-          type: string
-        description: network settings or CNI configurations.
-        type: object
-      policies:
-        additionalProperties:
-          type: string
-        description: any relevant policies.
-        type: object
-      volume:
-        additionalProperties:
-          type: string
-        description: volume settings.
-        type: object
-    type: object
-  Softwaremodel.MigrationMethod:
-    enum:
-    - binary
-    - os_package
-    - container
-    - kubernetes
-    - managed_csp
-    type: string
-    x-enum-comments:
-      MethodBinary: Moving the software as a binary executable.
-      MethodContainer: Installing as a container package.
-      MethodKubernetes: Installing as a Kubernetes package.
-      MethodManaged: Using the CSP's managed software service.
-      MethodOSPackage: Installing via OS package manager.
-    x-enum-varnames:
-    - MethodBinary
-    - MethodOSPackage
-    - MethodContainer
-    - MethodKubernetes
-    - MethodManaged
-  Softwaremodel.OperatingSystem:
-    properties:
-      architecture:
-        description: x86_64, arm64
-        type: string
-      type:
-        description: Ubuntu, Debian, Windows
-        type: string
-      version:
-        description: OS version
-        type: string
-    type: object
-  Softwaremodel.Software:
-    properties:
-      environment:
-        allOf:
-        - $ref: '#/definitions/Softwaremodel.Environment'
-        description: can be on-premise or cloud.
-      software_properties:
-        items:
-          $ref: '#/definitions/Softwaremodel.SoftwareProperty'
-        type: array
-    type: object
-  Softwaremodel.SoftwareConfig:
-    properties:
-      settings:
-        additionalProperties:
-          type: string
-        description: Settings can include environment variables, config file paths,
-          ports, etc.
-        type: object
-    type: object
-  Softwaremodel.SoftwareProperty:
-    properties:
-      config:
-        allOf:
-        - $ref: '#/definitions/Softwaremodel.SoftwareConfig'
-        description: configuration settings for the software
-      container_info:
-        allOf:
-        - $ref: '#/definitions/Softwaremodel.ContainerConfig'
-        description: Optional parameters for container and Kubernetes migration methods.
-      kubernetes_info:
-        $ref: '#/definitions/Softwaremodel.KubernetesConfig'
-      methods:
-        description: supported migration methods
-        items:
-          $ref: '#/definitions/Softwaremodel.MigrationMethod'
-        type: array
-      software_name:
-        description: any software, e.g., "nginx", "nfs", "mysql"
-        type: string
-      version:
-        description: version of the software
-        type: string
-    type: object
-  cloudinframodel.AddOn:
-    properties:
-      config:
-        items:
-          $ref: '#/definitions/cloudinframodel.KeyValue'
-        type: array
-      enabled:
+      isAutoGenerated:
         type: boolean
+      maxTotalStorageTiB:
+        type: integer
+      memoryGiB:
+        type: number
       name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
         type: string
-      version:
+      namespace:
+        example: default
         type: string
-    type: object
-  cloudinframodel.AuthInfo:
-    properties:
-      apiCredential:
+      netBwGbps:
+        type: integer
+      orderInFilteredResult:
+        type: integer
+      osType:
         type: string
-      keyPath:
+      providerName:
         type: string
-      password:
-        type: string
-      type:
-        description: ssh-key, password, api-key
-        type: string
-      username:
-        type: string
-    type: object
-  cloudinframodel.CSPType:
-    enum:
-    - AWS
-    - GCP
-    - Azure
-    - Alibaba
-    - Tencent
-    - OpenStack
-    - IBM
-    - NCP
-    - NHN
-    - KTCloud
-    type: string
-    x-enum-varnames:
-    - AWS
-    - GCP
-    - Azure
-    - Alibaba
-    - Tencent
-    - OpenStack
-    - IBM
-    - NCP
-    - NHN
-    - KTCloud
-  cloudinframodel.CloudEnvironment:
-    properties:
-      cspType:
-        allOf:
-        - $ref: '#/definitions/cloudinframodel.CSPType'
-        description: AWS, GCP, Azure, ...
       regionName:
         type: string
-      zoneName:
+      rootDiskSize:
         type: string
-    type: object
-  cloudinframodel.CloudInfra:
-    properties:
-      cloudenvironment:
-        $ref: '#/definitions/cloudinframodel.CloudEnvironment'
-      clusters:
-        items:
-          $ref: '#/definitions/cloudinframodel.ClusterProperty'
-        type: array
-      network:
-        $ref: '#/definitions/cloudinframodel.NetworkProperty'
-      vms:
-        items:
-          $ref: '#/definitions/cloudinframodel.VMProperty'
-        type: array
-    required:
-    - cloudenvironment
-    - network
-    - vms
-    type: object
-  cloudinframodel.ClusterProperty:
-    properties:
-      addOns:
-        items:
-          $ref: '#/definitions/cloudinframodel.AddOn'
-        type: array
-      caData:
-        description: Certificate Authority data
+      rootDiskType:
         type: string
-      description:
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
         type: string
-      endpointUrl:
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
         type: string
-      id:
-        type: string
-      kubeConfig:
-        type: string
-      lavel:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      nodePools:
-        items:
-          $ref: '#/definitions/cloudinframodel.NodePool'
-        type: array
-      subnets:
-        description: Subnet IDs
-        items:
-          type: string
-        type: array
-      type:
-        description: e.g., "Kubernetes", "ECS", "GKE"
-        type: string
-      version:
-        description: e.g., "1.23"
-        type: string
-      vpc:
-        description: VPC ID
-        type: string
-    type: object
-  cloudinframodel.Disk:
-    properties:
-      attachedTo:
-        description: VM ID if attached
-        type: string
-      description:
-        type: string
-      deviceName:
-        description: e.g., "/dev/sda1"
-        type: string
-      diskType:
-        description: e.g., "SSD", "HDD"
-        type: string
-      iops:
+      vCPU:
         type: integer
-      isBootDisk:
-        type: boolean
-      isEncrypted:
-        type: boolean
-      lavel:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      sizeGb:
-        type: integer
-      snapshot:
-        description: Source snapshot ID if applicable
-        type: string
-      throughput:
-        description: In MBps
-        type: integer
-      zone:
-        type: string
     type: object
-  cloudinframodel.KeyPair:
+  cloudmodel.TbSshKeyReq:
     properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: |-
+          Fields for "Register existing SSH keys" feature
+          CspResourceId is required to register object from CSP (option=register)
+        type: string
       description:
         type: string
       fingerprint:
         type: string
-      keyFormat:
-        description: e.g., "ssh-rsa", "ecdsa"
-        type: string
       name:
         type: string
       privateKey:
-        description: 'Note: Should be handled securely'
         type: string
       publicKey:
         type: string
+      username:
+        type: string
+      verifiedUsername:
+        type: string
+    required:
+    - connectionName
+    - name
     type: object
-  cloudinframodel.KeyValue:
-    properties:
-      key:
-        type: string
-      value:
-        type: string
-    type: object
-  cloudinframodel.NIC:
-    properties:
-      description:
-        type: string
-      isPrimary:
-        type: boolean
-      macAddress:
-        type: string
-      name:
-        type: string
-      privateIp:
-        type: string
-      publicIp:
-        type: string
-      securityGroups:
-        items:
-          type: string
-        type: array
-      subnetId:
-        type: string
-    type: object
-  cloudinframodel.NetworkProperty:
-    properties:
-      cidr:
-        type: string
-      description:
-        type: string
-      lavel:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      vpcs:
-        items:
-          $ref: '#/definitions/cloudinframodel.VPC'
-        type: array
-    type: object
-  cloudinframodel.NodePool:
-    properties:
-      autoScaling:
-        type: boolean
-      description:
-        type: string
-      desiredNodes:
-        type: integer
-      diskSizeGb:
-        type: integer
-      diskType:
-        type: string
-      id:
-        type: string
-      maxNodes:
-        type: integer
-      minNodes:
-        type: integer
-      name:
-        type: string
-      nodeLabels:
-        items:
-          $ref: '#/definitions/cloudinframodel.KeyValue'
-        type: array
-      subnets:
-        description: Subnet IDs
-        items:
-          type: string
-        type: array
-      taints:
-        items:
-          $ref: '#/definitions/cloudinframodel.Taint'
-        type: array
-      vmImage:
-        description: VM Image ID
-        type: string
-      vmSpec:
-        description: VM Spec ID
-        type: string
-    type: object
-  cloudinframodel.RouteEntry:
-    properties:
-      destinationCidr:
-        type: string
-      target:
-        description: Gateway ID, Instance ID, etc.
-        type: string
-      targetType:
-        type: string
-    type: object
-  cloudinframodel.RouteInfo:
-    properties:
-      associatedTo:
-        description: IDs of associated resources
-        items:
-          type: string
-        type: array
-      description:
-        type: string
-      name:
-        type: string
-      routes:
-        items:
-          $ref: '#/definitions/cloudinframodel.RouteEntry'
-        type: array
-    type: object
-  cloudinframodel.SGRule:
+  cloudmodel.TbSubnetReq:
     properties:
       description:
+        example: subnet00 managed by CB-Tumblebug
         type: string
-      destCidr:
-        type: string
-      destSecGrp:
-        type: string
-      direction:
-        description: '"inbound" or "outbound"'
-        type: string
-      fromPort:
-        description: Start port range
-        type: integer
-      ipProtocol:
-        description: e.g., "tcp", "udp", "icmp"
+      ipv4_CIDR:
+        example: 10.0.1.0/24
         type: string
       name:
-        type: string
-      sourceCidr:
-        type: string
-      sourceSecGrp:
-        type: string
-      toPort:
-        description: End port range
-        type: integer
-    type: object
-  cloudinframodel.SecurityGroup:
-    properties:
-      description:
-        type: string
-      lavel:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      rules:
-        items:
-          $ref: '#/definitions/cloudinframodel.SGRule'
-        type: array
-    type: object
-  cloudinframodel.Subnet:
-    properties:
-      cidr:
-        type: string
-      description:
-        type: string
-      isPublic:
-        type: boolean
-      lavel:
-        additionalProperties:
-          type: string
-        type: object
-      name:
+        example: subnet00
         type: string
       zone:
         type: string
+    required:
+    - ipv4_CIDR
+    - name
     type: object
-  cloudinframodel.Taint:
+  cloudmodel.TbVNetReq:
     properties:
-      effect:
-        description: e.g., "NoSchedule", "PreferNoSchedule", "NoExecute"
+      cidrBlock:
+        example: 10.0.0.0/16
         type: string
-      key:
-        type: string
-      value:
-        type: string
-    type: object
-  cloudinframodel.VMImage:
-    properties:
-      architecture:
-        description: e.g., "x86_64", "arm64"
+      connectionName:
+        example: aws-ap-northeast-2
         type: string
       description:
+        example: vnet00 managed by CB-Tumblebug
         type: string
-      id:
-        type: string
-      lavel:
-        additionalProperties:
-          type: string
-        type: object
       name:
+        example: vnet00
         type: string
-      osDistro:
-        description: e.g., "Ubuntu", "Windows Server"
-        type: string
-      osType:
-        description: e.g., "Linux", "Windows"
-        type: string
-      osVersion:
-        description: e.g., "22.04", "2019"
-        type: string
-      sizeGB:
-        type: integer
-      sourceImageId:
-        type: string
-      sourceUrl:
-        type: string
+      subnetInfoList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbSubnetReq'
+        type: array
+    required:
+    - connectionName
+    - name
     type: object
-  cloudinframodel.VMProperty:
+  cloudmodel.TbVmReq:
     properties:
-      additionalDisks:
-        items:
-          $ref: '#/definitions/cloudinframodel.Disk'
-        type: array
-      authinfo:
-        $ref: '#/definitions/cloudinframodel.AuthInfo'
-      description:
+      connectionName:
+        example: testcloud01-seoul
         type: string
-      keyPair:
-        allOf:
-        - $ref: '#/definitions/cloudinframodel.KeyPair'
-        description: Key Pair Info
-      lavel:
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP (required
+          for option=register)
+        example: i-014fa6ede6ada0b2c
+        type: string
+      dataDiskIds:
+        items:
+          type: string
+        type: array
+      description:
+        example: Description
+        type: string
+      imageId:
+        description: ImageType        string   `json:"imageType"`
+        type: string
+      label:
         additionalProperties:
           type: string
+        description: Label is for describing the object by keywords
         type: object
-      monAgent:
-        description: '"installMonAgent": true or false'
-        type: boolean
       name:
+        description: VM name or subGroup name if is (not empty) && (> 0). If it is
+          a group, actual VM name will be generated with -N postfix.
+        example: g1-1
         type: string
-      networkInterfaces:
+      rootDiskSize:
+        description: '"default", Integer (GB): ["50", ..., "1000"]'
+        example: default, 30, 42, ...
+        type: string
+      rootDiskType:
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: default, TYPE1, ...
+        type: string
+      securityGroupIds:
         items:
-          $ref: '#/definitions/cloudinframodel.NIC'
-        type: array
-      privateIp:
-        type: string
-      rootDisk:
-        $ref: '#/definitions/cloudinframodel.Disk'
-      securityGroups:
-        description: Security Group Info.s
-        items:
-          $ref: '#/definitions/cloudinframodel.SecurityGroup'
-        type: array
-      status:
-        description: Running or Susppended
-        type: string
-      subnet:
-        allOf:
-        - $ref: '#/definitions/cloudinframodel.Subnet'
-        description: Subnet Info
-      userData:
-        description: Boot script
-        type: string
-      vmImage:
-        allOf:
-        - $ref: '#/definitions/cloudinframodel.VMImage'
-        description: VM Image Info
-      vmSpec:
-        allOf:
-        - $ref: '#/definitions/cloudinframodel.VMSpec'
-        description: VM Spec Info
-      vpc:
-        allOf:
-        - $ref: '#/definitions/cloudinframodel.VPC'
-        description: VPC Info
-    type: object
-  cloudinframodel.VMSpec:
-    properties:
-      cspInstanceType:
-        description: e.g., "t2.micro", "n1-standard-1"
-        type: string
-      description:
-        type: string
-      diskSizeGb:
-        type: integer
-      diskType:
-        description: e.g., "SSD", "HDD"
-        type: string
-      gpuCount:
-        type: integer
-      gpuType:
-        type: string
-      id:
-        type: string
-      lavel:
-        additionalProperties:
           type: string
-        type: object
-      memoryGb:
-        type: number
-      name:
-        type: string
-      networkBandwidth:
-        description: In Mbps
-        type: integer
-      vCpu:
-        type: integer
-    type: object
-  cloudinframodel.VPC:
-    properties:
-      cidr:
-        type: string
-      description:
-        type: string
-      lavel:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      routeTable:
-        $ref: '#/definitions/cloudinframodel.RouteInfo'
-      securityGroups:
-        items:
-          $ref: '#/definitions/cloudinframodel.SecurityGroup'
         type: array
-      subnets:
-        items:
-          $ref: '#/definitions/cloudinframodel.Subnet'
-        type: array
+      specId:
+        type: string
+      sshKeyId:
+        type: string
+      subGroupSize:
+        description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
+          VMs will be created accordingly.
+        example: "3"
+        type: string
+      subnetId:
+        type: string
+      vNetId:
+        type: string
+      vmUserName:
+        type: string
+      vmUserPassword:
+        type: string
+    required:
+    - connectionName
+    - imageId
+    - name
+    - securityGroupIds
+    - specId
+    - sshKeyId
+    - subnetId
+    - vNetId
     type: object
   handler.CloudModelRespInfo:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudinframodel.CloudInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -919,7 +542,7 @@ definitions:
   handler.CreateCloudModelReq:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudinframodel.CloudInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
       csp:
         type: string
       description:
@@ -944,7 +567,7 @@ definitions:
   handler.CreateCloudModelResp:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudinframodel.CloudInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -983,7 +606,7 @@ definitions:
       isInitUserModel:
         type: boolean
       onpremiseInfraModel:
-        $ref: '#/definitions/Onpreminframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
       userId:
         type: string
       userModelName:
@@ -1010,7 +633,7 @@ definitions:
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
-        $ref: '#/definitions/Onpreminframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
       updateTime:
         type: string
       userId:
@@ -1025,7 +648,7 @@ definitions:
   handler.GetCloudModelResp:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudinframodel.CloudInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -1093,7 +716,7 @@ definitions:
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
-        $ref: '#/definitions/Onpreminframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
       updateTime:
         type: string
       userId:
@@ -1115,7 +738,7 @@ definitions:
   handler.ModelRespInfo:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudinframodel.CloudInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -1135,11 +758,9 @@ definitions:
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
-        $ref: '#/definitions/Onpreminframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
       region:
         type: string
-      softwareModel:
-        $ref: '#/definitions/Softwaremodel.Software'
       updateTime:
         type: string
       userId:
@@ -1153,7 +774,6 @@ definitions:
     required:
     - cloudInfraModel
     - onpremiseInfraModel
-    - softwareModel
     type: object
   handler.ModelsVersionRespInfo:
     properties:
@@ -1179,7 +799,7 @@ definitions:
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
-        $ref: '#/definitions/Onpreminframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
       updateTime:
         type: string
       userId:
@@ -1204,7 +824,7 @@ definitions:
   handler.UpdateCloudModelReq:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudinframodel.CloudInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
       csp:
         type: string
       description:
@@ -1229,7 +849,7 @@ definitions:
   handler.UpdateCloudModelResp:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudinframodel.CloudInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -1268,7 +888,7 @@ definitions:
       isInitUserModel:
         type: boolean
       onpremiseInfraModel:
-        $ref: '#/definitions/Onpreminframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
       userId:
         type: string
       userModelName:
@@ -1295,7 +915,7 @@ definitions:
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
-        $ref: '#/definitions/Onpreminframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
       updateTime:
         type: string
       userId:
@@ -1324,6 +944,263 @@ definitions:
       text:
         example: Any text
         type: string
+    type: object
+  onpremisemodel.CpuProperty:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      cores:
+        description: Number of physical cores per CPU
+        example: 18
+        type: integer
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 2
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+        type: string
+      threads:
+        description: Number of logical CPUs (threads) per CPU with hyper-threading
+          enabled
+        example: 36
+        type: integer
+      vendor:
+        example: GenuineIntel
+        type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  onpremisemodel.DiskProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      label:
+        type: string
+      totalSize:
+        description: Unit GiB
+        example: 1024
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - label
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.FirewallRuleProperty:
+    properties:
+      action:
+        description: e.g., allow, deny
+        type: string
+      direction:
+        description: e.g., inbound, outbound
+        type: string
+      dstCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      dstPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+      protocol:
+        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
+        type: string
+      srcCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      srcPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+    type: object
+  onpremisemodel.GatewayProperty:
+    properties:
+      interfaceName:
+        description: Name of the network interface associated with the gateway
+        type: string
+      ip:
+        description: IP address of the gateway
+        type: string
+      machineId:
+        description: Unique identifier for the machine (e.g., UUID)
+        type: string
+    type: object
+  onpremisemodel.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 128
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.NetworkDetail:
+    properties:
+      cidrBlocks:
+        items:
+          type: string
+        type: array
+      defaultGateways:
+        items:
+          $ref: '#/definitions/onpremisemodel.GatewayProperty'
+        type: array
+    type: object
+  onpremisemodel.NetworkInterfaceProperty:
+    properties:
+      ipv4CidrBlocks:
+        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
+          of inet addr, Bcast, and Mask
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
+        items:
+          type: string
+        type: array
+      macAddress:
+        description: MAC address
+        type: string
+      mtu:
+        description: Maximum Transmission Unit (MTU) in bytes
+        type: integer
+      name:
+        description: Interface name (e.g., eth0, ens01, enp0s3)
+        type: string
+      state:
+        description: Interface state (e.g., UP, DOWN)
+        type: string
+    required:
+    - name
+    type: object
+  onpremisemodel.NetworkProperty:
+    properties:
+      ipv4Networks:
+        $ref: '#/definitions/onpremisemodel.NetworkDetail'
+      ipv6Networks:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.NetworkDetail'
+        description: TBD
+    type: object
+  onpremisemodel.OnpremInfra:
+    properties:
+      network:
+        $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.ServerProperty'
+        type: array
+    required:
+    - servers
+    type: object
+  onpremisemodel.OsProperty:
+    properties:
+      id:
+        example: ubuntu
+        type: string
+      idLike:
+        example: debian
+        type: string
+      name:
+        example: Ubuntu
+        type: string
+      prettyName:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
+        type: string
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
+        type: string
+      versionCodename:
+        example: jammy
+        type: string
+      versionId:
+        example: "22.04"
+        type: string
+    required:
+    - prettyName
+    type: object
+  onpremisemodel.RouteProperty:
+    properties:
+      destination:
+        description: Destination network, expressed in CIDR format
+        type: string
+      gateway:
+        description: Gateway address to which packets are forwarded
+        type: string
+      interface:
+        description: Network interface associated with the route
+        type: string
+      linkState:
+        description: Link state of the route (e.g., UP, DOWN)
+        type: string
+      metric:
+        description: Metric value indicating the priority of the route
+        type: integer
+      protocol:
+        description: Protocol used to set the route (e.g., kernel, static)
+        type: string
+      scope:
+        description: Scope of the route (e.g., global, link, host)
+        type: string
+      source:
+        description: Optionally stores the source address (used for policy-based routing)
+        type: string
+    type: object
+  onpremisemodel.ServerProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the server (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
     type: object
 info:
   contact:
@@ -1396,14 +1273,18 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Successfully deleted!!
+        "200":
+          description: Successfully Deleted the Cloud Migration User Model
           schema:
-            $ref: '#/definitions/handler.UpdateCloudModelResp'
+            type: string
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
         "404":
-          description: Not Found
+          description: Model Not Found
           schema:
-            $ref: '#/definitions/model.Response'
+            type: object
         "500":
           description: Internal Server Error
           schema:
@@ -1601,7 +1482,22 @@ paths:
       - '[API] On-Premise Migration User Models'
   /onpremmodel/{id}:
     delete:
+      consumes:
+      - application/json
+      description: Delete a on-premise model with the given information.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
       responses:
+        "200":
+          description: Successfully Deleted the On-Premise Migration User Model
+          schema:
+            type: string
         "400":
           description: Invalid Request
           schema:
@@ -1610,6 +1506,13 @@ paths:
           description: Model Not Found
           schema:
             type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a on-premise model
+      tags:
+      - '[API] On-Premise Migration User Models'
     get:
       consumes:
       - application/json

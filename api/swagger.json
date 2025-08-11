@@ -193,16 +193,22 @@
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Successfully deleted!!",
+                    "200": {
+                        "description": "Successfully Deleted the Cloud Migration User Model",
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateCloudModelResp"
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Model Not Found",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "type": "object"
                         }
                     },
                     "500": {
@@ -502,7 +508,33 @@
                 }
             },
             "delete": {
+                "description": "Delete a on-premise model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] On-Premise Migration User Models"
+                ],
+                "summary": "Delete a on-premise model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
+                    "200": {
+                        "description": "Successfully Deleted the On-Premise Migration User Model",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "400": {
                         "description": "Invalid Request",
                         "schema": {
@@ -513,6 +545,12 @@
                         "description": "Model Not Found",
                         "schema": {
                             "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
                         }
                     }
                 }
@@ -549,1286 +587,694 @@
         }
     },
     "definitions": {
-        "Onpreminframodel.CpuProperty": {
+        "cloudmodel.ImageStatus": {
+            "type": "string",
+            "enum": [
+                "Available",
+                "Unavailable",
+                "Deprecated",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "ImageAvailable",
+                "ImageUnavailable",
+                "ImageDeprecated",
+                "ImageNA"
+            ]
+        },
+        "cloudmodel.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.MciCmdReq": {
             "type": "object",
             "required": [
-                "cores",
-                "cpus",
-                "threads"
+                "command"
             ],
             "properties": {
-                "architecture": {
-                    "type": "string",
-                    "example": "x86_64"
-                },
-                "cores": {
-                    "description": "Number of physical cores per CPU",
-                    "type": "integer",
-                    "example": 18
-                },
-                "cpus": {
-                    "description": "Number of physical CPUs (sockets)",
-                    "type": "integer",
-                    "example": 2
-                },
-                "maxSpeed": {
-                    "description": "Maximum speed in GHz",
-                    "type": "number",
-                    "example": 3.6
-                },
-                "model": {
-                    "type": "string",
-                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
-                },
-                "threads": {
-                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
-                    "type": "integer",
-                    "example": 36
-                },
-                "vendor": {
-                    "type": "string",
-                    "example": "GenuineIntel"
-                }
-            }
-        },
-        "Onpreminframodel.DiskProperty": {
-            "type": "object",
-            "required": [
-                "label",
-                "totalSize",
-                "type"
-            ],
-            "properties": {
-                "available": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "totalSize": {
-                    "description": "Unit GiB",
-                    "type": "integer",
-                    "example": 1024
-                },
-                "type": {
-                    "description": "SSD, HDD",
-                    "type": "string",
-                    "example": "SSD"
-                },
-                "used": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "Onpreminframodel.FirewallRuleProperty": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "description": "allow, deny",
-                    "type": "string"
-                },
-                "direction": {
-                    "description": "inbound, outbound",
-                    "type": "string"
-                },
-                "dstCIDR": {
-                    "type": "string"
-                },
-                "dstPorts": {
-                    "type": "string"
-                },
-                "protocol": {
-                    "description": "TCP, UDP, ICMP",
-                    "type": "string"
-                },
-                "srcCIDR": {
-                    "type": "string"
-                },
-                "srcPorts": {
-                    "type": "string"
-                }
-            }
-        },
-        "Onpreminframodel.MemoryProperty": {
-            "type": "object",
-            "required": [
-                "totalSize",
-                "type"
-            ],
-            "properties": {
-                "available": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                },
-                "totalSize": {
-                    "description": "Unit GiB",
-                    "type": "integer",
-                    "example": 128
-                },
-                "type": {
-                    "type": "string",
-                    "example": "DDR4"
-                },
-                "used": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "Onpreminframodel.NetworkInterfaceProperty": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "ipv4CidrBlocks": {
-                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "ipv6CidrBlocks": {
-                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "macAddress": {
-                    "description": "MAC address",
-                    "type": "string"
-                },
-                "mtu": {
-                    "description": "Maximum Transmission Unit (MTU) in bytes",
-                    "type": "integer"
-                },
-                "name": {
-                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
-                    "type": "string"
-                },
-                "state": {
-                    "description": "Interface state (e.g., UP, DOWN)",
-                    "type": "string"
-                }
-            }
-        },
-        "Onpreminframodel.NetworkProperty": {
-            "type": "object",
-            "properties": {
-                "ipv4Networks": {
+                "command": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
                     "example": [
-                        "172.26.240.0/20"
+                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
                     ]
                 },
-                "ipv6Networks": {
-                    "description": "TBD",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "userName": {
+                    "type": "string",
+                    "example": "cb-user"
                 }
             }
         },
-        "Onpreminframodel.OnpremInfra": {
-            "type": "object",
-            "required": [
-                "servers"
+        "cloudmodel.OSArchitecture": {
+            "type": "string",
+            "enum": [
+                "arm32",
+                "arm64",
+                "arm64_mac",
+                "x86_32",
+                "x86_64",
+                "x86_32_mac",
+                "x86_64_mac",
+                "s390x",
+                "NA",
+                ""
             ],
+            "x-enum-varnames": [
+                "ARM32",
+                "ARM64",
+                "ARM64_MAC",
+                "X86_32",
+                "X86_64",
+                "X86_32_MAC",
+                "X86_64_MAC",
+                "S390X",
+                "ArchitectureNA",
+                "ArchitectureUnknown"
+            ]
+        },
+        "cloudmodel.OSPlatform": {
+            "type": "string",
+            "enum": [
+                "Linux/UNIX",
+                "Windows",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "Linux_UNIX",
+                "Windows",
+                "PlatformNA"
+            ]
+        },
+        "cloudmodel.RecommendedVmInfra": {
+            "type": "object",
             "properties": {
-                "network": {
-                    "$ref": "#/definitions/Onpreminframodel.NetworkProperty"
+                "description": {
+                    "type": "string"
                 },
-                "servers": {
+                "status": {
+                    "type": "string"
+                },
+                "targetSecurityGroupList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Onpreminframodel.ServerProperty"
+                        "$ref": "#/definitions/cloudmodel.TbSecurityGroupReq"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.TbSshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.TbVNetReq"
+                },
+                "targetVmInfra": {
+                    "$ref": "#/definitions/cloudmodel.TbMciReq"
+                },
+                "targetVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbImageInfo"
+                    }
+                },
+                "targetVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbSpecInfo"
                     }
                 }
             }
         },
-        "Onpreminframodel.OsProperty": {
+        "cloudmodel.TbFirewallRuleInfo": {
             "type": "object",
             "required": [
-                "prettyName"
+                "Direction",
+                "Protocol"
             ],
             "properties": {
+                "CIDR": {
+                    "type": "string",
+                    "example": "0.0.0.0/0"
+                },
+                "Direction": {
+                    "type": "string",
+                    "enum": [
+                        "inbound",
+                        "outbound"
+                    ],
+                    "example": "inbound"
+                },
+                "Ports": {
+                    "type": "string",
+                    "example": "1-65535,22,5555"
+                },
+                "Protocol": {
+                    "type": "string",
+                    "enum": [
+                        "TCP",
+                        "UDP",
+                        "ICMP",
+                        "ALL"
+                    ],
+                    "example": "TCP"
+                }
+            }
+        },
+        "cloudmodel.TbImageInfo": {
+            "type": "object",
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "creationDate": {
+                    "type": "string"
+                },
+                "cspImageName": {
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.KeyValue"
+                    }
+                },
+                "fetchedTime": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string",
-                    "example": "ubuntu"
+                    "example": "aws-ap-southeast-1"
                 },
-                "idLike": {
-                    "type": "string",
-                    "example": "debian"
+                "imageStatus": {
+                    "description": "Available, Deprecated, NA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.ImageStatus"
+                        }
+                    ],
+                    "example": "Available"
+                },
+                "infraType": {
+                    "description": "vm|k8s|kubernetes|container, etc.",
+                    "type": "string"
+                },
+                "isGPUImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "isKubernetesImage": {
+                    "type": "boolean",
+                    "default": false
                 },
                 "name": {
                     "type": "string",
-                    "example": "Ubuntu"
+                    "example": "aws-ap-southeast-1"
                 },
-                "prettyName": {
-                    "description": "Pretty name",
+                "namespace": {
+                    "description": "Composite primary key",
                     "type": "string",
-                    "example": "Ubuntu 22.04.3 LTS"
+                    "example": "default"
                 },
-                "version": {
-                    "description": "Full version string",
+                "osArchitecture": {
+                    "description": "arm64, x86_64 etc.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.OSArchitecture"
+                        }
+                    ],
+                    "example": "x86_64"
+                },
+                "osDiskSizeGB": {
+                    "description": "10, 50, 100 etc.",
+                    "type": "number",
+                    "example": 50
+                },
+                "osDiskType": {
+                    "description": "ebs, HDD, etc.",
                     "type": "string",
-                    "example": "22.04.3 LTS (Jammy Jellyfish)"
+                    "example": "HDD"
                 },
-                "versionCodename": {
+                "osDistribution": {
+                    "description": "Ubuntu 22.04~, CentOS 8 etc.",
                     "type": "string",
-                    "example": "jammy"
+                    "example": "Ubuntu 22.04~"
                 },
-                "versionId": {
+                "osPlatform": {
+                    "description": "Linux/UNIX, Windows, NA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.OSPlatform"
+                        }
+                    ],
+                    "example": "Linux/UNIX"
+                },
+                "osType": {
                     "type": "string",
-                    "example": "22.04"
-                }
-            }
-        },
-        "Onpreminframodel.RouteProperty": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "description": "Destination network, expressed in CIDR format",
+                    "example": "ubuntu 22.04"
+                },
+                "providerName": {
                     "type": "string"
                 },
-                "gateway": {
-                    "description": "Gateway address to which packets are forwarded",
-                    "type": "string"
-                },
-                "interface": {
-                    "description": "Network interface associated with the route",
-                    "type": "string"
-                },
-                "linkState": {
-                    "description": "Link state of the route (e.g., UP, DOWN)",
-                    "type": "string"
-                },
-                "metric": {
-                    "description": "Metric value indicating the priority of the route",
-                    "type": "integer"
-                },
-                "protocol": {
-                    "description": "Protocol used to set the route (e.g., kernel, static)",
-                    "type": "string"
-                },
-                "scope": {
-                    "description": "Scope of the route (e.g., global, link, host)",
-                    "type": "string"
-                },
-                "source": {
-                    "description": "Optionally stores the source address (used for policy-based routing)",
-                    "type": "string"
-                }
-            }
-        },
-        "Onpreminframodel.ServerProperty": {
-            "type": "object",
-            "properties": {
-                "cpu": {
-                    "$ref": "#/definitions/Onpreminframodel.CpuProperty"
-                },
-                "dataDisks": {
+                "regionList": {
+                    "description": "Array field for supporting multiple regions",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Onpreminframodel.DiskProperty"
+                        "type": "string"
                     }
+                },
+                "systemLabel": {
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                }
+            }
+        },
+        "cloudmodel.TbMciReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "vm"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                        }
+                    ]
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbVmReq"
+                    }
+                }
+            }
+        },
+        "cloudmodel.TbSecurityGroupReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name",
+                "vNetId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is required to register object from CSP (option=register)",
+                    "type": "string",
+                    "example": "required for option=register only. ex: csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
                 },
                 "firewallRules": {
+                    "description": "validate:\"required\"`",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Onpreminframodel.FirewallRuleProperty"
+                        "$ref": "#/definitions/cloudmodel.TbFirewallRuleInfo"
                     }
-                },
-                "hostname": {
-                    "type": "string"
-                },
-                "interfaces": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Onpreminframodel.NetworkInterfaceProperty"
-                    }
-                },
-                "memory": {
-                    "$ref": "#/definitions/Onpreminframodel.MemoryProperty"
-                },
-                "os": {
-                    "$ref": "#/definitions/Onpreminframodel.OsProperty"
-                },
-                "rootDisk": {
-                    "$ref": "#/definitions/Onpreminframodel.DiskProperty"
-                },
-                "routingTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Onpreminframodel.RouteProperty"
-                    }
-                }
-            }
-        },
-        "Softwaremodel.ContainerConfig": {
-            "type": "object",
-            "properties": {
-                "extra_config": {
-                    "description": "Additional container configuration.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "image": {
-                    "description": "container image info.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "network": {
-                    "description": "e.g., bridge, host, overlay, etc.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "volume": {
-                    "description": "volume details or mount point info.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "Softwaremodel.Environment": {
-            "type": "object",
-            "properties": {
-                "config": {
-                    "description": "can include additional details such as network settings, credentials, etc.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "os": {
-                    "$ref": "#/definitions/Softwaremodel.OperatingSystem"
-                },
-                "provider": {
-                    "description": "(if cloud) aws, azure, gcp, etc.",
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "type": {
-                    "description": "e.g., \"on-premise\" or \"cloud\"",
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "Softwaremodel.KubernetesConfig": {
-            "type": "object",
-            "properties": {
-                "cluster": {
-                    "description": "cluster name or identifier.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "extra_config": {
-                    "description": "Additional Kubernetes configuration.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "network": {
-                    "description": "network settings or CNI configurations.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "policies": {
-                    "description": "any relevant policies.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "volume": {
-                    "description": "volume settings.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "Softwaremodel.MigrationMethod": {
-            "type": "string",
-            "enum": [
-                "binary",
-                "os_package",
-                "container",
-                "kubernetes",
-                "managed_csp"
-            ],
-            "x-enum-comments": {
-                "MethodBinary": "Moving the software as a binary executable.",
-                "MethodContainer": "Installing as a container package.",
-                "MethodKubernetes": "Installing as a Kubernetes package.",
-                "MethodManaged": "Using the CSP's managed software service.",
-                "MethodOSPackage": "Installing via OS package manager."
-            },
-            "x-enum-varnames": [
-                "MethodBinary",
-                "MethodOSPackage",
-                "MethodContainer",
-                "MethodKubernetes",
-                "MethodManaged"
-            ]
-        },
-        "Softwaremodel.OperatingSystem": {
-            "type": "object",
-            "properties": {
-                "architecture": {
-                    "description": "x86_64, arm64",
-                    "type": "string"
-                },
-                "type": {
-                    "description": "Ubuntu, Debian, Windows",
-                    "type": "string"
-                },
-                "version": {
-                    "description": "OS version",
-                    "type": "string"
-                }
-            }
-        },
-        "Softwaremodel.Software": {
-            "type": "object",
-            "properties": {
-                "environment": {
-                    "description": "can be on-premise or cloud.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/Softwaremodel.Environment"
-                        }
-                    ]
-                },
-                "software_properties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Softwaremodel.SoftwareProperty"
-                    }
-                }
-            }
-        },
-        "Softwaremodel.SoftwareConfig": {
-            "type": "object",
-            "properties": {
-                "settings": {
-                    "description": "Settings can include environment variables, config file paths, ports, etc.",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "Softwaremodel.SoftwareProperty": {
-            "type": "object",
-            "properties": {
-                "config": {
-                    "description": "configuration settings for the software",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/Softwaremodel.SoftwareConfig"
-                        }
-                    ]
-                },
-                "container_info": {
-                    "description": "Optional parameters for container and Kubernetes migration methods.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/Softwaremodel.ContainerConfig"
-                        }
-                    ]
-                },
-                "kubernetes_info": {
-                    "$ref": "#/definitions/Softwaremodel.KubernetesConfig"
-                },
-                "methods": {
-                    "description": "supported migration methods",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Softwaremodel.MigrationMethod"
-                    }
-                },
-                "software_name": {
-                    "description": "any software, e.g., \"nginx\", \"nfs\", \"mysql\"",
-                    "type": "string"
-                },
-                "version": {
-                    "description": "version of the software",
-                    "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.AddOn": {
-            "type": "object",
-            "properties": {
-                "config": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.KeyValue"
-                    }
-                },
-                "enabled": {
-                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
                 },
-                "version": {
+                "vNetId": {
                     "type": "string"
                 }
             }
         },
-        "cloudinframodel.AuthInfo": {
+        "cloudmodel.TbSpecInfo": {
             "type": "object",
             "properties": {
-                "apiCredential": {
+                "acceleratorCount": {
+                    "type": "integer"
+                },
+                "acceleratorMemoryGB": {
+                    "type": "number"
+                },
+                "acceleratorModel": {
                     "type": "string"
                 },
-                "keyPath": {
+                "acceleratorType": {
                     "type": "string"
                 },
-                "password": {
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "associatedObjectList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "connectionName": {
                     "type": "string"
                 },
-                "type": {
-                    "description": "ssh-key, password, api-key",
+                "costPerHour": {
+                    "type": "number"
+                },
+                "cspSpecName": {
+                    "description": "CspSpecName is name of the spec given by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "description": {
                     "type": "string"
                 },
-                "username": {
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.KeyValue"
+                    }
+                },
+                "diskSizeGB": {
+                    "type": "number"
+                },
+                "evaluationScore01": {
+                    "type": "number"
+                },
+                "evaluationScore02": {
+                    "type": "number"
+                },
+                "evaluationScore03": {
+                    "type": "number"
+                },
+                "evaluationScore04": {
+                    "type": "number"
+                },
+                "evaluationScore05": {
+                    "type": "number"
+                },
+                "evaluationScore06": {
+                    "type": "number"
+                },
+                "evaluationScore07": {
+                    "type": "number"
+                },
+                "evaluationScore08": {
+                    "type": "number"
+                },
+                "evaluationScore09": {
+                    "type": "number"
+                },
+                "evaluationScore10": {
+                    "type": "number"
+                },
+                "evaluationStatus": {
                     "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.CSPType": {
-            "type": "string",
-            "enum": [
-                "AWS",
-                "GCP",
-                "Azure",
-                "Alibaba",
-                "Tencent",
-                "OpenStack",
-                "IBM",
-                "NCP",
-                "NHN",
-                "KTCloud"
-            ],
-            "x-enum-varnames": [
-                "AWS",
-                "GCP",
-                "Azure",
-                "Alibaba",
-                "Tencent",
-                "OpenStack",
-                "IBM",
-                "NCP",
-                "NHN",
-                "KTCloud"
-            ]
-        },
-        "cloudinframodel.CloudEnvironment": {
-            "type": "object",
-            "properties": {
-                "cspType": {
-                    "description": "AWS, GCP, Azure, ...",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudinframodel.CSPType"
-                        }
-                    ]
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "infraType": {
+                    "description": "InfraType can be one of vm|k8s|kubernetes|container, etc.",
+                    "type": "string"
+                },
+                "isAutoGenerated": {
+                    "type": "boolean"
+                },
+                "maxTotalStorageTiB": {
+                    "type": "integer"
+                },
+                "memoryGiB": {
+                    "type": "number"
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "namespace": {
+                    "type": "string",
+                    "example": "default"
+                },
+                "netBwGbps": {
+                    "type": "integer"
+                },
+                "orderInFilteredResult": {
+                    "type": "integer"
+                },
+                "osType": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
                 },
                 "regionName": {
                     "type": "string"
                 },
-                "zoneName": {
+                "rootDiskSize": {
                     "type": "string"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vCPU": {
+                    "type": "integer"
                 }
             }
         },
-        "cloudinframodel.CloudInfra": {
+        "cloudmodel.TbSshKeyReq": {
             "type": "object",
             "required": [
-                "cloudenvironment",
-                "network",
-                "vms"
+                "connectionName",
+                "name"
             ],
             "properties": {
-                "cloudenvironment": {
-                    "$ref": "#/definitions/cloudinframodel.CloudEnvironment"
-                },
-                "clusters": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.ClusterProperty"
-                    }
-                },
-                "network": {
-                    "$ref": "#/definitions/cloudinframodel.NetworkProperty"
-                },
-                "vms": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.VMProperty"
-                    }
-                }
-            }
-        },
-        "cloudinframodel.ClusterProperty": {
-            "type": "object",
-            "properties": {
-                "addOns": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.AddOn"
-                    }
-                },
-                "caData": {
-                    "description": "Certificate Authority data",
+                "connectionName": {
                     "type": "string"
                 },
-                "description": {
+                "cspResourceId": {
+                    "description": "Fields for \"Register existing SSH keys\" feature\nCspResourceId is required to register object from CSP (option=register)",
                     "type": "string"
                 },
-                "endpointUrl": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "kubeConfig": {
-                    "type": "string"
-                },
-                "lavel": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "nodePools": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.NodePool"
-                    }
-                },
-                "subnets": {
-                    "description": "Subnet IDs",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "type": {
-                    "description": "e.g., \"Kubernetes\", \"ECS\", \"GKE\"",
-                    "type": "string"
-                },
-                "version": {
-                    "description": "e.g., \"1.23\"",
-                    "type": "string"
-                },
-                "vpc": {
-                    "description": "VPC ID",
-                    "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.Disk": {
-            "type": "object",
-            "properties": {
-                "attachedTo": {
-                    "description": "VM ID if attached",
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "deviceName": {
-                    "description": "e.g., \"/dev/sda1\"",
-                    "type": "string"
-                },
-                "diskType": {
-                    "description": "e.g., \"SSD\", \"HDD\"",
-                    "type": "string"
-                },
-                "iops": {
-                    "type": "integer"
-                },
-                "isBootDisk": {
-                    "type": "boolean"
-                },
-                "isEncrypted": {
-                    "type": "boolean"
-                },
-                "lavel": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "sizeGb": {
-                    "type": "integer"
-                },
-                "snapshot": {
-                    "description": "Source snapshot ID if applicable",
-                    "type": "string"
-                },
-                "throughput": {
-                    "description": "In MBps",
-                    "type": "integer"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.KeyPair": {
-            "type": "object",
-            "properties": {
                 "description": {
                     "type": "string"
                 },
                 "fingerprint": {
                     "type": "string"
                 },
-                "keyFormat": {
-                    "description": "e.g., \"ssh-rsa\", \"ecdsa\"",
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
                 "privateKey": {
-                    "description": "Note: Should be handled securely",
                     "type": "string"
                 },
                 "publicKey": {
                     "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.KeyValue": {
-            "type": "object",
-            "properties": {
-                "key": {
+                },
+                "username": {
                     "type": "string"
                 },
-                "value": {
+                "verifiedUsername": {
                     "type": "string"
                 }
             }
         },
-        "cloudinframodel.NIC": {
+        "cloudmodel.TbSubnetReq": {
             "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isPrimary": {
-                    "type": "boolean"
-                },
-                "macAddress": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "privateIp": {
-                    "type": "string"
-                },
-                "publicIp": {
-                    "type": "string"
-                },
-                "securityGroups": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "subnetId": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.NetworkProperty": {
-            "type": "object",
-            "properties": {
-                "cidr": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "lavel": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "vpcs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.VPC"
-                    }
-                }
-            }
-        },
-        "cloudinframodel.NodePool": {
-            "type": "object",
-            "properties": {
-                "autoScaling": {
-                    "type": "boolean"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "desiredNodes": {
-                    "type": "integer"
-                },
-                "diskSizeGb": {
-                    "type": "integer"
-                },
-                "diskType": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "maxNodes": {
-                    "type": "integer"
-                },
-                "minNodes": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "nodeLabels": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.KeyValue"
-                    }
-                },
-                "subnets": {
-                    "description": "Subnet IDs",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "taints": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.Taint"
-                    }
-                },
-                "vmImage": {
-                    "description": "VM Image ID",
-                    "type": "string"
-                },
-                "vmSpec": {
-                    "description": "VM Spec ID",
-                    "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.RouteEntry": {
-            "type": "object",
-            "properties": {
-                "destinationCidr": {
-                    "type": "string"
-                },
-                "target": {
-                    "description": "Gateway ID, Instance ID, etc.",
-                    "type": "string"
-                },
-                "targetType": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.RouteInfo": {
-            "type": "object",
-            "properties": {
-                "associatedTo": {
-                    "description": "IDs of associated resources",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "routes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.RouteEntry"
-                    }
-                }
-            }
-        },
-        "cloudinframodel.SGRule": {
-            "type": "object",
+            "required": [
+                "ipv4_CIDR",
+                "name"
+            ],
             "properties": {
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "subnet00 managed by CB-Tumblebug"
                 },
-                "destCidr": {
-                    "type": "string"
-                },
-                "destSecGrp": {
-                    "type": "string"
-                },
-                "direction": {
-                    "description": "\"inbound\" or \"outbound\"",
-                    "type": "string"
-                },
-                "fromPort": {
-                    "description": "Start port range",
-                    "type": "integer"
-                },
-                "ipProtocol": {
-                    "description": "e.g., \"tcp\", \"udp\", \"icmp\"",
-                    "type": "string"
+                "ipv4_CIDR": {
+                    "type": "string",
+                    "example": "10.0.1.0/24"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "sourceCidr": {
-                    "type": "string"
-                },
-                "sourceSecGrp": {
-                    "type": "string"
-                },
-                "toPort": {
-                    "description": "End port range",
-                    "type": "integer"
-                }
-            }
-        },
-        "cloudinframodel.SecurityGroup": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "lavel": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "rules": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.SGRule"
-                    }
-                }
-            }
-        },
-        "cloudinframodel.Subnet": {
-            "type": "object",
-            "properties": {
-                "cidr": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "isPublic": {
-                    "type": "boolean"
-                },
-                "lavel": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "subnet00"
                 },
                 "zone": {
                     "type": "string"
                 }
             }
         },
-        "cloudinframodel.Taint": {
+        "cloudmodel.TbVNetReq": {
             "type": "object",
+            "required": [
+                "connectionName",
+                "name"
+            ],
             "properties": {
-                "effect": {
-                    "description": "e.g., \"NoSchedule\", \"PreferNoSchedule\", \"NoExecute\"",
-                    "type": "string"
+                "cidrBlock": {
+                    "type": "string",
+                    "example": "10.0.0.0/16"
                 },
-                "key": {
-                    "type": "string"
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
                 },
-                "value": {
-                    "type": "string"
+                "description": {
+                    "type": "string",
+                    "example": "vnet00 managed by CB-Tumblebug"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "vnet00"
+                },
+                "subnetInfoList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbSubnetReq"
+                    }
                 }
             }
         },
-        "cloudinframodel.VMImage": {
+        "cloudmodel.TbVmReq": {
             "type": "object",
+            "required": [
+                "connectionName",
+                "imageId",
+                "name",
+                "securityGroupIds",
+                "specId",
+                "sshKeyId",
+                "subnetId",
+                "vNetId"
+            ],
             "properties": {
-                "architecture": {
-                    "description": "e.g., \"x86_64\", \"arm64\"",
-                    "type": "string"
+                "connectionName": {
+                    "type": "string",
+                    "example": "testcloud01-seoul"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP (required for option=register)",
+                    "type": "string",
+                    "example": "i-014fa6ede6ada0b2c"
+                },
+                "dataDiskIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "imageId": {
+                    "description": "ImageType        string   `json:\"imageType\"`",
                     "type": "string"
                 },
-                "id": {
-                    "type": "string"
-                },
-                "lavel": {
+                "label": {
+                    "description": "Label is for describing the object by keywords",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
                 },
                 "name": {
-                    "type": "string"
+                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
                 },
-                "osDistro": {
-                    "description": "e.g., \"Ubuntu\", \"Windows Server\"",
-                    "type": "string"
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "example": "default, 30, 42, ..."
                 },
-                "osType": {
-                    "description": "e.g., \"Linux\", \"Windows\"",
-                    "type": "string"
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "default, TYPE1, ..."
                 },
-                "osVersion": {
-                    "description": "e.g., \"22.04\", \"2019\"",
-                    "type": "string"
-                },
-                "sizeGB": {
-                    "type": "integer"
-                },
-                "sourceImageId": {
-                    "type": "string"
-                },
-                "sourceUrl": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudinframodel.VMProperty": {
-            "type": "object",
-            "properties": {
-                "additionalDisks": {
+                "securityGroupIds": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudinframodel.Disk"
-                    }
-                },
-                "authinfo": {
-                    "$ref": "#/definitions/cloudinframodel.AuthInfo"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "keyPair": {
-                    "description": "Key Pair Info",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudinframodel.KeyPair"
-                        }
-                    ]
-                },
-                "lavel": {
-                    "type": "object",
-                    "additionalProperties": {
                         "type": "string"
                     }
                 },
-                "monAgent": {
-                    "description": "\"installMonAgent\": true or false",
-                    "type": "boolean"
-                },
-                "name": {
+                "specId": {
                     "type": "string"
                 },
-                "networkInterfaces": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.NIC"
-                    }
-                },
-                "privateIp": {
+                "sshKeyId": {
                     "type": "string"
                 },
-                "rootDisk": {
-                    "$ref": "#/definitions/cloudinframodel.Disk"
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
+                    "type": "string",
+                    "example": "3"
                 },
-                "securityGroups": {
-                    "description": "Security Group Info.s",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.SecurityGroup"
-                    }
-                },
-                "status": {
-                    "description": "Running or Susppended",
+                "subnetId": {
                     "type": "string"
                 },
-                "subnet": {
-                    "description": "Subnet Info",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudinframodel.Subnet"
-                        }
-                    ]
-                },
-                "userData": {
-                    "description": "Boot script",
+                "vNetId": {
                     "type": "string"
                 },
-                "vmImage": {
-                    "description": "VM Image Info",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudinframodel.VMImage"
-                        }
-                    ]
-                },
-                "vmSpec": {
-                    "description": "VM Spec Info",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudinframodel.VMSpec"
-                        }
-                    ]
-                },
-                "vpc": {
-                    "description": "VPC Info",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudinframodel.VPC"
-                        }
-                    ]
-                }
-            }
-        },
-        "cloudinframodel.VMSpec": {
-            "type": "object",
-            "properties": {
-                "cspInstanceType": {
-                    "description": "e.g., \"t2.micro\", \"n1-standard-1\"",
+                "vmUserName": {
                     "type": "string"
                 },
-                "description": {
+                "vmUserPassword": {
                     "type": "string"
-                },
-                "diskSizeGb": {
-                    "type": "integer"
-                },
-                "diskType": {
-                    "description": "e.g., \"SSD\", \"HDD\"",
-                    "type": "string"
-                },
-                "gpuCount": {
-                    "type": "integer"
-                },
-                "gpuType": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "lavel": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "memoryGb": {
-                    "type": "number"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "networkBandwidth": {
-                    "description": "In Mbps",
-                    "type": "integer"
-                },
-                "vCpu": {
-                    "type": "integer"
-                }
-            }
-        },
-        "cloudinframodel.VPC": {
-            "type": "object",
-            "properties": {
-                "cidr": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "lavel": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "routeTable": {
-                    "$ref": "#/definitions/cloudinframodel.RouteInfo"
-                },
-                "securityGroups": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.SecurityGroup"
-                    }
-                },
-                "subnets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudinframodel.Subnet"
-                    }
                 }
             }
         },
@@ -1839,7 +1285,7 @@
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudinframodel.CloudInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -1892,7 +1338,7 @@
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudinframodel.CloudInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                 },
                 "csp": {
                     "type": "string"
@@ -1930,7 +1376,7 @@
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudinframodel.CloudInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -1989,7 +1435,7 @@
                     "type": "boolean"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/Onpreminframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "userId": {
                     "type": "string"
@@ -2030,7 +1476,7 @@
                     "type": "string"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/Onpreminframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2053,7 +1499,7 @@
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudinframodel.CloudInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -2157,7 +1603,7 @@
                     "type": "string"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/Onpreminframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2188,12 +1634,11 @@
             "type": "object",
             "required": [
                 "cloudInfraModel",
-                "onpremiseInfraModel",
-                "softwareModel"
+                "onpremiseInfraModel"
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudinframodel.CloudInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -2223,13 +1668,10 @@
                     "type": "string"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/Onpreminframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "region": {
                     "type": "string"
-                },
-                "softwareModel": {
-                    "$ref": "#/definitions/Softwaremodel.Software"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2287,7 +1729,7 @@
                     "type": "string"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/Onpreminframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2326,7 +1768,7 @@
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudinframodel.CloudInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                 },
                 "csp": {
                     "type": "string"
@@ -2364,7 +1806,7 @@
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudinframodel.CloudInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -2423,7 +1865,7 @@
                     "type": "boolean"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/Onpreminframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "userId": {
                     "type": "string"
@@ -2464,7 +1906,7 @@
                     "type": "string"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/Onpreminframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2502,6 +1944,366 @@
                 "text": {
                     "type": "string",
                     "example": "Any text"
+                }
+            }
+        },
+        "onpremisemodel.CpuProperty": {
+            "type": "object",
+            "required": [
+                "cores",
+                "cpus",
+                "threads"
+            ],
+            "properties": {
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "cores": {
+                    "description": "Number of physical cores per CPU",
+                    "type": "integer",
+                    "example": 18
+                },
+                "cpus": {
+                    "description": "Number of physical CPUs (sockets)",
+                    "type": "integer",
+                    "example": 2
+                },
+                "maxSpeed": {
+                    "description": "Maximum speed in GHz",
+                    "type": "number",
+                    "example": 3.6
+                },
+                "model": {
+                    "type": "string",
+                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+                },
+                "threads": {
+                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
+                    "type": "integer",
+                    "example": 36
+                },
+                "vendor": {
+                    "type": "string",
+                    "example": "GenuineIntel"
+                }
+            }
+        },
+        "onpremisemodel.DiskProperty": {
+            "type": "object",
+            "required": [
+                "label",
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 1024
+                },
+                "type": {
+                    "description": "SSD, HDD",
+                    "type": "string",
+                    "example": "SSD"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "onpremisemodel.FirewallRuleProperty": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "e.g., allow, deny",
+                    "type": "string"
+                },
+                "direction": {
+                    "description": "e.g., inbound, outbound",
+                    "type": "string"
+                },
+                "dstCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "dstPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "e.g., \"TCP\", \"UDP\", \"ICMP\", \"*\" (for all protocol)",
+                    "type": "string"
+                },
+                "srcCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "srcPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.GatewayProperty": {
+            "type": "object",
+            "properties": {
+                "interfaceName": {
+                    "description": "Name of the network interface associated with the gateway",
+                    "type": "string"
+                },
+                "ip": {
+                    "description": "IP address of the gateway",
+                    "type": "string"
+                },
+                "machineId": {
+                    "description": "Unique identifier for the machine (e.g., UUID)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.MemoryProperty": {
+            "type": "object",
+            "required": [
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 128
+                },
+                "type": {
+                    "type": "string",
+                    "example": "DDR4"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "onpremisemodel.NetworkDetail": {
+            "type": "object",
+            "properties": {
+                "cidrBlocks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "defaultGateways": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.GatewayProperty"
+                    }
+                }
+            }
+        },
+        "onpremisemodel.NetworkInterfaceProperty": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "ipv4CidrBlocks": {
+                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ipv6CidrBlocks": {
+                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "macAddress": {
+                    "description": "MAC address",
+                    "type": "string"
+                },
+                "mtu": {
+                    "description": "Maximum Transmission Unit (MTU) in bytes",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "Interface state (e.g., UP, DOWN)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.NetworkProperty": {
+            "type": "object",
+            "properties": {
+                "ipv4Networks": {
+                    "$ref": "#/definitions/onpremisemodel.NetworkDetail"
+                },
+                "ipv6Networks": {
+                    "description": "TBD",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/onpremisemodel.NetworkDetail"
+                        }
+                    ]
+                }
+            }
+        },
+        "onpremisemodel.OnpremInfra": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "network": {
+                    "$ref": "#/definitions/onpremisemodel.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.ServerProperty"
+                    }
+                }
+            }
+        },
+        "onpremisemodel.OsProperty": {
+            "type": "object",
+            "required": [
+                "prettyName"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "ubuntu"
+                },
+                "idLike": {
+                    "type": "string",
+                    "example": "debian"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Ubuntu"
+                },
+                "prettyName": {
+                    "description": "Pretty name",
+                    "type": "string",
+                    "example": "Ubuntu 22.04.3 LTS"
+                },
+                "version": {
+                    "description": "Full version string",
+                    "type": "string",
+                    "example": "22.04.3 LTS (Jammy Jellyfish)"
+                },
+                "versionCodename": {
+                    "type": "string",
+                    "example": "jammy"
+                },
+                "versionId": {
+                    "type": "string",
+                    "example": "22.04"
+                }
+            }
+        },
+        "onpremisemodel.RouteProperty": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "description": "Destination network, expressed in CIDR format",
+                    "type": "string"
+                },
+                "gateway": {
+                    "description": "Gateway address to which packets are forwarded",
+                    "type": "string"
+                },
+                "interface": {
+                    "description": "Network interface associated with the route",
+                    "type": "string"
+                },
+                "linkState": {
+                    "description": "Link state of the route (e.g., UP, DOWN)",
+                    "type": "string"
+                },
+                "metric": {
+                    "description": "Metric value indicating the priority of the route",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "Protocol used to set the route (e.g., kernel, static)",
+                    "type": "string"
+                },
+                "scope": {
+                    "description": "Scope of the route (e.g., global, link, host)",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Optionally stores the source address (used for policy-based routing)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.ServerProperty": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "$ref": "#/definitions/onpremisemodel.CpuProperty"
+                },
+                "dataDisks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                    }
+                },
+                "firewallTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
+                    }
+                },
+                "hostname": {
+                    "type": "string"
+                },
+                "interfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
+                    }
+                },
+                "machineId": {
+                    "description": "Unique identifier for the server (e.g., UUID)",
+                    "type": "string"
+                },
+                "memory": {
+                    "$ref": "#/definitions/onpremisemodel.MemoryProperty"
+                },
+                "os": {
+                    "$ref": "#/definitions/onpremisemodel.OsProperty"
+                },
+                "rootDisk": {
+                    "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                },
+                "routingTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.RouteProperty"
+                    }
                 }
             }
         }
