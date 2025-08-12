@@ -25,7 +25,7 @@ const docTemplate = `{
     "paths": {
         "/cloudmodel": {
             "get": {
-                "description": "Get a list of cloud models.",
+                "description": "Get a list of cloud user models.",
                 "consumes": [
                     "application/json"
                 ],
@@ -35,24 +35,30 @@ const docTemplate = `{
                 "tags": [
                     "[API] Cloud Migration User Models"
                 ],
-                "summary": "Get a list of cloud models",
+                "summary": "Get a list of cloud user models",
                 "responses": {
                     "200": {
-                        "description": "(sample) This is a list of models",
+                        "description": "Successfully Obtained Cloud Migration User Models",
                         "schema": {
                             "$ref": "#/definitions/handler.GetCloudModelsResp"
                         }
                     },
-                    "404": {
-                        "description": "model not found",
+                    "400": {
+                        "description": "Invalid Request",
                         "schema": {
                             "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Create a new cloud model with the given information.",
+                "description": "Create a new cloud user model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -62,7 +68,7 @@ const docTemplate = `{
                 "tags": [
                     "[API] Cloud Migration User Models"
                 ],
-                "summary": "Create a new cloud model",
+                "summary": "Create a new cloud user model",
                 "parameters": [
                     {
                         "description": "model information",
@@ -76,7 +82,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "description": "Successfully Created the Cloud Migration User Model",
                         "schema": {
                             "$ref": "#/definitions/handler.CreateCloudModelResp"
                         }
@@ -92,7 +98,7 @@ const docTemplate = `{
         },
         "/cloudmodel/{id}": {
             "get": {
-                "description": "Get a specific cloud model.",
+                "description": "Get a specific cloud user model.",
                 "consumes": [
                     "application/json"
                 ],
@@ -102,7 +108,7 @@ const docTemplate = `{
                 "tags": [
                     "[API] Cloud Migration User Models"
                 ],
-                "summary": "Get a specific cloud model",
+                "summary": "Get a specific cloud user model",
                 "parameters": [
                     {
                         "type": "string",
@@ -114,13 +120,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "(Sample) a model",
+                        "description": "Successfully Obtained the Cloud Migration User Model",
                         "schema": {
                             "$ref": "#/definitions/handler.GetCloudModelResp"
                         }
                     },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
                     "404": {
-                        "description": "model not found",
+                        "description": "Model Not Found",
                         "schema": {
                             "type": "object"
                         }
@@ -128,7 +140,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a cloud model with the given information.",
+                "description": "Update a cloud user model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -138,7 +150,7 @@ const docTemplate = `{
                 "tags": [
                     "[API] Cloud Migration User Models"
                 ],
-                "summary": "Update a cloud model",
+                "summary": "Update a cloud user model",
                 "parameters": [
                     {
                         "type": "string",
@@ -159,15 +171,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully updated!!",
+                        "description": "Successfully Updated the Cloud Migration User Model",
                         "schema": {
                             "$ref": "#/definitions/handler.UpdateCloudModelResp"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "400": {
+                        "description": "Invalid Request",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
                         }
                     },
                     "500": {
@@ -179,7 +197,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a cloud model with the given information.",
+                "description": "Delete a cloud user model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -189,7 +207,7 @@ const docTemplate = `{
                 "tags": [
                     "[API] Cloud Migration User Models"
                 ],
-                "summary": "Delete a cloud model",
+                "summary": "Delete a cloud user model",
                 "parameters": [
                     {
                         "type": "string",
@@ -405,6 +423,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.CreateOnPremModelResp"
                         }
                     },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -449,10 +473,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.GetOnPremModelResp"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "400": {
+                        "description": "Invalid Request",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
                         }
                     },
                     "500": {
@@ -501,9 +531,9 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Model Not Found",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "type": "object"
                         }
                     },
                     "500": {
@@ -587,6 +617,222 @@ const docTemplate = `{
                         "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/handler.ResReadyz"
+                        }
+                    }
+                }
+            }
+        },
+        "/softwaremodel": {
+            "get": {
+                "description": "Get a list of software user models.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Software Migration User Models"
+                ],
+                "summary": "Get a list of software user models",
+                "responses": {
+                    "200": {
+                        "description": "Successfully Obtained Software Migration User Models",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetSoftwareModelsResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new software user model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Software Migration User Models"
+                ],
+                "summary": "Create a new software user model",
+                "parameters": [
+                    {
+                        "description": "model information",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateSoftwareModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully Created the Software Migration User Model",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateSoftwareModelResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/softwaremodel/{id}": {
+            "get": {
+                "description": "Get a specific software user model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Software Migration User Models"
+                ],
+                "summary": "Get a specific software user model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully Obtained the Software Migration User Model",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetSoftwareModelResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a software user model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Software Migration User Models"
+                ],
+                "summary": "Update a software user model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateSoftwareModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully Updated the Software Migration User Model",
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateSoftwareModelResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a software user model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Software Migration User Models"
+                ],
+                "summary": "Delete a software user model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully Deleted the Software Migration User Model",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
                         }
                     }
                 }
@@ -1499,6 +1745,79 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CreateSoftwareModelReq": {
+            "type": "object",
+            "required": [
+                "softwareModel"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
+                },
+                "softwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateSoftwareModelResp": {
+            "type": "object",
+            "required": [
+                "softwareModel"
+            ],
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
+                },
+                "softwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "softwareModelVersion": {
+                    "type": "string"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.GetCloudModelResp": {
             "type": "object",
             "required": [
@@ -1637,6 +1956,61 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.GetSoftwareModelResp": {
+            "type": "object",
+            "required": [
+                "softwareModel"
+            ],
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
+                },
+                "softwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "softwareModelVersion": {
+                    "type": "string"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.GetSoftwareModelsResp": {
+            "type": "object",
+            "properties": {
+                "models": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SoftwareModelRespInfo"
+                    }
+                }
+            }
+        },
         "handler.ModelRespInfo": {
             "type": "object",
             "required": [
@@ -1764,6 +2138,50 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SoftwareModelRespInfo": {
+            "type": "object",
+            "required": [
+                "softwareModel"
+            ],
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
+                },
+                "softwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "softwareModelVersion": {
+                    "type": "string"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
                     "type": "string"
                 }
             }
@@ -1914,6 +2332,79 @@ const docTemplate = `{
                 },
                 "onpremiseInfraModel": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateSoftwareModelReq": {
+            "type": "object",
+            "required": [
+                "softwareModel"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
+                },
+                "softwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateSoftwareModelResp": {
+            "type": "object",
+            "required": [
+                "softwareModel"
+            ],
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
+                },
+                "softwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "softwareModelVersion": {
+                    "type": "string"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2311,6 +2802,337 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/onpremisemodel.RouteProperty"
                     }
+                }
+            }
+        },
+        "softwaremodel.Binary": {
+            "type": "object",
+            "required": [
+                "name",
+                "version"
+            ],
+            "properties": {
+                "binary_path": {
+                    "type": "string"
+                },
+                "custom_configs": {
+                    "type": "string"
+                },
+                "custom_data_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "needed_libraries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.Container": {
+            "type": "object",
+            "required": [
+                "container_id",
+                "container_image",
+                "container_status",
+                "name",
+                "network_mode",
+                "restart_policy",
+                "runtime"
+            ],
+            "properties": {
+                "container_id": {
+                    "type": "string"
+                },
+                "container_image": {
+                    "$ref": "#/definitions/softwaremodel.ContainerImage"
+                },
+                "container_ports": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.ContainerPort"
+                    }
+                },
+                "container_status": {
+                    "type": "string"
+                },
+                "docker_compose_path": {
+                    "type": "string"
+                },
+                "envs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.Env"
+                    }
+                },
+                "mount_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_mode": {
+                    "type": "string"
+                },
+                "restart_policy": {
+                    "type": "string"
+                },
+                "runtime": {
+                    "description": "Which runtime uses for the container (Docker, Podman)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/softwaremodel.SoftwareContainerRuntimeType"
+                        }
+                    ]
+                }
+            }
+        },
+        "softwaremodel.ContainerImage": {
+            "type": "object",
+            "required": [
+                "image_architecture",
+                "image_hash",
+                "image_name",
+                "image_version"
+            ],
+            "properties": {
+                "image_architecture": {
+                    "$ref": "#/definitions/softwaremodel.SoftwareArchitecture"
+                },
+                "image_hash": {
+                    "type": "string"
+                },
+                "image_name": {
+                    "type": "string"
+                },
+                "image_version": {
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.ContainerPort": {
+            "type": "object",
+            "required": [
+                "container_port",
+                "host_ip",
+                "host_port",
+                "protocol"
+            ],
+            "properties": {
+                "container_port": {
+                    "description": "NetworkSettings.Ports.{Port}/{Protocol} -\u003e {Port}",
+                    "type": "integer"
+                },
+                "host_ip": {
+                    "description": "NetworkSettings.Ports.{Port}/{Protocol}.HostIp",
+                    "type": "string"
+                },
+                "host_port": {
+                    "description": "NetworkSettings.Ports.{Port}/{Protocol}.HostPort",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "NetworkSettings.Ports.{Port}/{Protocol} -\u003e {Protocol}",
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.Env": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.Kubernetes": {
+            "type": "object",
+            "required": [
+                "kube_config",
+                "resources",
+                "version"
+            ],
+            "properties": {
+                "kube_config": {
+                    "type": "string"
+                },
+                "resources": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "version": {
+                    "description": "Same as release",
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.Package": {
+            "type": "object",
+            "required": [
+                "name",
+                "needed_packages",
+                "type",
+                "version"
+            ],
+            "properties": {
+                "custom_configs": {
+                    "type": "string"
+                },
+                "custom_data_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "gpg_key_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "need_to_delete_packages": {
+                    "type": "string"
+                },
+                "needed_packages": {
+                    "type": "string"
+                },
+                "repo_url": {
+                    "type": "string"
+                },
+                "repo_use_os_version_code": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "type": {
+                    "$ref": "#/definitions/softwaremodel.SoftwarePackageType"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.SoftwareArchitecture": {
+            "type": "string",
+            "enum": [
+                "common",
+                "x86_64",
+                "x86",
+                "armv5",
+                "armv6",
+                "armv7",
+                "arm64v8"
+            ],
+            "x-enum-varnames": [
+                "SoftwareArchitectureCommon",
+                "SoftwareArchitectureX8664",
+                "SoftwareArchitectureX86",
+                "SoftwareArchitectureARMv5",
+                "SoftwareArchitectureARMv6",
+                "SoftwareArchitectureARMv7",
+                "SoftwareArchitectureARM64v8"
+            ]
+        },
+        "softwaremodel.SoftwareContainerRuntimeType": {
+            "type": "string",
+            "enum": [
+                "docker",
+                "podman"
+            ],
+            "x-enum-varnames": [
+                "SoftwareContainerRuntimeTypeDocker",
+                "SoftwareContainerRuntimeTypePodman"
+            ]
+        },
+        "softwaremodel.SoftwareList": {
+            "type": "object",
+            "properties": {
+                "binaries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.Binary"
+                    }
+                },
+                "containers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.Container"
+                    }
+                },
+                "kubernetes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.Kubernetes"
+                    }
+                },
+                "packages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.Package"
+                    }
+                }
+            }
+        },
+        "softwaremodel.SoftwarePackageType": {
+            "type": "string",
+            "enum": [
+                "deb",
+                "rpm"
+            ],
+            "x-enum-comments": {
+                "SoftwarePackageTypeDEB": "Debian based package type",
+                "SoftwarePackageTypeRPM": "RHEL based package type"
+            },
+            "x-enum-varnames": [
+                "SoftwarePackageTypeDEB",
+                "SoftwarePackageTypeRPM"
+            ]
+        },
+        "softwaremodel.SourceConnectionInfoSoftwareProperty": {
+            "type": "object",
+            "required": [
+                "connection_id"
+            ],
+            "properties": {
+                "connection_id": {
+                    "type": "string"
+                },
+                "softwares": {
+                    "$ref": "#/definitions/softwaremodel.SoftwareList"
+                }
+            }
+        },
+        "softwaremodel.SourceGroupSoftwareProperty": {
+            "type": "object",
+            "required": [
+                "source_group_id"
+            ],
+            "properties": {
+                "connection_info_list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.SourceConnectionInfoSoftwareProperty"
+                    }
+                },
+                "source_group_id": {
+                    "type": "string"
                 }
             }
         }
