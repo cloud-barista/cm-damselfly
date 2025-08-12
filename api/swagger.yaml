@@ -645,6 +645,54 @@ definitions:
     required:
     - onpremiseInfraModel
     type: object
+  handler.CreateSoftwareModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      softwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - softwareModel
+    type: object
+  handler.CreateSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      softwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      softwareModelVersion:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - softwareModel
+    type: object
   handler.GetCloudModelResp:
     properties:
       cloudInfraModel:
@@ -735,6 +783,42 @@ definitions:
           $ref: '#/definitions/handler.OnPremModelRespInfo'
         type: array
     type: object
+  handler.GetSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      softwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      softwareModelVersion:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - softwareModel
+    type: object
+  handler.GetSoftwareModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.SoftwareModelRespInfo'
+        type: array
+    type: object
   handler.ModelRespInfo:
     properties:
       cloudInfraModel:
@@ -820,6 +904,35 @@ definitions:
     properties:
       message:
         type: string
+    type: object
+  handler.SoftwareModelRespInfo:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      softwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      softwareModelVersion:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - softwareModel
     type: object
   handler.UpdateCloudModelReq:
     properties:
@@ -926,6 +1039,54 @@ definitions:
         type: string
     required:
     - onpremiseInfraModel
+    type: object
+  handler.UpdateSoftwareModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      softwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - softwareModel
+    type: object
+  handler.UpdateSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      softwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      softwareModelVersion:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - softwareModel
     type: object
   model.Response:
     properties:
@@ -1202,6 +1363,236 @@ definitions:
           $ref: '#/definitions/onpremisemodel.RouteProperty'
         type: array
     type: object
+  softwaremodel.Binary:
+    properties:
+      binary_path:
+        type: string
+      custom_configs:
+        type: string
+      custom_data_paths:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      needed_libraries:
+        items:
+          type: string
+        type: array
+      version:
+        type: string
+    required:
+    - name
+    - version
+    type: object
+  softwaremodel.Container:
+    properties:
+      container_id:
+        type: string
+      container_image:
+        $ref: '#/definitions/softwaremodel.ContainerImage'
+      container_ports:
+        items:
+          $ref: '#/definitions/softwaremodel.ContainerPort'
+        type: array
+      container_status:
+        type: string
+      docker_compose_path:
+        type: string
+      envs:
+        items:
+          $ref: '#/definitions/softwaremodel.Env'
+        type: array
+      mount_paths:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      network_mode:
+        type: string
+      restart_policy:
+        type: string
+      runtime:
+        allOf:
+        - $ref: '#/definitions/softwaremodel.SoftwareContainerRuntimeType'
+        description: Which runtime uses for the container (Docker, Podman)
+    required:
+    - container_id
+    - container_image
+    - container_status
+    - name
+    - network_mode
+    - restart_policy
+    - runtime
+    type: object
+  softwaremodel.ContainerImage:
+    properties:
+      image_architecture:
+        $ref: '#/definitions/softwaremodel.SoftwareArchitecture'
+      image_hash:
+        type: string
+      image_name:
+        type: string
+      image_version:
+        type: string
+    required:
+    - image_architecture
+    - image_hash
+    - image_name
+    - image_version
+    type: object
+  softwaremodel.ContainerPort:
+    properties:
+      container_port:
+        description: NetworkSettings.Ports.{Port}/{Protocol} -> {Port}
+        type: integer
+      host_ip:
+        description: NetworkSettings.Ports.{Port}/{Protocol}.HostIp
+        type: string
+      host_port:
+        description: NetworkSettings.Ports.{Port}/{Protocol}.HostPort
+        type: integer
+      protocol:
+        description: NetworkSettings.Ports.{Port}/{Protocol} -> {Protocol}
+        type: string
+    required:
+    - container_port
+    - host_ip
+    - host_port
+    - protocol
+    type: object
+  softwaremodel.Env:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+    required:
+    - name
+    type: object
+  softwaremodel.Kubernetes:
+    properties:
+      kube_config:
+        type: string
+      resources:
+        additionalProperties: true
+        type: object
+      version:
+        description: Same as release
+        type: string
+    required:
+    - kube_config
+    - resources
+    - version
+    type: object
+  softwaremodel.Package:
+    properties:
+      custom_configs:
+        type: string
+      custom_data_paths:
+        items:
+          type: string
+        type: array
+      gpg_key_url:
+        type: string
+      name:
+        type: string
+      need_to_delete_packages:
+        type: string
+      needed_packages:
+        type: string
+      repo_url:
+        type: string
+      repo_use_os_version_code:
+        default: false
+        type: boolean
+      type:
+        $ref: '#/definitions/softwaremodel.SoftwarePackageType'
+      version:
+        type: string
+    required:
+    - name
+    - needed_packages
+    - type
+    - version
+    type: object
+  softwaremodel.SoftwareArchitecture:
+    enum:
+    - common
+    - x86_64
+    - x86
+    - armv5
+    - armv6
+    - armv7
+    - arm64v8
+    type: string
+    x-enum-varnames:
+    - SoftwareArchitectureCommon
+    - SoftwareArchitectureX8664
+    - SoftwareArchitectureX86
+    - SoftwareArchitectureARMv5
+    - SoftwareArchitectureARMv6
+    - SoftwareArchitectureARMv7
+    - SoftwareArchitectureARM64v8
+  softwaremodel.SoftwareContainerRuntimeType:
+    enum:
+    - docker
+    - podman
+    type: string
+    x-enum-varnames:
+    - SoftwareContainerRuntimeTypeDocker
+    - SoftwareContainerRuntimeTypePodman
+  softwaremodel.SoftwareList:
+    properties:
+      binaries:
+        items:
+          $ref: '#/definitions/softwaremodel.Binary'
+        type: array
+      containers:
+        items:
+          $ref: '#/definitions/softwaremodel.Container'
+        type: array
+      kubernetes:
+        items:
+          $ref: '#/definitions/softwaremodel.Kubernetes'
+        type: array
+      packages:
+        items:
+          $ref: '#/definitions/softwaremodel.Package'
+        type: array
+    type: object
+  softwaremodel.SoftwarePackageType:
+    enum:
+    - deb
+    - rpm
+    type: string
+    x-enum-comments:
+      SoftwarePackageTypeDEB: Debian based package type
+      SoftwarePackageTypeRPM: RHEL based package type
+    x-enum-varnames:
+    - SoftwarePackageTypeDEB
+    - SoftwarePackageTypeRPM
+  softwaremodel.SourceConnectionInfoSoftwareProperty:
+    properties:
+      connection_id:
+        type: string
+      softwares:
+        $ref: '#/definitions/softwaremodel.SoftwareList'
+    required:
+    - connection_id
+    type: object
+  softwaremodel.SourceGroupSoftwareProperty:
+    properties:
+      connection_info_list:
+        items:
+          $ref: '#/definitions/softwaremodel.SourceConnectionInfoSoftwareProperty'
+        type: array
+      source_group_id:
+        type: string
+    required:
+    - source_group_id
+    type: object
 info:
   contact:
     email: contact-to-cloud-barista@googlegroups.com
@@ -1218,25 +1609,29 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get a list of cloud models.
+      description: Get a list of cloud user models.
       produces:
       - application/json
       responses:
         "200":
-          description: (sample) This is a list of models
+          description: Successfully Obtained Cloud Migration User Models
           schema:
             $ref: '#/definitions/handler.GetCloudModelsResp'
-        "404":
-          description: model not found
+        "400":
+          description: Invalid Request
           schema:
             type: object
-      summary: Get a list of cloud models
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of cloud user models
       tags:
       - '[API] Cloud Migration User Models'
     post:
       consumes:
       - application/json
-      description: Create a new cloud model with the given information.
+      description: Create a new cloud user model with the given information.
       parameters:
       - description: model information
         in: body
@@ -1248,22 +1643,21 @@ paths:
       - application/json
       responses:
         "201":
-          description: (Sample) This is a sample description for success response
-            in Swagger UI
+          description: Successfully Created the Cloud Migration User Model
           schema:
             $ref: '#/definitions/handler.CreateCloudModelResp'
         "400":
           description: Invalid Request
           schema:
             type: object
-      summary: Create a new cloud model
+      summary: Create a new cloud user model
       tags:
       - '[API] Cloud Migration User Models'
   /cloudmodel/{id}:
     delete:
       consumes:
       - application/json
-      description: Delete a cloud model with the given information.
+      description: Delete a cloud user model with the given information.
       parameters:
       - description: Model ID
         in: path
@@ -1289,13 +1683,13 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Delete a cloud model
+      summary: Delete a cloud user model
       tags:
       - '[API] Cloud Migration User Models'
     get:
       consumes:
       - application/json
-      description: Get a specific cloud model.
+      description: Get a specific cloud user model.
       parameters:
       - description: Model ID
         in: path
@@ -1306,20 +1700,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: (Sample) a model
+          description: Successfully Obtained the Cloud Migration User Model
           schema:
             $ref: '#/definitions/handler.GetCloudModelResp'
-        "404":
-          description: model not found
+        "400":
+          description: Invalid Request
           schema:
             type: object
-      summary: Get a specific cloud model
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+      summary: Get a specific cloud user model
       tags:
       - '[API] Cloud Migration User Models'
     put:
       consumes:
       - application/json
-      description: Update a cloud model with the given information.
+      description: Update a cloud user model with the given information.
       parameters:
       - description: Model ID
         in: path
@@ -1336,18 +1734,22 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully updated!!
+          description: Successfully Updated the Cloud Migration User Model
           schema:
             $ref: '#/definitions/handler.UpdateCloudModelResp'
-        "404":
-          description: Not Found
+        "400":
+          description: Invalid Request
           schema:
-            $ref: '#/definitions/model.Response'
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Update a cloud model
+      summary: Update a cloud user model
       tags:
       - '[API] Cloud Migration User Models'
   /httpVersion:
@@ -1469,6 +1871,10 @@ paths:
           description: Successfully Created the On-Premise Migration User Model
           schema:
             $ref: '#/definitions/handler.CreateOnPremModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
         "404":
           description: Not Found
           schema:
@@ -1530,10 +1936,14 @@ paths:
           description: Successfully Obtained the On-Premise Migration User Model
           schema:
             $ref: '#/definitions/handler.GetOnPremModelResp'
-        "404":
-          description: Not Found
+        "400":
+          description: Invalid Request
           schema:
-            $ref: '#/definitions/model.Response'
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
         "500":
           description: Internal Server Error
           schema:
@@ -1565,9 +1975,9 @@ paths:
           schema:
             $ref: '#/definitions/handler.UpdateOnPremModelResp'
         "404":
-          description: Not Found
+          description: Model Not Found
           schema:
-            $ref: '#/definitions/model.Response'
+            type: object
         "500":
           description: Internal Server Error
           schema:
@@ -1594,6 +2004,149 @@ paths:
       summary: Check Damselfly is ready
       tags:
       - '[Admin] System management'
+  /softwaremodel:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of software user models.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained Software Migration User Models
+          schema:
+            $ref: '#/definitions/handler.GetSoftwareModelsResp'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of software user models
+      tags:
+      - '[API] Software Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: Create a new software user model with the given information.
+      parameters:
+      - description: model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSoftwareModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Created the Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.CreateSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+      summary: Create a new software user model
+      tags:
+      - '[API] Software Migration User Models'
+  /softwaremodel/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a software user model with the given information.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Deleted the Software Migration User Model
+          schema:
+            type: string
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a software user model
+      tags:
+      - '[API] Software Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific software user model.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained the Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.GetSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+      summary: Get a specific software user model
+      tags:
+      - '[API] Software Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: Update a software user model with the given information.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateSoftwareModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Updated the Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.UpdateSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a software user model
+      tags:
+      - '[API] Software Migration User Models'
 securityDefinitions:
   BasicAuth:
     type: basic
