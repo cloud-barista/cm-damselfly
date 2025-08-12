@@ -11,10 +11,9 @@ import (
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	"github.com/rs/zerolog/log"
 
-	model "github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
-	onpremisemodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
-	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
-	// softwaremodel "github.com/cloud-barista/cm-model/sw"
+	model 			"github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
+	onpremisemodel 	"github.com/cloud-barista/cm-model/infra/on-premise-model"
+	cloudmodel 		"github.com/cloud-barista/cm-model/infra/cloud-model"
 )
 
 // ##############################################################################################
@@ -39,7 +38,6 @@ type ModelRespInfo struct {
 	Zone             string                  	   	`json:"zone"`
 	OnpremInfraModel onpremisemodel.OnpremInfra   	`json:"onpremiseInfraModel" validate:"required"`
 	CloudInfraModel  cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
-	// SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -180,10 +178,9 @@ type OnPremModelReqInfo struct {
 	UserId           string             		`json:"userId"`
 	IsInitUserModel  bool               		`json:"isInitUserModel"`
 	UserModelName    string             		`json:"userModelName"`
-	Description      string             		`json:"description"`
 	UserModelVer     string             		`json:"userModelVersion"`
+	Description      string             		`json:"description"`	
 	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
-	// SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 type OnPremModelRespInfo struct {
@@ -191,15 +188,14 @@ type OnPremModelRespInfo struct {
 	UserId           string             		`json:"userId"`
 	IsInitUserModel  bool               		`json:"isInitUserModel"`
 	UserModelName    string             		`json:"userModelName"`
-	Description      string             		`json:"description"`
 	UserModelVer     string             		`json:"userModelVersion"`
+	Description      string             		`json:"description"`
 	OnPremModelVer   string             		`json:"onpremModelVersion"`
 	CreateTime       string             		`json:"createTime"`
 	UpdateTime       string             		`json:"updateTime"`
 	IsTargetModel    bool               		`json:"isTargetModel"`
 	IsCloudModel     bool               		`json:"isCloudModel"`
 	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
-	// SoftwareModel    software.Software	 	 `json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -271,7 +267,8 @@ type GetOnPremModelResp struct {
 // @Produce  json
 // @Param id path string true "Model ID"
 // @Success 200 {object} GetOnPremModelResp "Successfully Obtained the On-Premise Migration User Model"
-// @Failure 404 {object} model.Response
+// @Failure 400 {object} object "Invalid Request"
+// @Failure 404 {object} object "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /onpremmodel/{id} [get]
 func GetOnPremModel(c echo.Context) error {
@@ -441,13 +438,13 @@ func GetOnPremModel(c echo.Context) error {
 }
 
 // [Note]
-// Struct Embedding is used to inherit the fields of MyOnPremModel
+// Struct Embedding is used to inherit the fields of OnPremModel
 type CreateOnPremModelReq struct {
 	OnPremModelReqInfo
 }
 
 // [Note]
-// Struct Embedding is used to inherit the fields of MyOnPremModel
+// Struct Embedding is used to inherit the fields of OnPremModel
 type CreateOnPremModelResp struct {
 	OnPremModelRespInfo
 }
@@ -460,6 +457,7 @@ type CreateOnPremModelResp struct {
 // @Produce  json
 // @Param Model body CreateOnPremModelReq true "model information"
 // @Success 201 {object} CreateOnPremModelResp "Successfully Created the On-Premise Migration User Model"
+// @Failure 400 {object} object "Invalid Request"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
 // @Router /onpremmodel [post]
@@ -531,13 +529,13 @@ func CreateOnPremModel(c echo.Context) error {
 }
 
 // [Note]
-// Struct Embedding is used to inherit the fields of MyOnPremModel
+// Struct Embedding is used to inherit the fields of OnPremModel
 type UpdateOnPremModelReq struct {
 	OnPremModelReqInfo
 }
 
 // [Note]
-// Struct Embedding is used to inherit the fields of MyOnPremModel
+// Struct Embedding is used to inherit the fields of OnPremModel
 type UpdateOnPremModelResp struct {
 	OnPremModelRespInfo
 }
@@ -551,7 +549,7 @@ type UpdateOnPremModelResp struct {
 // @Param id path string true "Model ID"
 // @Param Model body UpdateOnPremModelReq true "Model information to update"
 // @Success 201 {object} UpdateOnPremModelResp "Successfully Updated the On-Premise Migration User Model"
-// @Failure 404 {object} model.Response
+// @Failure 404 {object} object "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /onpremmodel/{id} [put]
 func UpdateOnPremModel(c echo.Context) error {
@@ -799,7 +797,6 @@ type CloudModelReqInfo struct {
 	Region          string                  		`json:"region"`
 	Zone            string                  		`json:"zone"`
 	CloudInfraModel cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
-	// SoftwareModel    software.Software	    `json:"softwareModel" validate:"required"`	
 }
 
 type CloudModelRespInfo struct {
@@ -818,7 +815,6 @@ type CloudModelRespInfo struct {
 	IsCloudModel    bool                    		`json:"isCloudModel"`
 	CloudModelVer   string                  		`json:"cloudModelVersion"`	
 	CloudInfraModel cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
-	// SoftwareModel    software.Software	 	`json:"softwareModel" validate:"required"`	
 }
 
 // Caution!!)
@@ -830,13 +826,14 @@ type GetCloudModelsResp struct {
 }
 
 // GetCloudModels godoc
-// @Summary Get a list of cloud models
-// @Description Get a list of cloud models.
+// @Summary Get a list of cloud user models
+// @Description Get a list of cloud user models.
 // @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} GetCloudModelsResp "(sample) This is a list of models"
-// @Failure 404 {object} object "model not found"
+// @Success 200 {object} GetCloudModelsResp "Successfully Obtained Cloud Migration User Models"
+// @Failure 400 {object} object "Invalid Request"
+// @Failure 404 {object} model.Response
 // @Router /cloudmodel [get]
 func GetCloudModels(c echo.Context) error {
 	modelList, exists := lkvstore.GetWithPrefix("")
@@ -873,14 +870,15 @@ type GetCloudModelResp struct {
 }
 
 // GetCloudModel godoc
-// @Summary Get a specific cloud model
-// @Description Get a specific cloud model.
+// @Summary Get a specific cloud user model
+// @Description Get a specific cloud user model.
 // @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
-// @Success 200 {object} GetCloudModelResp "(Sample) a model"
-// @Failure 404 {object} object "model not found"
+// @Success 200 {object} GetCloudModelResp "Successfully Obtained the Cloud Migration User Model"
+// @Failure 400 {object} object "Invalid Request"
+// @Failure 404 {object} object "Model Not Found"
 // @Router /cloudmodel/{id} [get]
 func GetCloudModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
@@ -931,25 +929,25 @@ func GetCloudModel(c echo.Context) error {
 }
 
 // [Note]
-// Struct Embedding is used to inherit the fields of MyCloudModel
+// Struct Embedding is used to inherit the fields of CloudModel
 type CreateCloudModelReq struct {
 	CloudModelReqInfo
 }
 
 // [Note]
-// Struct Embedding is used to inherit the fields of MyCloudModel
+// Struct Embedding is used to inherit the fields of CloudModel
 type CreateCloudModelResp struct {
 	CloudModelRespInfo
 }
 
 // CreateCloudModel godoc
-// @Summary Create a new cloud model
-// @Description Create a new cloud model with the given information.
+// @Summary Create a new cloud user model
+// @Description Create a new cloud user model with the given information.
 // @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param Model body CreateCloudModelReq true "model information"
-// @Success 201 {object} CreateCloudModelResp "(Sample) This is a sample description for success response in Swagger UI"
+// @Success 201 {object} CreateCloudModelResp "Successfully Created the Cloud Migration User Model"
 // @Failure 400 {object} object "Invalid Request"
 // @Router /cloudmodel [post]
 func CreateCloudModel(c echo.Context) error {
@@ -1016,27 +1014,28 @@ func CreateCloudModel(c echo.Context) error {
 }
 
 // [Note]
-// Struct Embedding is used to inherit the fields of MyCloudModel
+// Struct Embedding is used to inherit the fields of CloudModel
 type UpdateCloudModelReq struct {
 	CloudModelReqInfo
 }
 
 // [Note]
-// Struct Embedding is used to inherit the fields of MyCloudModel
+// Struct Embedding is used to inherit the fields of CloudModel
 type UpdateCloudModelResp struct {
 	CloudModelRespInfo
 }
 
 // UpdateCloudModel godoc
-// @Summary Update a cloud model
-// @Description Update a cloud model with the given information.
+// @Summary Update a cloud user model
+// @Description Update a cloud user model with the given information.
 // @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
 // @Param Model body UpdateCloudModelReq true "Model information to update"
-// @Success 201 {object} UpdateCloudModelResp "Successfully updated!!"
-// @Failure 404 {object} model.Response
+// @Success 201 {object} UpdateCloudModelResp "Successfully Updated the Cloud Migration User Model"
+// @Failure 400 {object} object "Invalid Request"
+// @Failure 404 {object} object "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /cloudmodel/{id} [put]
 func UpdateCloudModel(c echo.Context) error {
@@ -1206,8 +1205,8 @@ func UpdateCloudModel(c echo.Context) error {
 // No ResponseBody required for "DELETE /cloudmodel/{id}"
 
 // DeleteCloudModel godoc
-// @Summary Delete a cloud model
-// @Description Delete a cloud model with the given information.
+// @Summary Delete a cloud user model
+// @Description Delete a cloud user model with the given information.
 // @Tags [API] Cloud Migration User Models
 // @Accept  json
 // @Produce  json
