@@ -14,7 +14,7 @@ As a Cloud Computing Infrastructure Migration Framework (codename: cm-damselply)
 - Operating system (OS): 
     - Ubuntu 22.04
 - Languages: 
-    - Go 1.23.0
+    - Go 1.23.x
 
 ## How to run CM-Damselfly
 
@@ -121,13 +121,15 @@ sudo make compose-up
 
 ### Versions of packages applied to the released Damselfly
 
-| cm-damselfly | cm-model<BR>(OnpremInfraModel)<BR>(SoftwareModel) | cb-tumblebug<BR>(CloudInfraModel) |
+| cm-damselfly | cm-model<BR>(OnpremInfraModel<BR>/SoftwareModel) | cb-tumblebug<BR>(CloudInfraModel) |
 |--------|--------|--------|
 | v0.2.0 | v0.0.3 | v0.9.16 |
 | v0.2.1 | v0.0.3 | v0.10.0 |
 | v0.2.2 | v0.0.3 | v0.10.0 |
-| v0.3.0 | v0.0.10 | v0.11.2 |
+| v0.3.0 | v0.0.3 | v0.10.3 |
 | v0.3.1 | v0.0.10 | v0.11.2 |
+| v0.3.2 | v0.0.10 | v0.11.2 |
+| v0.3.3 | v0.0.11 | v0.11.3 |
 
 ### CM-Damselfly REST API user guide
 - Discussion link : [How to use and test CM-Damselfly APIs (with test examples)](https://github.com/cloud-barista/cm-damselfly/discussions/25)
