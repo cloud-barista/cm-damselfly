@@ -183,11 +183,18 @@ func RunServer(port string) {
 	gModel.PUT("/cloudmodel/:id", handler.UpdateCloudModel)
 	gModel.DELETE("/cloudmodel/:id", handler.DeleteCloudModel)
 
-	gModel.POST("/softwaremodel", handler.CreateSoftwareModel)
-	gModel.GET("/softwaremodel", handler.GetSoftwareModels)
-	gModel.GET("/softwaremodel/:id", handler.GetSoftwareModel)
-	gModel.PUT("/softwaremodel/:id", handler.UpdateSoftwareModel)
-	gModel.DELETE("/softwaremodel/:id", handler.DeleteSoftwareModel)
+	gModel.POST("/softwaremodel/source", handler.CreateSourceSoftwareModel)
+	gModel.GET("/softwaremodel/source", handler.GetSourceSoftwareModels)
+	gModel.GET("/softwaremodel/source/:id", handler.GetSourceSoftwareModel)
+	gModel.PUT("/softwaremodel/source/:id", handler.UpdateSourceSoftwareModel)
+	gModel.PUT("/softwaremodel/source/:id", handler.UpdateSourceSoftwareModel)
+	gModel.DELETE("/softwaremodel/source/:id", handler.DeleteSourceSoftwareModel)
+
+	gModel.POST("/softwaremodel/target", handler.CreateTargetSoftwareModel)
+	gModel.GET("/softwaremodel/target", handler.GetTargetSoftwareModels)
+	gModel.GET("/softwaremodel/target/:id", handler.GetTargetSoftwareModel)
+	gModel.PUT("/softwaremodel/target/:id", handler.UpdateTargetSoftwareModel)
+	gModel.DELETE("/softwaremodel/target/:id", handler.DeleteTargetSoftwareModel)
 
 	// Run Damselfly API server
 	selfEndpoint := config.Damselfly.Self.Endpoint
