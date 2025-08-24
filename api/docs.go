@@ -622,9 +622,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/softwaremodel": {
+        "/softwaremodel/source": {
             "get": {
-                "description": "Get a list of software user models.",
+                "description": "Get a list of source software user models.",
                 "consumes": [
                     "application/json"
                 ],
@@ -632,14 +632,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Software Migration User Models"
+                    "[API] Source Software Migration User Models"
                 ],
-                "summary": "Get a list of software user models",
+                "summary": "Get a list of source software user models",
                 "responses": {
                     "200": {
-                        "description": "Successfully Obtained Software Migration User Models",
+                        "description": "Successfully Obtained Source Software Migration User Models",
                         "schema": {
-                            "$ref": "#/definitions/handler.GetSoftwareModelsResp"
+                            "$ref": "#/definitions/handler.GetSourceSoftwareModelsResp"
                         }
                     },
                     "404": {
@@ -651,7 +651,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new software user model with the given information.",
+                "description": "Create a new source software user model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -659,9 +659,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Software Migration User Models"
+                    "[API] Source Software Migration User Models"
                 ],
-                "summary": "Create a new software user model",
+                "summary": "Create a new source software user model",
                 "parameters": [
                     {
                         "description": "model information",
@@ -669,15 +669,15 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateSoftwareModelReq"
+                            "$ref": "#/definitions/handler.CreateSourceSoftwareModelReq"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully Created the Software Migration User Model",
+                        "description": "Successfully Created the Source Software Migration User Model",
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateSoftwareModelResp"
+                            "$ref": "#/definitions/handler.CreateSourceSoftwareModelResp"
                         }
                     },
                     "400": {
@@ -689,9 +689,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/softwaremodel/{id}": {
+        "/softwaremodel/source/{id}": {
             "get": {
-                "description": "Get a specific software user model.",
+                "description": "Get a specific source software user model.",
                 "consumes": [
                     "application/json"
                 ],
@@ -699,9 +699,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Software Migration User Models"
+                    "[API] Source Software Migration User Models"
                 ],
-                "summary": "Get a specific software user model",
+                "summary": "Get a specific source software user model",
                 "parameters": [
                     {
                         "type": "string",
@@ -713,9 +713,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully Obtained the Software Migration User Model",
+                        "description": "Successfully Obtained the Source Software Migration User Model",
                         "schema": {
-                            "$ref": "#/definitions/handler.GetSoftwareModelResp"
+                            "$ref": "#/definitions/handler.GetSourceSoftwareModelResp"
                         }
                     },
                     "400": {
@@ -733,7 +733,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a software user model with the given information.",
+                "description": "Update a source software user model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -741,9 +741,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Software Migration User Models"
+                    "[API] Source Software Migration User Models"
                 ],
-                "summary": "Update a software user model",
+                "summary": "Update a source software user model",
                 "parameters": [
                     {
                         "type": "string",
@@ -758,15 +758,15 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateSoftwareModelReq"
+                            "$ref": "#/definitions/handler.UpdateSourceSoftwareModelReq"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully Updated the Software Migration User Model",
+                        "description": "Successfully Updated the Source Software Migration User Model",
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateSoftwareModelResp"
+                            "$ref": "#/definitions/handler.UpdateSourceSoftwareModelResp"
                         }
                     },
                     "400": {
@@ -790,7 +790,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a software user model with the given information.",
+                "description": "Delete a source software user model with the given information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -798,9 +798,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Software Migration User Models"
+                    "[API] Source Software Migration User Models"
                 ],
-                "summary": "Delete a software user model",
+                "summary": "Delete a source software user model",
                 "parameters": [
                     {
                         "type": "string",
@@ -812,7 +812,223 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully Deleted the Software Migration User Model",
+                        "description": "Successfully Deleted the Source Software Migration User Model",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/softwaremodel/target": {
+            "get": {
+                "description": "Get a list of target software user models.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Target Software Migration User Models"
+                ],
+                "summary": "Get a list of target software user models",
+                "responses": {
+                    "200": {
+                        "description": "Successfully Obtained Target Software Migration User Models",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetTargetSoftwareModelsResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new target software user model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Target Software Migration User Models"
+                ],
+                "summary": "Create a new target software user model",
+                "parameters": [
+                    {
+                        "description": "model information",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTargetSoftwareModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully Created the Target Software Migration User Model",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTargetSoftwareModelResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/softwaremodel/target/{id}": {
+            "get": {
+                "description": "Get a specific target software user model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Target Software Migration User Models"
+                ],
+                "summary": "Get a specific target software user model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully Obtained the Target Software Migration User Model",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetTargetSoftwareModelResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a target software user model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Target Software Migration User Models"
+                ],
+                "summary": "Update a target software user model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTargetSoftwareModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully Updated the Target Software Migration User Model",
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTargetSoftwareModelResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a target software user model with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Target Software Migration User Models"
+                ],
+                "summary": "Delete a target software user model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully Deleted the Target Software Migration User Model",
                         "schema": {
                             "type": "string"
                         }
@@ -1150,6 +1366,17 @@ const docTemplate = `{
                 },
                 "placementAlgo": {
                     "type": "string"
+                },
+                "policyOnPartialFailure": {
+                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "type": "string",
+                    "default": "continue",
+                    "enum": [
+                        "continue",
+                        "rollback",
+                        "refine"
+                    ],
+                    "example": "continue"
                 },
                 "postCommand": {
                     "description": "PostCommand is for the command to bootstrap the VMs",
@@ -1745,10 +1972,10 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateSoftwareModelReq": {
+        "handler.CreateSourceSoftwareModelReq": {
             "type": "object",
             "required": [
-                "softwareModel"
+                "sourceSoftwareModel"
             ],
             "properties": {
                 "description": {
@@ -1757,10 +1984,7 @@ const docTemplate = `{
                 "isInitUserModel": {
                     "type": "boolean"
                 },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "softwareModel": {
+                "sourceSoftwareModel": {
                     "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
                 },
                 "userId": {
@@ -1774,10 +1998,10 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateSoftwareModelResp": {
+        "handler.CreateSourceSoftwareModelResp": {
             "type": "object",
             "required": [
-                "softwareModel"
+                "sourceSoftwareModel"
             ],
             "properties": {
                 "createTime": {
@@ -1798,11 +2022,81 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
-                "softwareModel": {
+                "softwareModelVersion": {
+                    "type": "string"
+                },
+                "sourceSoftwareModel": {
                     "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateTargetSoftwareModelReq": {
+            "type": "object",
+            "required": [
+                "targetSoftwareModel"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateTargetSoftwareModelResp": {
+            "type": "object",
+            "required": [
+                "targetSoftwareModel"
+            ],
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
                 },
                 "softwareModelVersion": {
                     "type": "string"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
                 },
                 "updateTime": {
                     "type": "string"
@@ -1956,10 +2250,10 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GetSoftwareModelResp": {
+        "handler.GetSourceSoftwareModelResp": {
             "type": "object",
             "required": [
-                "softwareModel"
+                "sourceSoftwareModel"
             ],
             "properties": {
                 "createTime": {
@@ -1980,11 +2274,11 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
-                "softwareModel": {
-                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
-                },
                 "softwareModelVersion": {
                     "type": "string"
+                },
+                "sourceSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2000,13 +2294,68 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GetSoftwareModelsResp": {
+        "handler.GetSourceSoftwareModelsResp": {
             "type": "object",
             "properties": {
                 "models": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.SoftwareModelRespInfo"
+                        "$ref": "#/definitions/handler.SourceSoftwareModelRespInfo"
+                    }
+                }
+            }
+        },
+        "handler.GetTargetSoftwareModelResp": {
+            "type": "object",
+            "required": [
+                "targetSoftwareModel"
+            ],
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
+                },
+                "softwareModelVersion": {
+                    "type": "string"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.GetTargetSoftwareModelsResp": {
+            "type": "object",
+            "properties": {
+                "models": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.TargetSoftwareModelRespInfo"
                     }
                 }
             }
@@ -2142,10 +2491,10 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.SoftwareModelRespInfo": {
+        "handler.SourceSoftwareModelRespInfo": {
             "type": "object",
             "required": [
-                "softwareModel"
+                "sourceSoftwareModel"
             ],
             "properties": {
                 "createTime": {
@@ -2166,11 +2515,55 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
-                "softwareModel": {
+                "softwareModelVersion": {
+                    "type": "string"
+                },
+                "sourceSoftwareModel": {
                     "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.TargetSoftwareModelRespInfo": {
+            "type": "object",
+            "required": [
+                "targetSoftwareModel"
+            ],
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
                 },
                 "softwareModelVersion": {
                     "type": "string"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2347,10 +2740,10 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateSoftwareModelReq": {
+        "handler.UpdateSourceSoftwareModelReq": {
             "type": "object",
             "required": [
-                "softwareModel"
+                "sourceSoftwareModel"
             ],
             "properties": {
                 "description": {
@@ -2359,10 +2752,7 @@ const docTemplate = `{
                 "isInitUserModel": {
                     "type": "boolean"
                 },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "softwareModel": {
+                "sourceSoftwareModel": {
                     "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
                 },
                 "userId": {
@@ -2376,10 +2766,10 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateSoftwareModelResp": {
+        "handler.UpdateSourceSoftwareModelResp": {
             "type": "object",
             "required": [
-                "softwareModel"
+                "sourceSoftwareModel"
             ],
             "properties": {
                 "createTime": {
@@ -2400,11 +2790,81 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
-                "softwareModel": {
+                "softwareModelVersion": {
+                    "type": "string"
+                },
+                "sourceSoftwareModel": {
                     "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateTargetSoftwareModelReq": {
+            "type": "object",
+            "required": [
+                "targetSoftwareModel"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateTargetSoftwareModelResp": {
+            "type": "object",
+            "required": [
+                "targetSoftwareModel"
+            ],
+            "properties": {
+                "createTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
+                "isTargetModel": {
+                    "type": "boolean"
                 },
                 "softwareModelVersion": {
                     "type": "string"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2816,7 +3276,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "custom_configs": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "custom_data_paths": {
                     "type": "array",
@@ -2832,6 +3295,45 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.BinaryMigrationInfo": {
+            "type": "object",
+            "required": [
+                "name",
+                "version"
+            ],
+            "properties": {
+                "binary_path": {
+                    "type": "string"
+                },
+                "custom_configs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "custom_data_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "needed_libraries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "order": {
+                    "type": "integer"
                 },
                 "version": {
                     "type": "string"
@@ -2922,6 +3424,66 @@ const docTemplate = `{
                 }
             }
         },
+        "softwaremodel.ContainerMigrationInfo": {
+            "type": "object",
+            "required": [
+                "container_id",
+                "container_image",
+                "container_status",
+                "name",
+                "network_mode",
+                "restart_policy",
+                "runtime"
+            ],
+            "properties": {
+                "container_id": {
+                    "type": "string"
+                },
+                "container_image": {
+                    "$ref": "#/definitions/softwaremodel.ContainerImage"
+                },
+                "container_ports": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.ContainerPort"
+                    }
+                },
+                "container_status": {
+                    "type": "string"
+                },
+                "docker_compose_path": {
+                    "type": "string"
+                },
+                "envs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.Env"
+                    }
+                },
+                "mount_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_mode": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "restart_policy": {
+                    "type": "string"
+                },
+                "runtime": {
+                    "description": "Which runtime uses for the container (Docker, Podman, ...)",
+                    "type": "string"
+                }
+            }
+        },
         "softwaremodel.ContainerPort": {
             "type": "object",
             "required": [
@@ -2984,6 +3546,108 @@ const docTemplate = `{
                 }
             }
         },
+        "softwaremodel.KubernetesMigrationInfo": {
+            "type": "object",
+            "required": [
+                "kube_config",
+                "resources",
+                "velero",
+                "version"
+            ],
+            "properties": {
+                "kube_config": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "resources": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "velero": {
+                    "$ref": "#/definitions/softwaremodel.KubernetesVelero"
+                },
+                "version": {
+                    "description": "Same as release",
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.KubernetesVelero": {
+            "type": "object",
+            "required": [
+                "backup_location_config",
+                "bucket",
+                "provider"
+            ],
+            "properties": {
+                "backup_location_config": {
+                    "type": "string"
+                },
+                "bucket": {
+                    "type": "string"
+                },
+                "features": {
+                    "type": "string"
+                },
+                "plugins": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "secret_file": {
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.MigrationList": {
+            "type": "object",
+            "properties": {
+                "binaries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.BinaryMigrationInfo"
+                    }
+                },
+                "containers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.ContainerMigrationInfo"
+                    }
+                },
+                "kubernetes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.KubernetesMigrationInfo"
+                    }
+                },
+                "packages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.PackageMigrationInfo"
+                    }
+                }
+            }
+        },
+        "softwaremodel.MigrationServer": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "migration_list": {
+                    "$ref": "#/definitions/softwaremodel.MigrationList"
+                },
+                "source_connection_info_id": {
+                    "type": "string"
+                }
+            }
+        },
         "softwaremodel.Package": {
             "type": "object",
             "required": [
@@ -2994,7 +3658,10 @@ const docTemplate = `{
             ],
             "properties": {
                 "custom_configs": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "custom_data_paths": {
                     "type": "array",
@@ -3023,6 +3690,59 @@ const docTemplate = `{
                 },
                 "type": {
                     "$ref": "#/definitions/softwaremodel.SoftwarePackageType"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.PackageMigrationInfo": {
+            "type": "object",
+            "required": [
+                "name",
+                "needed_packages",
+                "version"
+            ],
+            "properties": {
+                "custom_configs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "custom_data_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "gpg_key_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "need_to_delete_packages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "needed_packages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "repo_url": {
+                    "type": "string"
+                },
+                "repo_use_os_version_code": {
+                    "type": "boolean",
+                    "default": false
                 },
                 "version": {
                     "type": "string"
@@ -3100,6 +3820,10 @@ const docTemplate = `{
                 "SoftwarePackageTypeDEB": "Debian based package type",
                 "SoftwarePackageTypeRPM": "RHEL based package type"
             },
+            "x-enum-descriptions": [
+                "Debian based package type",
+                "RHEL based package type"
+            ],
             "x-enum-varnames": [
                 "SoftwarePackageTypeDEB",
                 "SoftwarePackageTypeRPM"
@@ -3133,6 +3857,17 @@ const docTemplate = `{
                 },
                 "source_group_id": {
                     "type": "string"
+                }
+            }
+        },
+        "softwaremodel.TargetGroupSoftwareProperty": {
+            "type": "object",
+            "properties": {
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.MigrationServer"
+                    }
                 }
             }
         }
