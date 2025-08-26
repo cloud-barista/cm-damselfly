@@ -288,7 +288,7 @@ const docTemplate = `{
         },
         "/model/version": {
             "get": {
-                "description": "Get the versions of all models(schemata of on-premise/cloud migration models)",
+                "description": "Get the versions of all models(schemata of on-premise/cloud/software migration models)",
                 "consumes": [
                     "application/json"
                 ],
@@ -298,7 +298,7 @@ const docTemplate = `{
                 "tags": [
                     "[API] Migration Models"
                 ],
-                "summary": "Get the versions of all models(schemata of on-premise/cloud migration models)",
+                "summary": "Get the versions of all models(schemata of on-premise/cloud/software migration models)",
                 "operationId": "GetModelsVersion",
                 "responses": {
                     "200": {
@@ -1815,6 +1815,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "region": {
                     "type": "string"
                 },
@@ -1906,6 +1909,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "region": {
                     "type": "string"
                 },
@@ -1975,6 +1981,9 @@ const docTemplate = `{
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "onpremModelVersion": {
                     "type": "string"
@@ -2046,6 +2055,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2116,6 +2128,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2168,6 +2183,9 @@ const docTemplate = `{
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "region": {
                     "type": "string"
@@ -2243,6 +2261,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "onpremModelVersion": {
                     "type": "string"
                 },
@@ -2297,6 +2318,9 @@ const docTemplate = `{
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "softwareModelVersion": {
                     "type": "string"
@@ -2353,6 +2377,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2388,7 +2415,9 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "cloudInfraModel",
-                "onpremiseInfraModel"
+                "onpremiseInfraModel",
+                "sourceSoftwareModel",
+                "targetSoftwareModel"
             ],
             "properties": {
                 "cloudInfraModel": {
@@ -2421,6 +2450,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "onpremModelVersion": {
                     "type": "string"
                 },
@@ -2432,6 +2464,12 @@ const docTemplate = `{
                 },
                 "softwareModelVersion": {
                     "type": "string"
+                },
+                "sourceSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2487,6 +2525,9 @@ const docTemplate = `{
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "onpremModelVersion": {
                     "type": "string"
@@ -2548,6 +2589,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2591,6 +2635,9 @@ const docTemplate = `{
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "softwareModelVersion": {
                     "type": "string"
@@ -2683,6 +2730,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "region": {
                     "type": "string"
                 },
@@ -2752,6 +2802,9 @@ const docTemplate = `{
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "onpremModelVersion": {
                     "type": "string"
@@ -2823,6 +2876,9 @@ const docTemplate = `{
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2892,6 +2948,9 @@ const docTemplate = `{
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "softwareModelVersion": {
                     "type": "string"
