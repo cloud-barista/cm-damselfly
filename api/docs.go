@@ -36,6 +36,7 @@ const docTemplate = `{
                     "[API] Cloud Migration User Models"
                 ],
                 "summary": "Get a list of cloud user models",
+                "operationId": "GetCloudModels",
                 "responses": {
                     "200": {
                         "description": "Successfully Obtained Cloud Migration User Models",
@@ -69,6 +70,7 @@ const docTemplate = `{
                     "[API] Cloud Migration User Models"
                 ],
                 "summary": "Create a new cloud user model",
+                "operationId": "CreateCloudModel",
                 "parameters": [
                     {
                         "description": "model information",
@@ -109,6 +111,7 @@ const docTemplate = `{
                     "[API] Cloud Migration User Models"
                 ],
                 "summary": "Get a specific cloud user model",
+                "operationId": "GetCloudModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -151,6 +154,7 @@ const docTemplate = `{
                     "[API] Cloud Migration User Models"
                 ],
                 "summary": "Update a cloud user model",
+                "operationId": "UpdateCloudModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -208,6 +212,7 @@ const docTemplate = `{
                     "[API] Cloud Migration User Models"
                 ],
                 "summary": "Delete a cloud user model",
+                "operationId": "DeleteCloudModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -258,6 +263,7 @@ const docTemplate = `{
                     "[Admin] System management"
                 ],
                 "summary": "Check HTTP version of incoming request",
+                "operationId": "RestCheckHTTPVersion",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -293,6 +299,7 @@ const docTemplate = `{
                     "[API] Migration Models"
                 ],
                 "summary": "Get the versions of all models(schemata of on-premise/cloud migration models)",
+                "operationId": "GetModelsVersion",
                 "responses": {
                     "200": {
                         "description": "This is the versions of all models(schemata)",
@@ -328,6 +335,7 @@ const docTemplate = `{
                     "[API] Migration User Models"
                 ],
                 "summary": "Get a list of all user models",
+                "operationId": "GetModels",
                 "parameters": [
                     {
                         "type": "boolean",
@@ -372,6 +380,7 @@ const docTemplate = `{
                     "[API] On-Premise Migration User Models"
                 ],
                 "summary": "Get a list of on-premise models",
+                "operationId": "GetOnPremModels",
                 "responses": {
                     "200": {
                         "description": "Successfully Obtained On-Premise Migration User Models",
@@ -405,6 +414,7 @@ const docTemplate = `{
                     "[API] On-Premise Migration User Models"
                 ],
                 "summary": "Create a new on-premise model",
+                "operationId": "CreateOnPremModel",
                 "parameters": [
                     {
                         "description": "model information",
@@ -457,6 +467,7 @@ const docTemplate = `{
                     "[API] On-Premise Migration User Models"
                 ],
                 "summary": "Get a specific on-premise model",
+                "operationId": "GetOnPremModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -505,6 +516,7 @@ const docTemplate = `{
                     "[API] On-Premise Migration User Models"
                 ],
                 "summary": "Update a on-premise model",
+                "operationId": "UpdateOnPremModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -556,6 +568,7 @@ const docTemplate = `{
                     "[API] On-Premise Migration User Models"
                 ],
                 "summary": "Delete a on-premise model",
+                "operationId": "DeleteOnPremModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -606,6 +619,7 @@ const docTemplate = `{
                     "[Admin] System management"
                 ],
                 "summary": "Check Damselfly is ready",
+                "operationId": "RestGetReadyz",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -635,6 +649,7 @@ const docTemplate = `{
                     "[API] Source Software Migration User Models"
                 ],
                 "summary": "Get a list of source software user models",
+                "operationId": "GetSourceSoftwareModels",
                 "responses": {
                     "200": {
                         "description": "Successfully Obtained Source Software Migration User Models",
@@ -662,6 +677,7 @@ const docTemplate = `{
                     "[API] Source Software Migration User Models"
                 ],
                 "summary": "Create a new source software user model",
+                "operationId": "CreateSourceSoftwareModel",
                 "parameters": [
                     {
                         "description": "model information",
@@ -702,6 +718,7 @@ const docTemplate = `{
                     "[API] Source Software Migration User Models"
                 ],
                 "summary": "Get a specific source software user model",
+                "operationId": "GetSourceSoftwareModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -744,6 +761,7 @@ const docTemplate = `{
                     "[API] Source Software Migration User Models"
                 ],
                 "summary": "Update a source software user model",
+                "operationId": "UpdateSourceSoftwareModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -801,6 +819,7 @@ const docTemplate = `{
                     "[API] Source Software Migration User Models"
                 ],
                 "summary": "Delete a source software user model",
+                "operationId": "DeleteSourceSoftwareModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -851,6 +870,7 @@ const docTemplate = `{
                     "[API] Target Software Migration User Models"
                 ],
                 "summary": "Get a list of target software user models",
+                "operationId": "GetTargetSoftwareModels",
                 "responses": {
                     "200": {
                         "description": "Successfully Obtained Target Software Migration User Models",
@@ -878,6 +898,7 @@ const docTemplate = `{
                     "[API] Target Software Migration User Models"
                 ],
                 "summary": "Create a new target software user model",
+                "operationId": "CreateTargetSoftwareModel",
                 "parameters": [
                     {
                         "description": "model information",
@@ -918,6 +939,7 @@ const docTemplate = `{
                     "[API] Target Software Migration User Models"
                 ],
                 "summary": "Get a specific target software user model",
+                "operationId": "GetTargetSoftwareModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -960,6 +982,7 @@ const docTemplate = `{
                     "[API] Target Software Migration User Models"
                 ],
                 "summary": "Update a target software user model",
+                "operationId": "UpdateTargetSoftwareModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -1017,6 +1040,7 @@ const docTemplate = `{
                     "[API] Target Software Migration User Models"
                 ],
                 "summary": "Delete a target software user model",
+                "operationId": "DeleteTargetSoftwareModel",
                 "parameters": [
                     {
                         "type": "string",
@@ -2391,6 +2415,9 @@ const docTemplate = `{
                 "isInitUserModel": {
                     "type": "boolean"
                 },
+                "isSoftwareModel": {
+                    "type": "boolean"
+                },
                 "isTargetModel": {
                     "type": "boolean"
                 },
@@ -2401,6 +2428,9 @@ const docTemplate = `{
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "region": {
+                    "type": "string"
+                },
+                "softwareModelVersion": {
                     "type": "string"
                 },
                 "updateTime": {
@@ -2427,6 +2457,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "onpremModelVersion": {
+                    "type": "string"
+                },
+                "softwareModelVersion": {
                     "type": "string"
                 }
             }

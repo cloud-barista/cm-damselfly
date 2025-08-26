@@ -930,6 +930,8 @@ definitions:
         type: boolean
       isInitUserModel:
         type: boolean
+      isSoftwareModel:
+        type: boolean
       isTargetModel:
         type: boolean
       onpremModelVersion:
@@ -937,6 +939,8 @@ definitions:
       onpremiseInfraModel:
         $ref: '#/definitions/onpremisemodel.OnpremInfra'
       region:
+        type: string
+      softwareModelVersion:
         type: string
       updateTime:
         type: string
@@ -957,6 +961,8 @@ definitions:
       cloudModelVersion:
         type: string
       onpremModelVersion:
+        type: string
+      softwareModelVersion:
         type: string
     type: object
   handler.OnPremModelRespInfo:
@@ -1963,6 +1969,7 @@ paths:
       consumes:
       - application/json
       description: Get a list of cloud user models.
+      operationId: GetCloudModels
       produces:
       - application/json
       responses:
@@ -1985,6 +1992,7 @@ paths:
       consumes:
       - application/json
       description: Create a new cloud user model with the given information.
+      operationId: CreateCloudModel
       parameters:
       - description: model information
         in: body
@@ -2011,6 +2019,7 @@ paths:
       consumes:
       - application/json
       description: Delete a cloud user model with the given information.
+      operationId: DeleteCloudModel
       parameters:
       - description: Model ID
         in: path
@@ -2043,6 +2052,7 @@ paths:
       consumes:
       - application/json
       description: Get a specific cloud user model.
+      operationId: GetCloudModel
       parameters:
       - description: Model ID
         in: path
@@ -2071,6 +2081,7 @@ paths:
       consumes:
       - application/json
       description: Update a cloud user model with the given information.
+      operationId: UpdateCloudModel
       parameters:
       - description: Model ID
         in: path
@@ -2111,6 +2122,7 @@ paths:
       - application/json
       description: Checks and logs the HTTP version of the incoming request to the
         server console.
+      operationId: RestCheckHTTPVersion
       produces:
       - application/json
       responses:
@@ -2134,6 +2146,7 @@ paths:
       consumes:
       - application/json
       description: Get a list of all user models.
+      operationId: GetModels
       parameters:
       - description: Is TargetModel ?
         in: path
@@ -2164,6 +2177,7 @@ paths:
       - application/json
       description: Get the versions of all models(schemata of on-premise/cloud migration
         models)
+      operationId: GetModelsVersion
       produces:
       - application/json
       responses:
@@ -2188,6 +2202,7 @@ paths:
       consumes:
       - application/json
       description: Get a list of on-premise models.
+      operationId: GetOnPremModels
       produces:
       - application/json
       responses:
@@ -2210,6 +2225,7 @@ paths:
       consumes:
       - application/json
       description: Create a new on-premise model with the given information.
+      operationId: CreateOnPremModel
       parameters:
       - description: model information
         in: body
@@ -2244,6 +2260,7 @@ paths:
       consumes:
       - application/json
       description: Delete a on-premise model with the given information.
+      operationId: DeleteOnPremModel
       parameters:
       - description: Model ID
         in: path
@@ -2276,6 +2293,7 @@ paths:
       consumes:
       - application/json
       description: Get a specific on-premise model.
+      operationId: GetOnPremModel
       parameters:
       - description: Model ID
         in: path
@@ -2308,6 +2326,7 @@ paths:
       consumes:
       - application/json
       description: Update a on-premise model with the given information.
+      operationId: UpdateOnPremModel
       parameters:
       - description: Model ID
         in: path
@@ -2343,6 +2362,7 @@ paths:
       consumes:
       - application/json
       description: Check Damselfly is ready
+      operationId: RestGetReadyz
       produces:
       - application/json
       responses:
@@ -2362,6 +2382,7 @@ paths:
       consumes:
       - application/json
       description: Get a list of source software user models.
+      operationId: GetSourceSoftwareModels
       produces:
       - application/json
       responses:
@@ -2380,6 +2401,7 @@ paths:
       consumes:
       - application/json
       description: Create a new source software user model with the given information.
+      operationId: CreateSourceSoftwareModel
       parameters:
       - description: model information
         in: body
@@ -2406,6 +2428,7 @@ paths:
       consumes:
       - application/json
       description: Delete a source software user model with the given information.
+      operationId: DeleteSourceSoftwareModel
       parameters:
       - description: Model ID
         in: path
@@ -2438,6 +2461,7 @@ paths:
       consumes:
       - application/json
       description: Get a specific source software user model.
+      operationId: GetSourceSoftwareModel
       parameters:
       - description: Model ID
         in: path
@@ -2466,6 +2490,7 @@ paths:
       consumes:
       - application/json
       description: Update a source software user model with the given information.
+      operationId: UpdateSourceSoftwareModel
       parameters:
       - description: Model ID
         in: path
@@ -2505,6 +2530,7 @@ paths:
       consumes:
       - application/json
       description: Get a list of target software user models.
+      operationId: GetTargetSoftwareModels
       produces:
       - application/json
       responses:
@@ -2523,6 +2549,7 @@ paths:
       consumes:
       - application/json
       description: Create a new target software user model with the given information.
+      operationId: CreateTargetSoftwareModel
       parameters:
       - description: model information
         in: body
@@ -2549,6 +2576,7 @@ paths:
       consumes:
       - application/json
       description: Delete a target software user model with the given information.
+      operationId: DeleteTargetSoftwareModel
       parameters:
       - description: Model ID
         in: path
@@ -2581,6 +2609,7 @@ paths:
       consumes:
       - application/json
       description: Get a specific target software user model.
+      operationId: GetTargetSoftwareModel
       parameters:
       - description: Model ID
         in: path
@@ -2609,6 +2638,7 @@ paths:
       consumes:
       - application/json
       description: Update a target software user model with the given information.
+      operationId: UpdateTargetSoftwareModel
       parameters:
       - description: Model ID
         in: path

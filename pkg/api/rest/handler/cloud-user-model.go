@@ -16,6 +16,73 @@ import (
 	cloudmodel 		"github.com/cloud-barista/cm-model/infra/cloud-model"
 )
 
+type ModelsVersionRespInfo struct {
+	OnPremModelVer 		string `json:"onpremModelVersion"`
+	CloudModelVer  		string `json:"cloudModelVersion"`
+	SoftwareModelVer  	string `json:"softwareModelVersion"`
+}
+
+type GetModelsVersionResp struct {
+	ModelsVersion ModelsVersionRespInfo `json:"modelsVersion"`
+}
+
+// GetModelsVersion godoc
+// @ID GetModelsVersion
+// @Summary Get the versions of all models(schemata of on-premise/cloud migration models)
+// @Description Get the versions of all models(schemata of on-premise/cloud migration models)
+// @Tags [API] Migration Models
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} GetModelsVersionResp "This is the versions of all models(schemata)"
+// @Failure 404 {object} model.Response
+// @Failure 500 {object} model.Response
+// @Router /model/version [get]
+func GetModelsVersion(c echo.Context) error {
+	var resultVer string
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	if err != nil {
+		msg := "Failed to Get the Module Verion!!"
+		log.Debug().Msg(msg)
+		// newErr := errors.New(msg)
+		// return c.JSON(http.StatusNotFound, newErr)
+	} else {
+		if len(modelVer) > 10 {
+			release, err := getLatestRelease("cloud-barista", "cm-model")
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				return err
+			}    
+			log.Info().Msgf("Latest version: %s\n", release.TagName)
+			// log.Info().Msgf("Release name: %s\n", release.Name)
+			resultVer = release.TagName
+		} else {
+			resultVer = modelVer
+		}
+		log.Info().Msgf("Cloud Model version: %s", resultVer)
+	}
+
+	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
+	if err != nil {
+		newErr := fmt.Errorf("failed to get the 'cb-tumblebug' module version : [%v]", err)
+		log.Error().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+
+	modelsVersionInfo := ModelsVersionRespInfo{
+		OnPremModelVer: 	resultVer,
+		CloudModelVer:  	cloudModelVer,
+		SoftwareModelVer:	resultVer,
+	}
+	res := GetModelsVersionResp{
+		ModelsVersion: modelsVersionInfo,
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
 // ##############################################################################################
 // ### On-premise and Cloud Migration User Model
 // ##############################################################################################
@@ -31,8 +98,10 @@ type ModelRespInfo struct {
 	UpdateTime       string                  	   	`json:"updateTime"`
 	IsTargetModel    bool                    	   	`json:"isTargetModel"`
 	IsCloudModel     bool                    	   	`json:"isCloudModel"`
+	IsSoftwareModel  bool                    		`json:"isSoftwareModel"`
 	OnPremModelVer   string                  	   	`json:"onpremModelVersion"`
 	CloudModelVer    string                  	   	`json:"cloudModelVersion"`
+	SoftwareModelVer string                  		`json:"softwareModelVersion"`
 	CSP              string                  	   	`json:"csp"`
 	Region           string                  	   	`json:"region"`
 	Zone             string                  	   	`json:"zone"`
@@ -49,6 +118,7 @@ type GetModelsResp struct {
 }
 
 // GetModels godoc
+// @ID GetModels
 // @Summary Get a list of all user models
 // @Description Get a list of all user models.
 // @Tags [API] Migration User Models
@@ -117,59 +187,6 @@ func GetModels(c echo.Context) error {
 	}
 }
 
-type ModelsVersionRespInfo struct {
-	OnPremModelVer string `json:"onpremModelVersion"`
-	CloudModelVer  string `json:"cloudModelVersion"`
-}
-
-type GetModelsVersionResp struct {
-	ModelsVersion ModelsVersionRespInfo `json:"modelsVersion"`
-}
-
-// GetModelsVersion godoc
-// @Summary Get the versions of all models(schemata of on-premise/cloud migration models)
-// @Description Get the versions of all models(schemata of on-premise/cloud migration models)
-// @Tags [API] Migration Models
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} GetModelsVersionResp "This is the versions of all models(schemata)"
-// @Failure 404 {object} model.Response
-// @Failure 500 {object} model.Response
-// @Router /model/version [get]
-func GetModelsVersion(c echo.Context) error {
-
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
-	if err != nil {
-		newErr := fmt.Errorf("failed to get the 'cm-model' module version : [%v]", err)
-		log.Error().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
-	}
-
-	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
-	if err != nil {
-		newErr := fmt.Errorf("failed to get the 'cb-tumblebug' module version : [%v]", err)
-		log.Error().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
-	}
-
-	modelsVersionInfo := ModelsVersionRespInfo{
-		OnPremModelVer: modelVer,
-		CloudModelVer:  cloudModelVer,
-	}
-	res := GetModelsVersionResp{
-		ModelsVersion: modelsVersionInfo,
-	}
-	return c.JSON(http.StatusOK, res)
-}
-
 // ##############################################################################################
 // ### On-premise Migration User Model
 // ##############################################################################################
@@ -207,6 +224,7 @@ type GetOnPremModelsResp struct {
 }
 
 // GetOnPremModels godoc
+// @ID GetOnPremModels
 // @Summary Get a list of on-premise models
 // @Description Get a list of on-premise models.
 // @Tags [API] On-Premise Migration User Models
@@ -260,6 +278,7 @@ type GetOnPremModelResp struct {
 }
 
 // GetOnPremModel godoc
+// @ID GetOnPremModel
 // @Summary Get a specific on-premise model
 // @Description Get a specific on-premise model.
 // @Tags [API] On-Premise Migration User Models
@@ -450,6 +469,7 @@ type CreateOnPremModelResp struct {
 }
 
 // CreateOnPremModel godoc
+// @ID CreateOnPremModel
 // @Summary Create a new on-premise model
 // @Description Create a new on-premise model with the given information.
 // @Tags [API] On-Premise Migration User Models
@@ -498,16 +518,29 @@ func CreateOnPremModel(c echo.Context) error {
 	userModel.IsTargetModel = false
 	userModel.IsCloudModel = false
 
-	onpremModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	var resultVer string
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
 	if err != nil {
 		msg := "Failed to Get the Module Verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
-		log.Info().Msgf("On-premise Model version: [%s]", onpremModelVer)
+		if len(modelVer) > 10 {
+			release, err := getLatestRelease("cloud-barista", "cm-model")
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				return err
+			}    
+			log.Info().Msgf("Latest version: %s\n", release.TagName)
+			// log.Info().Msgf("Release name: %s\n", release.Name)
+			resultVer = release.TagName
+		} else {
+			resultVer = modelVer
+		}
+		log.Info().Msgf("On-premise Model version: %s", resultVer)
 	}
-	userModel.OnPremModelVer = onpremModelVer
+	userModel.OnPremModelVer = resultVer
 
 	// Convert Int to String type
 	// strNum := strconv.Itoa(randomNum)
@@ -541,6 +574,7 @@ type UpdateOnPremModelResp struct {
 }
 
 // UpdateOnPremModel godoc
+// @ID UpdateOnPremModel
 // @Summary Update a on-premise model
 // @Description Update a on-premise model with the given information.
 // @Tags [API] On-Premise Migration User Models
@@ -710,6 +744,7 @@ func UpdateOnPremModel(c echo.Context) error {
 // No ResponseBody required for "DELETE /onpremmodel/{id}"
 
 // DeleteOnPremModel godoc
+// @ID DeleteOnPremModel
 // @Summary Delete a on-premise model
 // @Description Delete a on-premise model with the given information.
 // @Tags [API] On-Premise Migration User Models
@@ -826,6 +861,7 @@ type GetCloudModelsResp struct {
 }
 
 // GetCloudModels godoc
+// @ID GetCloudModels
 // @Summary Get a list of cloud user models
 // @Description Get a list of cloud user models.
 // @Tags [API] Cloud Migration User Models
@@ -870,6 +906,7 @@ type GetCloudModelResp struct {
 }
 
 // GetCloudModel godoc
+// @ID GetCloudModel
 // @Summary Get a specific cloud user model
 // @Description Get a specific cloud user model.
 // @Tags [API] Cloud Migration User Models
@@ -941,6 +978,7 @@ type CreateCloudModelResp struct {
 }
 
 // CreateCloudModel godoc
+// @ID CreateCloudModel
 // @Summary Create a new cloud user model
 // @Description Create a new cloud user model with the given information.
 // @Tags [API] Cloud Migration User Models
@@ -983,16 +1021,29 @@ func CreateCloudModel(c echo.Context) error {
 	model.CreateTime = time
 	model.IsCloudModel = true
 
-	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
+	var resultVer string
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
 	if err != nil {
 		msg := "Failed to Get the Module Verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
-		log.Info().Msgf("Cloud Model version: %s", cloudModelVer)
+		if len(modelVer) > 10 {
+			release, err := getLatestRelease("cloud-barista", "cm-model")
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				return err
+			}    
+			log.Info().Msgf("Latest version: %s\n", release.TagName)
+			// log.Info().Msgf("Release name: %s\n", release.Name)
+			resultVer = release.TagName
+		} else {
+			resultVer = modelVer
+		}
+		log.Info().Msgf("Cloud Model version: %s", resultVer)
 	}
-	model.CloudModelVer = cloudModelVer
+	model.CloudModelVer = resultVer
 
 	// Convert Int to String type
 	// strNum := strconv.Itoa(randomNum)
@@ -1026,6 +1077,7 @@ type UpdateCloudModelResp struct {
 }
 
 // UpdateCloudModel godoc
+// @ID UpdateCloudModel
 // @Summary Update a cloud user model
 // @Description Update a cloud user model with the given information.
 // @Tags [API] Cloud Migration User Models
@@ -1205,6 +1257,7 @@ func UpdateCloudModel(c echo.Context) error {
 // No ResponseBody required for "DELETE /cloudmodel/{id}"
 
 // DeleteCloudModel godoc
+// @ID DeleteCloudModel
 // @Summary Delete a cloud user model
 // @Description Delete a cloud user model with the given information.
 // @Tags [API] Cloud Migration User Models
