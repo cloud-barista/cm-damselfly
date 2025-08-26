@@ -14,6 +14,7 @@ import (
 	model 			"github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
 	onpremisemodel 	"github.com/cloud-barista/cm-model/infra/on-premise-model"
 	cloudmodel 		"github.com/cloud-barista/cm-model/infra/cloud-model"
+	softwaremodel 	"github.com/cloud-barista/cm-model/sw"
 )
 
 type ModelsVersionRespInfo struct {
@@ -26,10 +27,16 @@ type GetModelsVersionResp struct {
 	ModelsVersion ModelsVersionRespInfo `json:"modelsVersion"`
 }
 
+const (
+	OnPremModel string = "OnPremiseModel"
+	CloudModel 	string = "CloudModel"
+	SWModel 	string = "SoftwareModel"
+)
+
 // GetModelsVersion godoc
 // @ID GetModelsVersion
-// @Summary Get the versions of all models(schemata of on-premise/cloud migration models)
-// @Description Get the versions of all models(schemata of on-premise/cloud migration models)
+// @Summary Get the versions of all models(schemata of on-premise/cloud/software migration models)
+// @Description Get the versions of all models(schemata of on-premise/cloud/software migration models)
 // @Tags [API] Migration Models
 // @Accept  json
 // @Produce  json
@@ -84,7 +91,7 @@ func GetModelsVersion(c echo.Context) error {
 }
 
 // ##############################################################################################
-// ### On-premise and Cloud Migration User Model
+// ### On-premise, Cloud, Software Migration User Model
 // ##############################################################################################
 
 type ModelRespInfo struct {
@@ -99,6 +106,7 @@ type ModelRespInfo struct {
 	IsTargetModel    bool                    	   	`json:"isTargetModel"`
 	IsCloudModel     bool                    	   	`json:"isCloudModel"`
 	IsSoftwareModel  bool                    		`json:"isSoftwareModel"`
+	ModelType 		 string                  	   	`json:"modelType"`
 	OnPremModelVer   string                  	   	`json:"onpremModelVersion"`
 	CloudModelVer    string                  	   	`json:"cloudModelVersion"`
 	SoftwareModelVer string                  		`json:"softwareModelVersion"`
@@ -107,6 +115,8 @@ type ModelRespInfo struct {
 	Zone             string                  	   	`json:"zone"`
 	OnpremInfraModel onpremisemodel.OnpremInfra   	`json:"onpremiseInfraModel" validate:"required"`
 	CloudInfraModel  cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
+	SourceSoftwareModel softwaremodel.SourceGroupSoftwareProperty	`json:"sourceSoftwareModel" validate:"required"`
+	TargetSoftwareModel softwaremodel.TargetGroupSoftwareProperty	`json:"targetSoftwareModel" validate:"required"`		
 }
 
 // Caution!!)
@@ -167,17 +177,21 @@ func GetModels(c echo.Context) error {
 		if isTargetmodel { // Only Tareget models
 			for _, model := range modelList {
 				if model, ok := model.(map[string]interface{}); ok {
-					if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == true {
+					// if model["modelType"] != SWModel { // Software models are not included
+						if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == true {
 						models = append(models, model)
-					}
+						}
+					// }					
 				}
 			}
 		} else { // Only Source models
 			for _, model := range modelList {
 				if model, ok := model.(map[string]interface{}); ok {
-					if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == false {
-						models = append(models, model)
-					}
+					// if model["modelType"] != SWModel { // Software models are not included
+						if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == false {
+							models = append(models, model)
+						}
+					// }
 				}
 			}
 		}
@@ -196,7 +210,7 @@ type OnPremModelReqInfo struct {
 	IsInitUserModel  bool               		`json:"isInitUserModel"`
 	UserModelName    string             		`json:"userModelName"`
 	UserModelVer     string             		`json:"userModelVersion"`
-	Description      string             		`json:"description"`	
+	Description      string             		`json:"description"`
 	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
 }
 
@@ -212,6 +226,7 @@ type OnPremModelRespInfo struct {
 	UpdateTime       string             		`json:"updateTime"`
 	IsTargetModel    bool               		`json:"isTargetModel"`
 	IsCloudModel     bool               		`json:"isCloudModel"`
+	ModelType 		 string                  	`json:"modelType"`
 	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
 }
 
@@ -446,7 +461,7 @@ func GetOnPremModel(c echo.Context) error {
 
 		return c.JSON(http.StatusOK, userModel)
 	} else {
-		newErr := fmt.Errorf("failed to find the model from db with the id")
+		newErr := fmt.Errorf("Failed to find the model from db with the id")
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -514,9 +529,10 @@ func CreateOnPremModel(c echo.Context) error {
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	}
-	userModel.CreateTime = time
+	userModel.CreateTime 	= time
 	userModel.IsTargetModel = false
-	userModel.IsCloudModel = false
+	userModel.IsCloudModel 	= false
+	userModel.ModelType 	= OnPremModel
 
 	var resultVer string
 	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
@@ -848,7 +864,8 @@ type CloudModelRespInfo struct {
 	Region          string                  		`json:"region"`
 	Zone            string                  		`json:"zone"`
 	IsCloudModel    bool                    		`json:"isCloudModel"`
-	CloudModelVer   string                  		`json:"cloudModelVersion"`	
+	CloudModelVer   string                  		`json:"cloudModelVersion"`
+	ModelType 		 string                  	   	`json:"modelType"`
 	CloudInfraModel cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
 }
 
@@ -886,18 +903,12 @@ func GetCloudModels(c echo.Context) error {
 		}
 
 		if len(cloudModels) < 1 {
-			msg := "Failed to Find Any Model"
-			log.Debug().Msg(msg)
-			newErr := errors.New(msg)
-			return c.JSON(http.StatusNotFound, newErr)
+			return c.JSON(http.StatusOK, nil)
 		}
 
 		return c.JSON(http.StatusOK, cloudModels)
 	} else {
-		msg := "Failed to Find Any Model from DB"
-		log.Debug().Msg(msg)		// Not log.Error()
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
+		return c.JSON(http.StatusOK, nil)
 	}
 }
 
@@ -1018,8 +1029,9 @@ func CreateCloudModel(c echo.Context) error {
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	}
-	model.CreateTime = time
-	model.IsCloudModel = true
+	model.CreateTime 	= time
+	model.IsCloudModel 	= true
+	model.ModelType 	= CloudModel
 
 	var resultVer string
 	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
@@ -1110,15 +1122,6 @@ func UpdateCloudModel(c echo.Context) error {
 		log.Error().Msg(msg)
 		newErr := errors.New(msg)
 		return c.JSON(http.StatusBadRequest, newErr)
-
-
-		err := fmt.Errorf("invalid request")
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
 	}
 	// fmt.Printf("New Req Values for [%s]: %v", c.Param("id"), updateModel)
 
