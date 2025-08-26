@@ -3,7 +3,7 @@ module github.com/cloud-barista/cm-damselfly
 go 1.23.0
 
 require (
-	github.com/cloud-barista/cm-model v0.0.12-0.20250823152636-94d1ad552aa3
+	github.com/cloud-barista/cm-model v0.0.12
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
