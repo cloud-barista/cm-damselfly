@@ -281,7 +281,7 @@
         },
         "/model/version": {
             "get": {
-                "description": "Get the versions of all models(schemata of on-premise/cloud migration models)",
+                "description": "Get the versions of all models(schemata of on-premise/cloud/software migration models)",
                 "consumes": [
                     "application/json"
                 ],
@@ -291,7 +291,7 @@
                 "tags": [
                     "[API] Migration Models"
                 ],
-                "summary": "Get the versions of all models(schemata of on-premise/cloud migration models)",
+                "summary": "Get the versions of all models(schemata of on-premise/cloud/software migration models)",
                 "operationId": "GetModelsVersion",
                 "responses": {
                     "200": {
@@ -1808,6 +1808,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "region": {
                     "type": "string"
                 },
@@ -1899,6 +1902,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "region": {
                     "type": "string"
                 },
@@ -1968,6 +1974,9 @@
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "onpremModelVersion": {
                     "type": "string"
@@ -2039,6 +2048,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2109,6 +2121,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2161,6 +2176,9 @@
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "region": {
                     "type": "string"
@@ -2236,6 +2254,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "onpremModelVersion": {
                     "type": "string"
                 },
@@ -2290,6 +2311,9 @@
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "softwareModelVersion": {
                     "type": "string"
@@ -2346,6 +2370,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2381,7 +2408,9 @@
             "type": "object",
             "required": [
                 "cloudInfraModel",
-                "onpremiseInfraModel"
+                "onpremiseInfraModel",
+                "sourceSoftwareModel",
+                "targetSoftwareModel"
             ],
             "properties": {
                 "cloudInfraModel": {
@@ -2414,6 +2443,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "onpremModelVersion": {
                     "type": "string"
                 },
@@ -2425,6 +2457,12 @@
                 },
                 "softwareModelVersion": {
                     "type": "string"
+                },
+                "sourceSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
                 },
                 "updateTime": {
                     "type": "string"
@@ -2480,6 +2518,9 @@
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "onpremModelVersion": {
                     "type": "string"
@@ -2541,6 +2582,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2584,6 +2628,9 @@
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "softwareModelVersion": {
                     "type": "string"
@@ -2676,6 +2723,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "region": {
                     "type": "string"
                 },
@@ -2745,6 +2795,9 @@
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "onpremModelVersion": {
                     "type": "string"
@@ -2816,6 +2869,9 @@
                 "isTargetModel": {
                     "type": "boolean"
                 },
+                "modelType": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -2885,6 +2941,9 @@
                 },
                 "isTargetModel": {
                     "type": "boolean"
+                },
+                "modelType": {
+                    "type": "string"
                 },
                 "softwareModelVersion": {
                     "type": "string"

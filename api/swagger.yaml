@@ -537,6 +537,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       region:
         type: string
       updateTime:
@@ -597,6 +599,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       region:
         type: string
       updateTime:
@@ -643,6 +647,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
@@ -689,6 +695,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       softwareModelVersion:
         type: string
       sourceSoftwareModel:
@@ -735,6 +743,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       softwareModelVersion:
         type: string
       targetSoftwareModel:
@@ -770,6 +780,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       region:
         type: string
       updateTime:
@@ -818,6 +830,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
@@ -854,6 +868,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       softwareModelVersion:
         type: string
       sourceSoftwareModel:
@@ -890,6 +906,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       softwareModelVersion:
         type: string
       targetSoftwareModel:
@@ -934,6 +952,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
@@ -942,6 +962,10 @@ definitions:
         type: string
       softwareModelVersion:
         type: string
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
       updateTime:
         type: string
       userId:
@@ -955,6 +979,8 @@ definitions:
     required:
     - cloudInfraModel
     - onpremiseInfraModel
+    - sourceSoftwareModel
+    - targetSoftwareModel
     type: object
   handler.ModelsVersionRespInfo:
     properties:
@@ -979,6 +1005,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
@@ -1018,6 +1046,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       softwareModelVersion:
         type: string
       sourceSoftwareModel:
@@ -1047,6 +1077,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       softwareModelVersion:
         type: string
       targetSoftwareModel:
@@ -1107,6 +1139,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       region:
         type: string
       updateTime:
@@ -1153,6 +1187,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       onpremModelVersion:
         type: string
       onpremiseInfraModel:
@@ -1199,6 +1235,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       softwareModelVersion:
         type: string
       sourceSoftwareModel:
@@ -1245,6 +1283,8 @@ definitions:
         type: boolean
       isTargetModel:
         type: boolean
+      modelType:
+        type: string
       softwareModelVersion:
         type: string
       targetSoftwareModel:
@@ -2175,8 +2215,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get the versions of all models(schemata of on-premise/cloud migration
-        models)
+      description: Get the versions of all models(schemata of on-premise/cloud/software
+        migration models)
       operationId: GetModelsVersion
       produces:
       - application/json
@@ -2193,8 +2233,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Get the versions of all models(schemata of on-premise/cloud migration
-        models)
+      summary: Get the versions of all models(schemata of on-premise/cloud/software
+        migration models)
       tags:
       - '[API] Migration Models'
   /onpremmodel:

@@ -44,6 +44,7 @@ type SourceSoftwareModelRespInfo struct {
 	UpdateTime      	string                  		`json:"updateTime"`
 	IsSoftwareModel     bool                    		`json:"isSoftwareModel"`
 	IsTargetModel   	bool                    		`json:"isTargetModel"`
+	ModelType 		 	string                  	   	`json:"modelType"`
 	SourceSoftwareModel softwaremodel.SourceGroupSoftwareProperty	`json:"sourceSoftwareModel" validate:"required"`	
 }
 
@@ -82,18 +83,12 @@ func GetSourceSoftwareModels(c echo.Context) error {
 		}
 
 		if len(softwareModels) < 1 {
-			msg := "Failed to Find Any Model"
-			log.Debug().Msg(msg)
-			newErr := errors.New(msg)
-			return c.JSON(http.StatusNotFound, newErr)
+			return c.JSON(http.StatusOK, nil)
 		}
 
 		return c.JSON(http.StatusOK, softwareModels)
 	} else {
-		msg := "Failed to Find Any Model from DB"
-		log.Debug().Msg(msg)		// Not log.Error()
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
+		return c.JSON(http.StatusOK, nil)
 	}
 }
 
@@ -214,9 +209,10 @@ func CreateSourceSoftwareModel(c echo.Context) error {
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	}
-	model.CreateTime = time
-	model.IsSoftwareModel = true
-	model.IsTargetModel = false
+	model.CreateTime 		= time
+	model.IsSoftwareModel 	= true
+	model.IsTargetModel 	= false
+	model.ModelType 		= SWModel
 
 	var resultVer string
 	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
@@ -396,8 +392,8 @@ func UpdateSourceSoftwareModel(c echo.Context) error {
 			// return c.JSON(http.StatusNotFound, newErr)
 		}
 		updateModel.UpdateTime = time
-		updateModel.IsSoftwareModel = true
-		updateModel.IsTargetModel = false
+		// updateModel.IsSoftwareModel = true
+		// updateModel.IsTargetModel = false
 
 		// fmt.Println("### updateModel",)
 		// spew.Dump(updateModel)
@@ -534,6 +530,7 @@ type TargetSoftwareModelRespInfo struct {
 	UpdateTime      	string                  		`json:"updateTime"`
 	IsSoftwareModel     bool                    		`json:"isSoftwareModel"`
 	IsTargetModel   	bool                    		`json:"isTargetModel"`
+	ModelType 		 	string                  	   	`json:"modelType"`
 	TargetSoftwareModel softwaremodel.TargetGroupSoftwareProperty	`json:"targetSoftwareModel" validate:"required"`	
 }
 
@@ -572,18 +569,12 @@ func GetTargetSoftwareModels(c echo.Context) error {
 		}
 
 		if len(softwareModels) < 1 {
-			msg := "Failed to Find Any Model"
-			log.Debug().Msg(msg)
-			newErr := errors.New(msg)
-			return c.JSON(http.StatusNotFound, newErr)
+			return c.JSON(http.StatusOK, nil)
 		}
 
 		return c.JSON(http.StatusOK, softwareModels)
 	} else {
-		msg := "Failed to Find Any Model from DB"
-		log.Debug().Msg(msg)		// Not log.Error()
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
+		return c.JSON(http.StatusOK, nil)
 	}
 }
 
@@ -704,9 +695,10 @@ func CreateTargetSoftwareModel(c echo.Context) error {
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	}
-	model.CreateTime = time
-	model.IsSoftwareModel = true
-	model.IsTargetModel = true
+	model.CreateTime 		= time
+	model.IsSoftwareModel 	= true
+	model.IsTargetModel 	= true
+	model.ModelType 		= SWModel
 
 	var resultVer string
 	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
@@ -886,8 +878,8 @@ func UpdateTargetSoftwareModel(c echo.Context) error {
 			// return c.JSON(http.StatusNotFound, newErr)
 		}
 		updateModel.UpdateTime = time
-		updateModel.IsSoftwareModel = true
-		updateModel.IsTargetModel = true
+		// updateModel.IsSoftwareModel = true
+		// updateModel.IsTargetModel = true
 
 		// fmt.Println("### updateModel",)
 		// spew.Dump(updateModel)
