@@ -8,12 +8,14 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"io"
+	"net/http"
+    "encoding/json"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/cloud-barista/cm-damselfly/pkg/config"
 	"github.com/rs/zerolog/log"
+	"github.com/cloud-barista/cm-damselfly/pkg/config"	
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -159,4 +161,27 @@ func isRunningInContainer() bool {
 	//     }
 	// }
 	// return false
+}
+
+func getLatestRelease(owner, repo string) (*Release, error) {
+    url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
+    
+    resp, err := http.Get(url)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+    
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, err
+    }
+    
+    var release Release
+    err = json.Unmarshal(body, &release)
+    if err != nil {
+        return nil, err
+    }
+    
+    return &release, nil
 }

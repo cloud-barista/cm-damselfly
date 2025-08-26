@@ -1,12 +1,10 @@
 package handler
 
-import (
-    "io"
+import (    
 	"fmt"
 	"net/http"
 	"errors"
 	"strings"
-    "encoding/json"
 	"github.com/labstack/echo/v4"
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
@@ -58,6 +56,7 @@ type GetSourceSoftwareModelsResp struct {
 }
 
 // GetSourceSoftwareModels godoc
+// @ID GetSourceSoftwareModels
 // @Summary Get a list of source software user models
 // @Description Get a list of source software user models.
 // @Tags [API] Source Software Migration User Models
@@ -103,6 +102,7 @@ type GetSourceSoftwareModelResp struct {
 }
 
 // GetSourceSoftwareModel godoc
+// @ID GetSourceSoftwareModel
 // @Summary Get a specific source software user model
 // @Description Get a specific source software user model.
 // @Tags [API] Source Software Migration User Models
@@ -174,6 +174,7 @@ type CreateSourceSoftwareModelResp struct {
 }
 
 // CreateSourceSoftwareModel godoc
+// @ID CreateSourceSoftwareModel
 // @Summary Create a new source software user model
 // @Description Create a new source software user model with the given information.
 // @Tags [API] Source Software Migration User Models
@@ -217,33 +218,29 @@ func CreateSourceSoftwareModel(c echo.Context) error {
 	model.IsSoftwareModel = true
 	model.IsTargetModel = false
 
-	release, err := getLatestRelease("cloud-barista", "cm-model")
-    if err != nil {
-        fmt.Printf("Error: %v\n", err)
-        return err
-    }    
-    log.Info().Msgf("Latest version: %s\n", release.TagName)
-    // log.Info().Msgf("Release name: %s\n", release.Name)
-	model.SoftwareModelVer = release.TagName
-
-	/*
 	var resultVer string
-	softwareModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
 	if err != nil {
 		msg := "Failed to Get the Module Verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
-		if len(softwareModelVer) > 10 {
-        	resultVer = strings.SplitN(softwareModelVer, "-", 2)[0]
+		if len(modelVer) > 10 {
+			release, err := getLatestRelease("cloud-barista", "cm-model")
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				return err
+			}    
+			log.Info().Msgf("Latest version: %s\n", release.TagName)
+			// log.Info().Msgf("Release name: %s\n", release.Name)
+			resultVer = release.TagName
 		} else {
-			resultVer = softwareModelVer
+			resultVer = modelVer
 		}
 		log.Info().Msgf("Software Model version: %s", resultVer)
 	}
 	model.SoftwareModelVer = resultVer
-	*/
 
 	// Convert Int to String type
 	// strNum := strconv.Itoa(randomNum)
@@ -277,6 +274,7 @@ type UpdateSourceSoftwareModelResp struct {
 }
 
 // UpdateSourceSoftwareModel godoc
+// @ID UpdateSourceSoftwareModel
 // @Summary Update a source software user model
 // @Description Update a source software user model with the given information.
 // @Tags [API] Source Software Migration User Models
@@ -446,6 +444,7 @@ func UpdateSourceSoftwareModel(c echo.Context) error {
 // No ResponseBody required for "DELETE /softwaremodel/source/{id}"
 
 // DeleteSourceSoftwareModel godoc
+// @ID DeleteSourceSoftwareModel
 // @Summary Delete a source software user model
 // @Description Delete a source software user model with the given information.
 // @Tags [API] Source Software Migration User Models
@@ -547,6 +546,7 @@ type GetTargetSoftwareModelsResp struct {
 }
 
 // GetTargetSoftwareModels godoc
+// @ID GetTargetSoftwareModels
 // @Summary Get a list of target software user models
 // @Description Get a list of target software user models.
 // @Tags [API] Target Software Migration User Models
@@ -592,6 +592,7 @@ type GetTargetSoftwareModelResp struct {
 }
 
 // GetTargetSoftwareModel godoc
+// @ID GetTargetSoftwareModel
 // @Summary Get a specific target software user model
 // @Description Get a specific target software user model.
 // @Tags [API] Target Software Migration User Models
@@ -663,6 +664,7 @@ type CreateTargetSoftwareModelResp struct {
 }
 
 // CreateTargetSoftwareModel godoc
+// @ID CreateTargetSoftwareModel
 // @Summary Create a new target software user model
 // @Description Create a new target software user model with the given information.
 // @Tags [API] Target Software Migration User Models
@@ -706,33 +708,29 @@ func CreateTargetSoftwareModel(c echo.Context) error {
 	model.IsSoftwareModel = true
 	model.IsTargetModel = true
 
-	release, err := getLatestRelease("cloud-barista", "cm-model")
-    if err != nil {
-        fmt.Printf("Error: %v\n", err)
-        return err
-    }    
-    log.Info().Msgf("Latest version: %s\n", release.TagName)
-    // log.Info().Msgf("Release name: %s\n", release.Name)
-	model.SoftwareModelVer = release.TagName
-
-	/*
 	var resultVer string
-	softwareModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
 	if err != nil {
 		msg := "Failed to Get the Module Verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
-		if len(softwareModelVer) > 10 {
-        	resultVer = strings.SplitN(softwareModelVer, "-", 2)[0]
+		if len(modelVer) > 10 {
+			release, err := getLatestRelease("cloud-barista", "cm-model")
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				return err
+			}    
+			log.Info().Msgf("Latest version: %s\n", release.TagName)
+			// log.Info().Msgf("Release name: %s\n", release.Name)
+			resultVer = release.TagName
 		} else {
-			resultVer = softwareModelVer
+			resultVer = modelVer
 		}
 		log.Info().Msgf("Software Model version: %s", resultVer)
 	}
 	model.SoftwareModelVer = resultVer
-	*/
 
 	// Convert Int to String type
 	// strNum := strconv.Itoa(randomNum)
@@ -766,6 +764,7 @@ type UpdateTargetSoftwareModelResp struct {
 }
 
 // UpdateTargetSoftwareModel godoc
+// @ID UpdateTargetSoftwareModel
 // @Summary Update a target software user model
 // @Description Update a target software user model with the given information.
 // @Tags [API] Target Software Migration User Models
@@ -935,6 +934,7 @@ func UpdateTargetSoftwareModel(c echo.Context) error {
 // No ResponseBody required for "DELETE /softwaremodel/target/{id}"
 
 // DeleteTargetSoftwareModel godoc
+// @ID DeleteTargetSoftwareModel
 // @Summary Delete a target software user model
 // @Description Delete a target software user model with the given information.
 // @Tags [API] Target Software Migration User Models
@@ -997,27 +997,4 @@ func DeleteTargetSoftwareModel(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, "Succeeded in Deleting the model")
-}
-
-func getLatestRelease(owner, repo string) (*Release, error) {
-    url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
-    
-    resp, err := http.Get(url)
-    if err != nil {
-        return nil, err
-    }
-    defer resp.Body.Close()
-    
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return nil, err
-    }
-    
-    var release Release
-    err = json.Unmarshal(body, &release)
-    if err != nil {
-        return nil, err
-    }
-    
-    return &release, nil
 }

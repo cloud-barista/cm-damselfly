@@ -14,6 +14,7 @@ type ResReadyz struct {
 
 // RestGetReadyz func check if CM-Damselfly server is ready or not.
 // RestGetReadyz godoc
+// @ID RestGetReadyz
 // @Summary Check Damselfly is ready
 // @Description Check Damselfly is ready
 // @Tags [Admin] System management
@@ -37,6 +38,7 @@ type ResHTTPVersion struct {
 }
 
 // RestCheckHTTPVersion godoc
+// @ID RestCheckHTTPVersion
 // @Summary Check HTTP version of incoming request
 // @Description Checks and logs the HTTP version of the incoming request to the server console.
 // @Tags [Admin] System management
