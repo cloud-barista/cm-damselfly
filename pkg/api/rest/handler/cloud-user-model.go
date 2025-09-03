@@ -1034,7 +1034,7 @@ func CreateCloudModel(c echo.Context) error {
 	model.ModelType 	= CloudModel
 
 	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
 	if err != nil {
 		msg := "Failed to Get the Module Verion!!"
 		log.Debug().Msg(msg)
@@ -1042,7 +1042,7 @@ func CreateCloudModel(c echo.Context) error {
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
 		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-model")
+			release, err := getLatestRelease("cloud-barista", "cb-tumblebug")
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				return err

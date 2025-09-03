@@ -1080,132 +1080,109 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "cloudmodel.ImageStatus": {
-            "type": "string",
-            "enum": [
-                "Available",
-                "Unavailable",
-                "Deprecated",
-                "NA"
-            ],
-            "x-enum-varnames": [
-                "ImageAvailable",
-                "ImageUnavailable",
-                "ImageDeprecated",
-                "ImageNA"
-            ]
-        },
-        "cloudmodel.KeyValue": {
+        "cloudmodel.CloudProperty": {
             "type": "object",
             "properties": {
-                "key": {
-                    "type": "string"
+                "csp": {
+                    "type": "string",
+                    "example": "aws"
                 },
-                "value": {
-                    "type": "string"
+                "region": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
                 }
             }
         },
-        "cloudmodel.MciCmdReq": {
+        "cloudmodel.CreateSubGroupReq": {
             "type": "object",
             "required": [
-                "command"
+                "connectionName",
+                "imageId",
+                "name",
+                "securityGroupIds",
+                "specId",
+                "sshKeyId",
+                "subnetId",
+                "vNetId"
             ],
             "properties": {
-                "command": {
+                "connectionName": {
+                    "type": "string",
+                    "example": "testcloud01-seoul"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP (required for option=register)",
+                    "type": "string",
+                    "example": "i-014fa6ede6ada0b2c"
+                },
+                "dataDiskIds": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    },
-                    "example": [
-                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
-                    ]
+                    }
                 },
-                "userName": {
-                    "type": "string",
-                    "example": "cb-user"
-                }
-            }
-        },
-        "cloudmodel.OSArchitecture": {
-            "type": "string",
-            "enum": [
-                "arm32",
-                "arm64",
-                "arm64_mac",
-                "x86_32",
-                "x86_64",
-                "x86_32_mac",
-                "x86_64_mac",
-                "s390x",
-                "NA",
-                ""
-            ],
-            "x-enum-varnames": [
-                "ARM32",
-                "ARM64",
-                "ARM64_MAC",
-                "X86_32",
-                "X86_64",
-                "X86_32_MAC",
-                "X86_64_MAC",
-                "S390X",
-                "ArchitectureNA",
-                "ArchitectureUnknown"
-            ]
-        },
-        "cloudmodel.OSPlatform": {
-            "type": "string",
-            "enum": [
-                "Linux/UNIX",
-                "Windows",
-                "NA"
-            ],
-            "x-enum-varnames": [
-                "Linux_UNIX",
-                "Windows",
-                "PlatformNA"
-            ]
-        },
-        "cloudmodel.RecommendedVmInfra": {
-            "type": "object",
-            "properties": {
                 "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "imageId": {
+                    "description": "ImageType        string   ` + "`" + `json:\"imageType\"` + "`" + `",
                     "type": "string"
                 },
-                "status": {
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "SubGroup name of VMs. Actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "default, TYPE1, ..."
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "specId": {
                     "type": "string"
                 },
-                "targetSecurityGroupList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbSecurityGroupReq"
-                    }
+                "sshKeyId": {
+                    "type": "string"
                 },
-                "targetSshKey": {
-                    "$ref": "#/definitions/cloudmodel.TbSshKeyReq"
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
+                    "type": "string",
+                    "example": "3"
                 },
-                "targetVNet": {
-                    "$ref": "#/definitions/cloudmodel.TbVNetReq"
+                "subnetId": {
+                    "type": "string"
                 },
-                "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.TbMciReq"
+                "vNetId": {
+                    "type": "string"
                 },
-                "targetVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbImageInfo"
-                    }
+                "vmUserName": {
+                    "type": "string"
                 },
-                "targetVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbSpecInfo"
-                    }
+                "vmUserPassword": {
+                    "type": "string"
                 }
             }
         },
-        "cloudmodel.TbFirewallRuleInfo": {
+        "cloudmodel.FirewallRuleReq": {
             "type": "object",
             "required": [
                 "Direction",
@@ -1213,10 +1190,12 @@ const docTemplate = `{
             ],
             "properties": {
                 "CIDR": {
+                    "description": "CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)",
                     "type": "string",
                     "example": "0.0.0.0/0"
                 },
                 "Direction": {
+                    "description": "Direction is the direction of the rule (inbound or outbound)",
                     "type": "string",
                     "enum": [
                         "inbound",
@@ -1225,22 +1204,23 @@ const docTemplate = `{
                     "example": "inbound"
                 },
                 "Ports": {
+                    "description": "Ports is to get multiple ports or port ranges as a string (e.g. \"22,900-1000,2000-3000\")\nThis allows flexibility in specifying single ports or ranges in a comma-separated format.\nThis field is used to handle both single ports and port ranges in a unified way.\nIt can accept a single port (e.g. \"22\"), a range (e.g. \"900-1000\"), or multiple ports/ranges (e.g. \"22,900-1000,2000-3000\").",
                     "type": "string",
-                    "example": "1-65535,22,5555"
+                    "example": "22,900-1000,2000-3000"
                 },
                 "Protocol": {
+                    "description": "Protocol is the protocol type for the rule (TCP, UDP, ICMP). Don't use ALL here.",
                     "type": "string",
                     "enum": [
                         "TCP",
                         "UDP",
-                        "ICMP",
-                        "ALL"
+                        "ICMP"
                     ],
                     "example": "TCP"
                 }
             }
         },
-        "cloudmodel.TbImageInfo": {
+        "cloudmodel.ImageInfo": {
             "type": "object",
             "properties": {
                 "connectionName": {
@@ -1281,6 +1261,10 @@ const docTemplate = `{
                 "infraType": {
                     "description": "vm|k8s|kubernetes|container, etc.",
                     "type": "string"
+                },
+                "isBasicImage": {
+                    "type": "boolean",
+                    "default": false
                 },
                 "isGPUImage": {
                     "type": "boolean",
@@ -1356,11 +1340,58 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.TbMciReq": {
+        "cloudmodel.ImageStatus": {
+            "type": "string",
+            "enum": [
+                "Available",
+                "Unavailable",
+                "Deprecated",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "ImageAvailable",
+                "ImageUnavailable",
+                "ImageDeprecated",
+                "ImageNA"
+            ]
+        },
+        "cloudmodel.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.MciCmdReq": {
+            "type": "object",
+            "required": [
+                "command"
+            ],
+            "properties": {
+                "command": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
+                    ]
+                },
+                "userName": {
+                    "type": "string",
+                    "example": "cb-user"
+                }
+            }
+        },
+        "cloudmodel.MciReq": {
             "type": "object",
             "required": [
                 "name",
-                "vm"
+                "subGroups"
             ],
             "properties": {
                 "description": {
@@ -1410,20 +1441,101 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "subGroups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CreateSubGroupReq"
+                    }
+                },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
+                }
+            }
+        },
+        "cloudmodel.OSArchitecture": {
+            "type": "string",
+            "enum": [
+                "arm32",
+                "arm64",
+                "arm64_mac",
+                "x86_32",
+                "x86_64",
+                "x86_32_mac",
+                "x86_64_mac",
+                "s390x",
+                "NA",
+                ""
+            ],
+            "x-enum-varnames": [
+                "ARM32",
+                "ARM64",
+                "ARM64_MAC",
+                "X86_32",
+                "X86_64",
+                "X86_32_MAC",
+                "X86_64_MAC",
+                "S390X",
+                "ArchitectureNA",
+                "ArchitectureUnknown"
+            ]
+        },
+        "cloudmodel.OSPlatform": {
+            "type": "string",
+            "enum": [
+                "Linux/UNIX",
+                "Windows",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "Linux_UNIX",
+                "Windows",
+                "PlatformNA"
+            ]
+        },
+        "cloudmodel.RecommendedVmInfra": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
                 },
-                "vm": {
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetSecurityGroupList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmReq"
+                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.VNetReq"
+                },
+                "targetVmInfra": {
+                    "$ref": "#/definitions/cloudmodel.MciReq"
+                },
+                "targetVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
+                "targetVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
                     }
                 }
             }
         },
-        "cloudmodel.TbSecurityGroupReq": {
+        "cloudmodel.SecurityGroupReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -1446,7 +1558,7 @@ const docTemplate = `{
                     "description": "validate:\"required\"` + "`" + `",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.TbFirewallRuleInfo"
+                        "$ref": "#/definitions/cloudmodel.FirewallRuleReq"
                     }
                 },
                 "name": {
@@ -1457,7 +1569,7 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.TbSpecInfo": {
+        "cloudmodel.SpecInfo": {
             "type": "object",
             "properties": {
                 "acceleratorCount": {
@@ -1541,7 +1653,7 @@ const docTemplate = `{
                 "id": {
                     "description": "Id is unique identifier for the object",
                     "type": "string",
-                    "example": "aws-ap-southeast-1"
+                    "example": "aws+ap-southeast+csp-06eb41e14121c550a"
                 },
                 "infraType": {
                     "description": "InfraType can be one of vm|k8s|kubernetes|container, etc.",
@@ -1577,6 +1689,12 @@ const docTemplate = `{
                 "providerName": {
                     "type": "string"
                 },
+                "regionLatitude": {
+                    "type": "number"
+                },
+                "regionLongitude": {
+                    "type": "number"
+                },
                 "regionName": {
                     "type": "string"
                 },
@@ -1601,7 +1719,7 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.TbSshKeyReq": {
+        "cloudmodel.SshKeyReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -1638,7 +1756,7 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.TbSubnetReq": {
+        "cloudmodel.SubnetReq": {
             "type": "object",
             "required": [
                 "ipv4_CIDR",
@@ -1662,7 +1780,7 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.TbVNetReq": {
+        "cloudmodel.VNetReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -1688,97 +1806,8 @@ const docTemplate = `{
                 "subnetInfoList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.TbSubnetReq"
+                        "$ref": "#/definitions/cloudmodel.SubnetReq"
                     }
-                }
-            }
-        },
-        "cloudmodel.TbVmReq": {
-            "type": "object",
-            "required": [
-                "connectionName",
-                "imageId",
-                "name",
-                "securityGroupIds",
-                "specId",
-                "sshKeyId",
-                "subnetId",
-                "vNetId"
-            ],
-            "properties": {
-                "connectionName": {
-                    "type": "string",
-                    "example": "testcloud01-seoul"
-                },
-                "cspResourceId": {
-                    "description": "CspResourceId is resource identifier managed by CSP (required for option=register)",
-                    "type": "string",
-                    "example": "i-014fa6ede6ada0b2c"
-                },
-                "dataDiskIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Description"
-                },
-                "imageId": {
-                    "description": "ImageType        string   ` + "`" + `json:\"imageType\"` + "`" + `",
-                    "type": "string"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
-                    "type": "string",
-                    "example": "g1-1"
-                },
-                "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "example": "default, 30, 42, ..."
-                },
-                "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "example": "default, TYPE1, ..."
-                },
-                "securityGroupIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "specId": {
-                    "type": "string"
-                },
-                "sshKeyId": {
-                    "type": "string"
-                },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "string",
-                    "example": "3"
-                },
-                "subnetId": {
-                    "type": "string"
-                },
-                "vNetId": {
-                    "type": "string"
-                },
-                "vmUserName": {
-                    "type": "string"
-                },
-                "vmUserPassword": {
-                    "type": "string"
                 }
             }
         },
