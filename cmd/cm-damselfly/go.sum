@@ -6,12 +6,16 @@ github.com/cloud-barista/cb-tumblebug v0.11.2 h1:CffzcHqV90haDweBrbAIHGfhDi4ldjG
 github.com/cloud-barista/cb-tumblebug v0.11.2/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
 github.com/cloud-barista/cb-tumblebug v0.11.3 h1:Bd8vsyPOBBfv/N+jZHpLPiEKpHX+UO+RVebzIcnbjK4=
 github.com/cloud-barista/cb-tumblebug v0.11.3/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
+github.com/cloud-barista/cb-tumblebug v0.11.9 h1:GgJZAk/cvrZZr8x6heKkCGD/QgNUBKpJRUsWtY5xXlo=
+github.com/cloud-barista/cb-tumblebug v0.11.9/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
 github.com/cloud-barista/cm-model v0.0.10 h1:vGaYam3/VX8IvagHdtWx10ZgH36xZ+44Db2ZG/uSvA4=
 github.com/cloud-barista/cm-model v0.0.10/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cloud-barista/cm-model v0.0.12-0.20250823152636-94d1ad552aa3 h1:n8ZjJxg9p7t6vrB1k1SQn+VARC/lDim+upUzI6saV7M=
 github.com/cloud-barista/cm-model v0.0.12-0.20250823152636-94d1ad552aa3/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cloud-barista/cm-model v0.0.12 h1:98+LJqDf/yBUkwd8fkkDGp20x6CtF064aC9xMu3GT7Q=
 github.com/cloud-barista/cm-model v0.0.12/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
+github.com/cloud-barista/cm-model v0.0.13 h1:SOuFyTcszHAFpaojYcuSYMOXkjSRfQPqwlVsB8RvmgE=
+github.com/cloud-barista/cm-model v0.0.13/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
