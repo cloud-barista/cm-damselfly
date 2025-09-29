@@ -1,6 +1,6 @@
 services:
   cm-damselfly:
-    image: cloudbaristaorg/cm-damselfly:0.3.5
+    image: cloudbaristaorg/cm-damselfly:0.3.6
     container_name: cm-damselfly
     pull_policy: missing
     restart: always
