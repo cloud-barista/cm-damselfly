@@ -119,19 +119,19 @@ sudo make compose-up
 - Default log file path
   - ./cm-damselfly/cmd/cm-damselfly/log/damselfly.log
 
-### Versions of packages applied to the released Damselfly
-
-| cm-damselfly | cm-model<BR>(OnpremInfraModel<BR>/SoftwareModel) | cb-tumblebug<BR>(CloudInfraModel) |
-|--------|--------|--------|
-| v0.2.0 | v0.0.3 | v0.9.16 |
-| v0.2.1 | v0.0.3 | v0.10.0 |
-| v0.2.2 | v0.0.3 | v0.10.0 |
-| v0.3.0 | v0.0.3 | v0.10.3 |
-| v0.3.1 | v0.0.10 | v0.11.2 |
-| v0.3.2 | v0.0.10 | v0.11.2 |
-| v0.3.3 | v0.0.11 | v0.11.3 |
-| v0.3.4 | v0.0.12 | v0.11.3 |
-| v0.3.5 | v0.0.13 | v0.11.9 |
+### Versions of models applied to the released Damselfly
+| **cm-damselfly** | **cm-model<BR>(OnpremInfraModel/CloudInfraModel/SoftwareModel)** |
+| :----: | :-----: |
+| v0.2.0 | v0.0.3 |
+| v0.2.1 | v0.0.3 |
+| v0.2.2 | v0.0.3 |
+| v0.3.0 | v0.0.3 |
+| v0.3.1 | v0.0.10 |
+| v0.3.2 | v0.0.10 |
+| v0.3.3 | v0.0.11 |
+| v0.3.4 | v0.0.12 |
+| v0.3.5 | v0.0.13 |
+| v0.3.6 | v0.0.14 |
 
 ### CM-Damselfly REST API user guide
 - Discussion link : [How to use and test CM-Damselfly APIs (with test examples)](https://github.com/cloud-barista/cm-damselfly/discussions/25)

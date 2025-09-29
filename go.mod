@@ -3,7 +3,7 @@ module github.com/cloud-barista/cm-damselfly
 go 1.23.0
 
 require (
-	github.com/cloud-barista/cm-model v0.0.13
+	github.com/cloud-barista/cm-model v0.0.14
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
@@ -14,7 +14,7 @@ require (
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/cloud-barista/cb-tumblebug v0.11.9 // indirect
+	github.com/cloud-barista/cb-tumblebug v0.11.13 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
