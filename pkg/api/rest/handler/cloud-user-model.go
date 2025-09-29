@@ -449,7 +449,7 @@ func GetOnPremModel(c echo.Context) error {
 					return c.JSON(http.StatusBadRequest, res)
 				}
 			} else {
-				newErr := fmt.Errorf("'isCloudModel' does not exist")
+				newErr := fmt.Errorf("'isCloudModel' does not exist. This is not on-premise model or cloud model")
 				log.Warn().Msg(newErr.Error())
 				res := model.Response{
 					Success: false,
@@ -644,7 +644,7 @@ func UpdateOnPremModel(c echo.Context) error {
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				msg := "'isCloudModel' does not exist"
+				msg := "'isCloudModel' does not exist. This is not on-premise model or cloud model"
 				log.Error().Msg(msg)
 				newErr := errors.New(msg)
 				return c.JSON(http.StatusNotFound, newErr)
@@ -805,7 +805,7 @@ func DeleteOnPremModel(c echo.Context) error {
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				msg := "'isCloudModel' does not exist"
+				msg := "'isCloudModel' does not exist. This is not on-premise model or cloud model"
 				log.Error().Msg(msg)
 				newErr := errors.New(msg)
 				return c.JSON(http.StatusNotFound, newErr)
@@ -960,7 +960,7 @@ func GetCloudModel(c echo.Context) error {
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				msg := "'isCloudModel' does not exist"
+				msg := "'isCloudModel' does not exist. This is not on-premise model or cloud model"
 				log.Error().Msg(msg)
 				newErr := errors.New(msg)
 				return c.JSON(http.StatusNotFound, newErr)
@@ -1153,7 +1153,7 @@ func UpdateCloudModel(c echo.Context) error {
 
 				}
 			} else {
-				msg := "'isCloudModel' does not exist"
+				msg := "'isCloudModel' does not exist. This is not on-premise model or cloud model"
 				log.Error().Msg(msg)
 				newErr := errors.New(msg)
 				return c.JSON(http.StatusNotFound, newErr)
@@ -1297,7 +1297,7 @@ func DeleteCloudModel(c echo.Context) error {
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				msg := "'isCloudModel' does not exist"
+				msg := "'isCloudModel' does not exist. This is not on-premise model or cloud model"
 				log.Error().Msg(msg)
 				newErr := errors.New(msg)
 				return c.JSON(http.StatusNotFound, newErr)
