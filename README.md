@@ -120,7 +120,7 @@ sudo make compose-up
   - ./cm-damselfly/cmd/cm-damselfly/log/damselfly.log
 
 ### Versions of models applied to the released Damselfly
-| **cm-damselfly** | **cm-model<BR>(OnpremInfraModel/CloudInfraModel/SoftwareModel)** |
+| **cm-damselfly version** | **cm-model version<BR>(OnpremInfraModel/CloudInfraModel/SoftwareModel)** |
 | :----: | :-----: |
 | v0.2.0 | v0.0.3 |
 | v0.2.1 | v0.0.3 |
@@ -132,6 +132,7 @@ sudo make compose-up
 | v0.3.4 | v0.0.12 |
 | v0.3.5 | v0.0.13 |
 | v0.3.6 | v0.0.14 |
+| v0.4.0 | v0.0.14 |
 
 ### CM-Damselfly REST API user guide
 - Discussion link : [How to use and test CM-Damselfly APIs (with test examples)](https://github.com/cloud-barista/cm-damselfly/discussions/25)
