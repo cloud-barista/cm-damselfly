@@ -9,12 +9,16 @@ As a Cloud Computing Infrastructure Migration Framework (codename: cm-damselply)
 - Target cloud computing infra migration model (Defined using the JSON format and Go Structure.)
 - Migration model management test codes for target cloud computing infra
 
-## Execution and development environment
+## Recommended execution and development environment
 
 - Operating system (OS): 
-    - Ubuntu 22.04
-- Languages: 
-    - Go 1.23.x
+    - Ubuntu 24.04
+- Programming Language: 
+    - Go 1.25.0+ (for building from source code)
+- Docker Container & Docker Compose:
+    - Latest stable version
+- API doc:
+    - Swag v1.16.3
 
 ## How to run CM-Damselfly
 
@@ -32,11 +36,11 @@ sudo apt install make gcc git
 ```
 2. Install Go
 
-**_NOTE :_** Install the stable version of Go. For example, Go v1.23.0
+**_NOTE :_** Install the stable version of Go. For example, Go v1.25.0
 
 ```bash
 # Set Go version
-GO_VERSION=1.23.0
+GO_VERSION=1.25.0
 
 # Get Go archive
 wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
