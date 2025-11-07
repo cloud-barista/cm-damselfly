@@ -6,7 +6,8 @@ import (
 	"errors"
 	"strconv"
 	"strings"
-	"github.com/labstack/echo/v4"
+	"github.com/google/uuid"
+	echo "github.com/labstack/echo/v4"
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	"github.com/rs/zerolog/log"
@@ -41,7 +42,7 @@ const (
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} GetModelsVersionResp "This is the versions of all models(schemata)"
-// @Failure 404 {object} model.Response
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /model/version [get]
 func GetModelsVersion(c echo.Context) error {
@@ -56,8 +57,14 @@ func GetModelsVersion(c echo.Context) error {
 		if len(modelVer) > 10 {
 			release, err := getLatestRelease("cloud-barista", "cm-model")
 			if err != nil {
-				fmt.Printf("Error: %v\n", err)
-				return err
+				msg := "Failed to Get the latest release."
+				log.Error().Msgf("%s : [%v]", msg, err)
+				newErr := fmt.Errorf("%s : [%v]", msg, err)
+				res := model.Response{
+        			Success: false,
+        			Text:    newErr.Error(),
+    			}
+    			return c.JSON(http.StatusInternalServerError, res)
 			}    
 			log.Info().Msgf("Latest version: %s\n", release.TagName)
 			// log.Info().Msgf("Release name: %s\n", release.Name)
@@ -68,9 +75,9 @@ func GetModelsVersion(c echo.Context) error {
 		log.Info().Msgf("Cloud Model version: %s", resultVer)
 	}
 
-	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
+	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the 'cb-tumblebug' module version : [%v]", err)
+		newErr := fmt.Errorf("Failed to Get the 'cm-model' module version : [%v]", err)
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -136,7 +143,7 @@ type GetModelsResp struct {
 // @Produce  json
 // @Param isTargetModel path bool true "Is TargetModel ?"
 // @Success 200 {object} GetModelsResp "Successfully Obtained Migration User Models."
-// @Failure 404 {object} model.Response
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /model/{isTargetModel} [get]
 func GetModels(c echo.Context) error {
@@ -246,7 +253,7 @@ type GetOnPremModelsResp struct {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} GetOnPremModelsResp "Successfully Obtained On-Premise Migration User Models"
-// @Failure 404 {object} model.Response
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /onpremmodel [get]
 func GetOnPremModels(c echo.Context) error {
@@ -302,12 +309,12 @@ type GetOnPremModelResp struct {
 // @Param id path string true "Model ID"
 // @Success 200 {object} GetOnPremModelResp "Successfully Obtained the On-Premise Migration User Model"
 // @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /onpremmodel/{id} [get]
 func GetOnPremModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
-		newErr := fmt.Errorf("invalid request, invalid model id")
+		newErr := fmt.Errorf("Invalid request, invalid model id")
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -493,7 +500,7 @@ type CreateOnPremModelResp struct {
 // @Param Model body CreateOnPremModelReq true "model information"
 // @Success 201 {object} CreateOnPremModelResp "Successfully Created the On-Premise Migration User Model"
 // @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /onpremmodel [post]
 func CreateOnPremModel(c echo.Context) error {
@@ -511,16 +518,7 @@ func CreateOnPremModel(c echo.Context) error {
 	// fmt.Println("### OnPremModel",)
 	// spew.Dump(userModel)
 
-	randomStr, err := generateRandomString(15)
-	if err != nil {
-		msg := "Failed to Generate a random string!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msgf("Random 15-length of string : [%s]", randomStr)
-	}
-	userModel.Id = randomStr
+	userModel.Id = uuid.New().String()
 
 	time, err := getSeoulCurrentTime()
 	if err != nil {
@@ -545,8 +543,14 @@ func CreateOnPremModel(c echo.Context) error {
 		if len(modelVer) > 10 {
 			release, err := getLatestRelease("cloud-barista", "cm-model")
 			if err != nil {
-				fmt.Printf("Error: %v\n", err)
-				return err
+				msg := "Failed to Get the latest release."
+				log.Error().Msgf("%s : [%v]", msg, err)
+				newErr := fmt.Errorf("%s : [%v]", msg, err)
+				res := model.Response{
+        			Success: false,
+        			Text:    newErr.Error(),
+    			}
+    			return c.JSON(http.StatusInternalServerError, res)
 			}    
 			log.Info().Msgf("Latest version: %s\n", release.TagName)
 			// log.Info().Msgf("Release name: %s\n", release.Name)
@@ -562,7 +566,7 @@ func CreateOnPremModel(c echo.Context) error {
 	// strNum := strconv.Itoa(randomNum)
 
 	// Save the userModel to the key-value store
-	lkvstore.Put(randomStr, userModel)
+	lkvstore.Put(userModel.Id, userModel)
 
 	// # Save the current state of the key-value store to file
 	if err := lkvstore.SaveLkvStore(); err != nil {
@@ -599,7 +603,7 @@ type UpdateOnPremModelResp struct {
 // @Param id path string true "Model ID"
 // @Param Model body UpdateOnPremModelReq true "Model information to update"
 // @Success 201 {object} UpdateOnPremModelResp "Successfully Updated the On-Premise Migration User Model"
-// @Failure 404 {object} object "Model Not Found"
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /onpremmodel/{id} [put]
 func UpdateOnPremModel(c echo.Context) error {
@@ -769,7 +773,7 @@ func UpdateOnPremModel(c echo.Context) error {
 // @Param id path string true "Model ID"
 // @Success 200 {string} string "Successfully Deleted the On-Premise Migration User Model"
 // @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /onpremmodel/{id} [delete]
 func DeleteOnPremModel(c echo.Context) error {
@@ -886,7 +890,8 @@ type GetCloudModelsResp struct {
 // @Produce  json
 // @Success 200 {object} GetCloudModelsResp "Successfully Obtained Cloud Migration User Models"
 // @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
 // @Router /cloudmodel [get]
 func GetCloudModels(c echo.Context) error {
 	modelList, exists := lkvstore.GetWithPrefix("")
@@ -926,7 +931,8 @@ type GetCloudModelResp struct {
 // @Param id path string true "Model ID"
 // @Success 200 {object} GetCloudModelResp "Successfully Obtained the Cloud Migration User Model"
 // @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
 // @Router /cloudmodel/{id} [get]
 func GetCloudModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
@@ -998,29 +1004,22 @@ type CreateCloudModelResp struct {
 // @Param Model body CreateCloudModelReq true "model information"
 // @Success 201 {object} CreateCloudModelResp "Successfully Created the Cloud Migration User Model"
 // @Failure 400 {object} object "Invalid Request"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
 // @Router /cloudmodel [post]
 func CreateCloudModel(c echo.Context) error {
-	model := new(CreateCloudModelResp)
+	userModel := new(CreateCloudModelResp)
 
-	if err := c.Bind(model); err != nil {
+	if err := c.Bind(userModel); err != nil {
 		msg := "Invalid Request!!"
 		log.Error().Msg(msg)
 		newErr := errors.New(msg)
 		return c.JSON(http.StatusBadRequest, newErr)
 	}
 	// fmt.Println("### CreateCloudModelResp",)
-	// spew.Dump(model)
+	// spew.Dump(userModel)
 
-	randomStr, err := generateRandomString(15)
-	if err != nil {
-		msg := "Failed to Generate a random string!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msgf("Random 15-length of string : [%s]", randomStr)
-	}
-	model.Id = randomStr
+	userModel.Id = uuid.New().String()
 
 	time, err := getSeoulCurrentTime()
 	if err != nil {
@@ -1029,23 +1028,29 @@ func CreateCloudModel(c echo.Context) error {
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	}
-	model.CreateTime 	= time
-	model.IsCloudModel 	= true
-	model.ModelType 	= CloudModel
+	userModel.CreateTime 	= time
+	userModel.IsCloudModel 	= true
+	userModel.ModelType 	= CloudModel
 
 	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cb-model")
 	if err != nil {
-		msg := "Failed to Get the Module Verion!!"
+		msg := "Failed to Get the 'cm-model' Module Verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
 		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cb-tumblebug")
+			release, err := getLatestRelease("cloud-barista", "cm-model")
 			if err != nil {
-				fmt.Printf("Error: %v\n", err)
-				return err
+				msg := "Failed to Get the Latest Release!!"
+				log.Error().Msgf("%s : [%v]", msg, err)
+				newErr := fmt.Errorf("%s : [%v]", msg, err)
+				res := model.Response{
+        			Success: false,
+        			Text:    newErr.Error(),
+    			}
+    			return c.JSON(http.StatusInternalServerError, res)
 			}    
 			log.Info().Msgf("Latest version: %s\n", release.TagName)
 			// log.Info().Msgf("Release name: %s\n", release.Name)
@@ -1055,25 +1060,25 @@ func CreateCloudModel(c echo.Context) error {
 		}
 		log.Info().Msgf("Cloud Model version: %s", resultVer)
 	}
-	model.CloudModelVer = resultVer
+	userModel.CloudModelVer = resultVer
 
 	// Convert Int to String type
 	// strNum := strconv.Itoa(randomNum)
 
-	// Save the model to the key-value store
-	lkvstore.Put(randomStr, model)
+	// Save the userModel to the key-value store
+	lkvstore.Put(userModel.Id, userModel)
 
 	// # Save the current state of the key-value store to file
 	if err := lkvstore.SaveLkvStore(); err != nil {
 		msg := "Failed to Save the lkvstore to file."
 		log.Error().Msgf("%s : [%v]", msg, err)
 		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusNotFound, newErr)
+		return c.JSON(http.StatusInternalServerError, newErr)
 	} else {
 		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 	}
 
-	return c.JSON(http.StatusCreated, model)
+	return c.JSON(http.StatusCreated, userModel)
 }
 
 // [Note]
@@ -1099,7 +1104,7 @@ type UpdateCloudModelResp struct {
 // @Param Model body UpdateCloudModelReq true "Model information to update"
 // @Success 201 {object} UpdateCloudModelResp "Successfully Updated the Cloud Migration User Model"
 // @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /cloudmodel/{id} [put]
 func UpdateCloudModel(c echo.Context) error {
@@ -1269,7 +1274,7 @@ func UpdateCloudModel(c echo.Context) error {
 // @Param id path string true "Model ID"
 // @Success 200 {string} string "Successfully Deleted the Cloud Migration User Model"
 // @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
+// @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /cloudmodel/{id} [delete]
 func DeleteCloudModel(c echo.Context) error {
