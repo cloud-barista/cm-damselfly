@@ -137,6 +137,7 @@ sudo make compose-up
 | v0.3.5 | v0.0.13 |
 | v0.3.6 | v0.0.14 |
 | v0.4.0 | v0.0.14 |
+| v0.4.1 | v0.0.15 |
 
 ### CM-Damselfly REST API user guide
 - Discussion link : [How to use and test CM-Damselfly APIs (with test examples)](https://github.com/cloud-barista/cm-damselfly/discussions/25)
