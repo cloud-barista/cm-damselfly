@@ -1,14 +1,16 @@
 package handler
 
 import (    
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"errors"
 	"strings"
 	"github.com/labstack/echo/v4"
-	// "github.com/davecgh/go-spew/spew"
+	"github.com/google/uuid"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
 	"github.com/rs/zerolog/log"
+	// "github.com/davecgh/go-spew/spew"
 
 	model 			"github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
 	softwaremodel 	"github.com/cloud-barista/cm-model/sw"
@@ -191,15 +193,8 @@ func CreateSourceSoftwareModel(c echo.Context) error {
 	// fmt.Println("### CreateSourceSoftwareModelResp",)
 	// spew.Dump(model)
 
-	randomStr, err := generateRandomString(15)
-	if err != nil {
-		msg := "Failed to Generate a random string!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msgf("Random 15-length of string : [%s]", randomStr)
-	}
+	randomStr := uuid.New().String()
+	log.Info().Msgf("Generated UUID : [%s]", randomStr)
 	model.Id = randomStr
 
 	time, err := getSeoulCurrentTime()
@@ -296,141 +291,90 @@ func UpdateSourceSoftwareModel(c echo.Context) error {
 	reqId := c.Param("id")
 	log.Info().Msgf("# Model ID to Update : [%s]", reqId)
 
-	updateModel := new(UpdateSourceSoftwareModelResp)
-
-	if err := c.Bind(updateModel); err != nil {
+	// Bind the request to get the updated fields
+	reqModel := new(UpdateSourceSoftwareModelReq)
+	if err := c.Bind(reqModel); err != nil {
 		msg := "Invalid Request!!"
 		log.Error().Msg(msg)
 		newErr := errors.New(msg)
 		return c.JSON(http.StatusBadRequest, newErr)
 	}
-	// fmt.Printf("New Req Values for [%s]: %v", c.Param("id"), updateModel)
 
-	model, exists := lkvstore.Get(reqId)
-	if exists {
-		log.Info().Msgf("Succeeded in Finding the model : [%s]", reqId)
-		// fmt.Printf("Values from DB [%s]: %v", c.Param("id"), model)
+	// Get the existing model from the store
+	existingData, exists := lkvstore.Get(reqId)
+	if !exists {
+		msg := "Model not found"
+		log.Error().Msgf("%s : [%s]", msg, reqId)
+		newErr := fmt.Errorf("%s : [%s]", msg, reqId)
+		return c.JSON(http.StatusNotFound, newErr)
+	}
 
-		if softwareModel, ok := model.(map[string]interface{}); ok {
-			// Check if the model is a on-premise model
-			if isSoftwareModel, exists := softwareModel["isSoftwareModel"]; exists {
-				if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok {
-					log.Info().Msgf("The value of isSoftwareModel is: %v", isSoftwareModel)
-
-					if isSoftwareModelBool {
-						log.Info().Msg("This model is a Software Model!!")
-					} else {
-						msg := "The Given ID is Not a Software Model ID"
-						log.Error().Msgf("%s : [%s]", msg, reqId)
-						newErr := fmt.Errorf("%s : [%s]", msg, reqId)
-						return c.JSON(http.StatusNotFound, newErr)
-					}
-				} else {		
-					msg := "'isSoftwareModel' is not a boolean type"
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
+	// Verify it's a software model
+	if softwareModel, ok := existingData.(map[string]interface{}); ok {
+		if isSoftwareModel, exists := softwareModel["isSoftwareModel"]; exists {
+			if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok {
+				if !isSoftwareModelBool {
+					msg := "The Given ID is Not a Software Model ID"
+					log.Error().Msgf("%s : [%s]", msg, reqId)
+					newErr := fmt.Errorf("%s : [%s]", msg, reqId)
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				msg := "'isSoftwareModel' does not exist"
-				log.Error().Msg(msg)
+				msg := "'isSoftwareModel' is not a boolean type"
+				log.Debug().Msg(msg)
 				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
+				return c.JSON(http.StatusInternalServerError, newErr)
 			}
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if softwareModelVer, exists := model["softwareModelVersion"]; exists {
-				if softwareModelVerStr, ok := softwareModelVer.(string); ok {
-
-					updateModel.SoftwareModelVer = softwareModelVerStr
-
-					log.Info().Msgf("# softwareModelVer : [%s]", softwareModelVerStr)
-				} else {
-					log.Info().Msg("'softwareModelVersion' is not a string type of value")
-				}
-			} else {
-				msg := "'softwareModelVersion' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if createTime, exists := model["createTime"]; exists {
-				if createTimeStr, ok := createTime.(string); ok {
-					updateModel.CreateTime = createTimeStr
-				} else {
-					msg := "'createTime' is not a string type of value"
-					log.Debug().Msg(msg)
-					// newErr := errors.New(msg)
-					// return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'createTime' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		// softwareModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
-		// if err != nil {
-		// 	fmt.Println("Error:", err)
-		// } else {
-		// 	fmt.Printf("Software Model version: %s", softwareModelVer)
-		// }
-		// updateModel.SoftwareModelVer = softwareModelVer
-
-		updateModel.Id = reqId
-		time, err := getSeoulCurrentTime()
-		if err != nil {
-			msg := "Failed to Get the Current time!!"
-			log.Debug().Msg(msg)
-			// newErr := errors.New(msg)
-			// return c.JSON(http.StatusNotFound, newErr)
-		}
-		updateModel.UpdateTime = time
-		// updateModel.IsSoftwareModel = true
-		// updateModel.IsTargetModel = false
-
-		// fmt.Println("### updateModel",)
-		// spew.Dump(updateModel)
-
-		// Convert to String type
-		// strNum := strconv.Itoa(id)
-
-		// Save the model to the key-value store
-		lkvstore.Put(reqId, updateModel)
-
-		// # Save the current state of the key-value store to file
-		if err := lkvstore.SaveLkvStore(); err != nil {
-			msg := "Failed to Save the lkvstore to file."
-			log.Error().Msgf("%s : [%v]", msg, err)
-			newErr := fmt.Errorf("%s : [%v]", msg, err)
-			return c.JSON(http.StatusNotFound, newErr)
 		} else {
-			log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+			msg := "'isSoftwareModel' does not exist"
+			log.Error().Msg(msg)
+			newErr := errors.New(msg)
+			return c.JSON(http.StatusInternalServerError, newErr)
 		}
-
-		// Get the model from the DB
-		model, exists := lkvstore.Get(reqId)
-		if exists {
-			// log.Info().Msgf("Loaded value for [%s]: %v", c.Param("id"), model)
-			return c.JSON(http.StatusOK, model)
-		} else {
-			msg := "Failed to Find the Model from DB with the ID"
-			log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-			newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-			return c.JSON(http.StatusNotFound, newErr)
-		}
-	} else {
-		msg := "Failed to Find the Model from DB"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
 	}
+
+	// Unmarshal existing data into the full response model struct
+	fullModel := new(CreateSourceSoftwareModelResp)
+	jsonBytes, err := json.Marshal(existingData)
+	if err != nil {
+		msg := "Failed to marshal existing data"
+		log.Error().Err(err).Msg(msg)
+		return c.JSON(http.StatusInternalServerError, errors.New(msg))
+	}
+	if err := json.Unmarshal(jsonBytes, fullModel); err != nil {
+		msg := "Failed to unmarshal existing data into model"
+		log.Error().Err(err).Msg(msg)
+		return c.JSON(http.StatusInternalServerError, errors.New(msg))
+	}
+
+	// Update only the fields provided in the request
+	fullModel.UserId = reqModel.UserId
+	fullModel.IsInitUserModel = reqModel.IsInitUserModel
+	fullModel.UserModelName = reqModel.UserModelName
+	fullModel.UserModelVer = reqModel.UserModelVer
+	fullModel.Description = reqModel.Description
+	fullModel.SourceSoftwareModel = reqModel.SourceSoftwareModel
+
+	updateTime, err := getSeoulCurrentTime()
+	if err != nil {
+		log.Debug().Msg("Failed to Get the Current time!!")
+	}
+	fullModel.UpdateTime = updateTime
+
+	// Save the updated full model back to the store
+	lkvstore.Put(reqId, fullModel)
+
+	// Save the current state of the key-value store to file
+	if err := lkvstore.SaveLkvStore(); err != nil {
+		msg := "Failed to Save the lkvstore to file."
+		log.Error().Msgf("%s : [%v]", msg, err)
+		newErr := fmt.Errorf("%s : [%v]", msg, err)
+		return c.JSON(http.StatusInternalServerError, newErr)
+	}
+	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+
+	log.Info().Msgf("Successfully updated the model: [%s]", reqId)
+	return c.JSON(http.StatusOK, fullModel)
 }
 
 // [Note]
@@ -677,15 +621,8 @@ func CreateTargetSoftwareModel(c echo.Context) error {
 	// fmt.Println("### CreateTargetSoftwareModelResp",)
 	// spew.Dump(model)
 
-	randomStr, err := generateRandomString(15)
-	if err != nil {
-		msg := "Failed to Generate a random string!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msgf("Random 15-length of string : [%s]", randomStr)
-	}
+	randomStr := uuid.New().String()
+	log.Info().Msgf("Generated UUID : [%s]", randomStr)
 	model.Id = randomStr
 
 	time, err := getSeoulCurrentTime()
@@ -782,141 +719,90 @@ func UpdateTargetSoftwareModel(c echo.Context) error {
 	reqId := c.Param("id")
 	log.Info().Msgf("# Model ID to Update : [%s]", reqId)
 
-	updateModel := new(UpdateTargetSoftwareModelResp)
-
-	if err := c.Bind(updateModel); err != nil {
+	// Bind the request to get the updated fields
+	reqModel := new(UpdateTargetSoftwareModelReq)
+	if err := c.Bind(reqModel); err != nil {
 		msg := "Invalid Request!!"
 		log.Error().Msg(msg)
 		newErr := errors.New(msg)
 		return c.JSON(http.StatusBadRequest, newErr)
 	}
-	// fmt.Printf("New Req Values for [%s]: %v", c.Param("id"), updateModel)
 
-	model, exists := lkvstore.Get(reqId)
-	if exists {
-		log.Info().Msgf("Succeeded in Finding the model : [%s]", reqId)
-		// fmt.Printf("Values from DB [%s]: %v", c.Param("id"), model)
+	// Get the existing model from the store
+	existingData, exists := lkvstore.Get(reqId)
+	if !exists {
+		msg := "Model not found"
+		log.Error().Msgf("%s : [%s]", msg, reqId)
+		newErr := fmt.Errorf("%s : [%s]", msg, reqId)
+		return c.JSON(http.StatusNotFound, newErr)
+	}
 
-		if softwareModel, ok := model.(map[string]interface{}); ok {
-			// Check if the model is a on-premise model
-			if isSoftwareModel, exists := softwareModel["isSoftwareModel"]; exists {
-				if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok {
-					log.Info().Msgf("The value of isSoftwareModel is: %v", isSoftwareModel)
-
-					if isSoftwareModelBool {
-						log.Info().Msg("This model is a Software Model!!")
-					} else {
-						msg := "The Given ID is Not a Software Model ID"
-						log.Error().Msgf("%s : [%s]", msg, reqId)
-						newErr := fmt.Errorf("%s : [%s]", msg, reqId)
-						return c.JSON(http.StatusNotFound, newErr)
-					}
-				} else {		
-					msg := "'isSoftwareModel' is not a boolean type"
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
+	// Verify it's a software model
+	if softwareModel, ok := existingData.(map[string]interface{}); ok {
+		if isSoftwareModel, exists := softwareModel["isSoftwareModel"]; exists {
+			if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok {
+				if !isSoftwareModelBool {
+					msg := "The Given ID is Not a Software Model ID"
+					log.Error().Msgf("%s : [%s]", msg, reqId)
+					newErr := fmt.Errorf("%s : [%s]", msg, reqId)
 					return c.JSON(http.StatusNotFound, newErr)
 				}
 			} else {
-				msg := "'isSoftwareModel' does not exist"
-				log.Error().Msg(msg)
+				msg := "'isSoftwareModel' is not a boolean type"
+				log.Debug().Msg(msg)
 				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
+				return c.JSON(http.StatusInternalServerError, newErr)
 			}
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if softwareModelVer, exists := model["softwareModelVersion"]; exists {
-				if softwareModelVerStr, ok := softwareModelVer.(string); ok {
-
-					updateModel.SoftwareModelVer = softwareModelVerStr
-
-					log.Info().Msgf("# softwareModelVer : [%s]", softwareModelVerStr)
-				} else {
-					log.Info().Msg("'softwareModelVersion' is not a string type of value")
-				}
-			} else {
-				msg := "'softwareModelVersion' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if createTime, exists := model["createTime"]; exists {
-				if createTimeStr, ok := createTime.(string); ok {
-					updateModel.CreateTime = createTimeStr
-				} else {
-					msg := "'createTime' is not a string type of value"
-					log.Debug().Msg(msg)
-					// newErr := errors.New(msg)
-					// return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'createTime' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		// softwareModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
-		// if err != nil {
-		// 	fmt.Println("Error:", err)
-		// } else {
-		// 	fmt.Printf("Software Model version: %s", softwareModelVer)
-		// }
-		// updateModel.SoftwareModelVer = softwareModelVer
-
-		updateModel.Id = reqId
-		time, err := getSeoulCurrentTime()
-		if err != nil {
-			msg := "Failed to Get the Current time!!"
-			log.Debug().Msg(msg)
-			// newErr := errors.New(msg)
-			// return c.JSON(http.StatusNotFound, newErr)
-		}
-		updateModel.UpdateTime = time
-		// updateModel.IsSoftwareModel = true
-		// updateModel.IsTargetModel = true
-
-		// fmt.Println("### updateModel",)
-		// spew.Dump(updateModel)
-
-		// Convert to String type
-		// strNum := strconv.Itoa(id)
-
-		// Save the model to the key-value store
-		lkvstore.Put(reqId, updateModel)
-
-		// # Save the current state of the key-value store to file
-		if err := lkvstore.SaveLkvStore(); err != nil {
-			msg := "Failed to Save the lkvstore to file."
-			log.Error().Msgf("%s : [%v]", msg, err)
-			newErr := fmt.Errorf("%s : [%v]", msg, err)
-			return c.JSON(http.StatusNotFound, newErr)
 		} else {
-			log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+			msg := "'isSoftwareModel' does not exist"
+			log.Error().Msg(msg)
+			newErr := errors.New(msg)
+			return c.JSON(http.StatusInternalServerError, newErr)
 		}
-
-		// Get the model from the DB
-		model, exists := lkvstore.Get(reqId)
-		if exists {
-			// log.Info().Msgf("Loaded value for [%s]: %v", c.Param("id"), model)
-			return c.JSON(http.StatusOK, model)
-		} else {
-			msg := "Failed to Find the Model from DB with the ID"
-			log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-			newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-			return c.JSON(http.StatusNotFound, newErr)
-		}
-	} else {
-		msg := "Failed to Find the Model from DB"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
 	}
+
+	// Unmarshal existing data into the full response model struct
+	fullModel := new(CreateTargetSoftwareModelResp)
+	jsonBytes, err := json.Marshal(existingData)
+	if err != nil {
+		msg := "Failed to marshal existing data"
+		log.Error().Err(err).Msg(msg)
+		return c.JSON(http.StatusInternalServerError, errors.New(msg))
+	}
+	if err := json.Unmarshal(jsonBytes, fullModel); err != nil {
+		msg := "Failed to unmarshal existing data into model"
+		log.Error().Err(err).Msg(msg)
+		return c.JSON(http.StatusInternalServerError, errors.New(msg))
+	}
+
+	// Update only the fields provided in the request
+	fullModel.UserId = reqModel.UserId
+	fullModel.IsInitUserModel = reqModel.IsInitUserModel
+	fullModel.UserModelName = reqModel.UserModelName
+	fullModel.UserModelVer = reqModel.UserModelVer
+	fullModel.Description = reqModel.Description
+	fullModel.TargetSoftwareModel = reqModel.TargetSoftwareModel
+
+	updateTime, err := getSeoulCurrentTime()
+	if err != nil {
+		log.Debug().Msg("Failed to Get the Current time!!")
+	}
+	fullModel.UpdateTime = updateTime
+
+	// Save the updated full model back to the store
+	lkvstore.Put(reqId, fullModel)
+
+	// Save the current state of the key-value store to file
+	if err := lkvstore.SaveLkvStore(); err != nil {
+		msg := "Failed to Save the lkvstore to file."
+		log.Error().Msgf("%s : [%v]", msg, err)
+		newErr := fmt.Errorf("%s : [%v]", msg, err)
+		return c.JSON(http.StatusInternalServerError, newErr)
+	}
+	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+
+	log.Info().Msgf("Successfully updated the model: [%s]", reqId)
+	return c.JSON(http.StatusOK, fullModel)
 }
 
 // [Note]
