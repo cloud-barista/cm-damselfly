@@ -13,9 +13,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	model 			"github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
-	onpremisemodel 	"github.com/cloud-barista/cm-model/infra/on-premise-model"
-	cloudmodel 		"github.com/cloud-barista/cm-model/infra/cloud-model"
-	softwaremodel 	"github.com/cloud-barista/cm-model/sw"
+	onpremisemodel 	"github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
+	cloudmodel 		"github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	softwaremodel 	"github.com/cloud-barista/cm-grasshopper/smdl"
 )
 
 type ModelsVersionRespInfo struct {
@@ -47,7 +47,7 @@ const (
 // @Router /model/version [get]
 func GetModelsVersion(c echo.Context) error {
 	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
 	if err != nil {
 		msg := "Failed to Get the Module Verion!!"
 		log.Debug().Msg(msg)
@@ -55,7 +55,7 @@ func GetModelsVersion(c echo.Context) error {
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
 		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-model")
+			release, err := getLatestRelease("cloud-barista", "cm-beetle/imdl")
 			if err != nil {
 				msg := "Failed to Get the latest release."
 				log.Error().Msgf("%s : [%v]", msg, err)
@@ -75,9 +75,20 @@ func GetModelsVersion(c echo.Context) error {
 		log.Info().Msgf("Cloud Model version: %s", resultVer)
 	}
 
-	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
 	if err != nil {
-		newErr := fmt.Errorf("Failed to Get the 'cm-model' module version : [%v]", err)
+		newErr := fmt.Errorf("Failed to Get the 'cm-beetle/imdl' module version : [%v]", err)
+		log.Error().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+
+	swModelVer, err := getModuleVersion("github.com/cloud-barista/cm-grasshopper/smdl")
+	if err != nil {
+		newErr := fmt.Errorf("Failed to Get the 'cm-grasshopper/smdl' module version : [%v]", err)
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -89,7 +100,7 @@ func GetModelsVersion(c echo.Context) error {
 	modelsVersionInfo := ModelsVersionRespInfo{
 		OnPremModelVer: 	resultVer,
 		CloudModelVer:  	cloudModelVer,
-		SoftwareModelVer:	resultVer,
+		SoftwareModelVer:	swModelVer,
 	}
 	res := GetModelsVersionResp{
 		ModelsVersion: modelsVersionInfo,
@@ -121,7 +132,7 @@ type ModelRespInfo struct {
 	Region           string                  	   	`json:"region"`
 	Zone             string                  	   	`json:"zone"`
 	OnpremInfraModel onpremisemodel.OnpremInfra   	`json:"onpremiseInfraModel" validate:"required"`
-	CloudInfraModel  cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
+	CloudInfraModel  cloudmodel.RecommendedInfra 	`json:"cloudInfraModel" validate:"required"`
 	SourceSoftwareModel softwaremodel.SourceGroupSoftwareProperty	`json:"sourceSoftwareModel" validate:"required"`
 	TargetSoftwareModel softwaremodel.TargetGroupSoftwareProperty	`json:"targetSoftwareModel" validate:"required"`		
 }
@@ -533,15 +544,15 @@ func CreateOnPremModel(c echo.Context) error {
 	userModel.ModelType 	= OnPremModel
 
 	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
 	if err != nil {
-		msg := "Failed to Get the Module Verion!!"
+		msg := "Failed to Get the 'cm-beetle/imdl' module verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
 		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-model")
+			release, err := getLatestRelease("cloud-barista", "cm-beetle/imdl")
 			if err != nil {
 				msg := "Failed to Get the latest release."
 				log.Error().Msgf("%s : [%v]", msg, err)
@@ -659,7 +670,7 @@ func UpdateOnPremModel(c echo.Context) error {
 			if onPremModelVer, exists := model["onpremModelVersion"]; exists {
 				if onpremModelVerStr, ok := onPremModelVer.(string); ok {
 					updateModel.OnPremModelVer = onpremModelVerStr
-					log.Info().Msgf("# onpremModelVer : [%s]", onpremModelVerStr)
+					log.Info().Msgf("On-premise Model version : [%s]", onpremModelVerStr)
 				} else {
 					msg := "'onpremModelVersion' is not a string type of value"
 					log.Debug().Msg(msg)
@@ -851,7 +862,7 @@ type CloudModelReqInfo struct {
 	CSP             string                  		`json:"csp"`
 	Region          string                  		`json:"region"`
 	Zone            string                  		`json:"zone"`
-	CloudInfraModel cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
+	CloudInfraModel cloudmodel.RecommendedInfra 	`json:"cloudInfraModel" validate:"required"`
 }
 
 type CloudModelRespInfo struct {
@@ -870,7 +881,7 @@ type CloudModelRespInfo struct {
 	IsCloudModel    bool                    		`json:"isCloudModel"`
 	CloudModelVer   string                  		`json:"cloudModelVersion"`
 	ModelType 		 string                  	   	`json:"modelType"`
-	CloudInfraModel cloudmodel.RecommendedVmInfra 	`json:"cloudInfraModel" validate:"required"`
+	CloudInfraModel cloudmodel.RecommendedInfra 	`json:"cloudInfraModel" validate:"required"`
 }
 
 // Caution!!)
@@ -1033,15 +1044,15 @@ func CreateCloudModel(c echo.Context) error {
 	userModel.ModelType 	= CloudModel
 
 	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cb-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
 	if err != nil {
-		msg := "Failed to Get the 'cm-model' Module Verion!!"
+		msg := "Failed to Get the 'cm-beetle/imdl' module verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
 		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-model")
+			release, err := getLatestRelease("cloud-barista", "cm-beetle/imdl")
 			if err != nil {
 				msg := "Failed to Get the Latest Release!!"
 				log.Error().Msgf("%s : [%v]", msg, err)

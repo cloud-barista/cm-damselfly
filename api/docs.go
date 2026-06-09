@@ -51,7 +51,13 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
                         }
@@ -93,6 +99,18 @@ const docTemplate = `{
                         "description": "Invalid Request",
                         "schema": {
                             "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
                         }
                     }
                 }
@@ -137,7 +155,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Model Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
                         }
                     }
                 }
@@ -189,7 +213,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Model Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "500": {
@@ -238,7 +262,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Model Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "500": {
@@ -308,7 +332,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Model Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
                         }
@@ -353,7 +377,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Model Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
                         }
@@ -389,7 +413,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Model Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
                         }
@@ -440,7 +464,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Model Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
                         }
@@ -493,7 +517,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Model Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "500": {
@@ -545,7 +569,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Model Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "500": {
@@ -594,7 +618,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Model Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "500": {
@@ -1093,7 +1117,7 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.CreateSubGroupReq": {
+        "cloudmodel.CreateNodeGroupReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -1109,6 +1133,10 @@ const docTemplate = `{
                 "connectionName": {
                     "type": "string",
                     "example": "testcloud01-seoul"
+                },
+                "cspImageName": {
+                    "description": "CspImageName is the CSP-side image identifier pre-resolved by EnsureImageAvailable\nat nodegroup level (Alibaba/Azure latest-version resolution included). When non-empty\nand the image is not a custom image, CreateNode skips the redundant per-VM GetImage\nDB call, significantly reducing concurrent DB load during large infra creation.\nCustom images always go through the full GetImage path (this field stays empty for them).",
+                    "type": "string"
                 },
                 "cspResourceId": {
                     "description": "CspResourceId is resource identifier managed by CSP (required for option=register)",
@@ -1137,14 +1165,25 @@ const docTemplate = `{
                     }
                 },
                 "name": {
-                    "description": "SubGroup name of VMs. Actual VM name will be generated with -N postfix.",
+                    "description": "NodeGroup name of Nodes. Actual Node name will be generated with -N postfix.",
                     "type": "string",
                     "example": "g1-1"
                 },
+                "nodeGroupSize": {
+                    "description": "NodeGroupSize is the number of Nodes to create in this NodeGroup. If \u003e 0, nodeGroup will be generated.",
+                    "type": "integer",
+                    "example": 3
+                },
+                "nodeUserName": {
+                    "type": "string"
+                },
+                "nodeUserPassword": {
+                    "type": "string"
+                },
                 "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "example": "default, 30, 42, ..."
+                    "description": "Root disk size in GB. 0 = use CSP default.",
+                    "type": "integer",
+                    "example": 50
                 },
                 "rootDiskType": {
                     "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
@@ -1163,21 +1202,10 @@ const docTemplate = `{
                 "sshKeyId": {
                     "type": "string"
                 },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "string",
-                    "example": "3"
-                },
                 "subnetId": {
                     "type": "string"
                 },
                 "vNetId": {
-                    "type": "string"
-                },
-                "vmUserName": {
-                    "type": "string"
-                },
-                "vmUserPassword": {
                     "type": "string"
                 }
             }
@@ -1223,11 +1251,23 @@ const docTemplate = `{
         "cloudmodel.ImageInfo": {
             "type": "object",
             "properties": {
+                "commandHistory": {
+                    "description": "CommandHistory stores the status and history of remote commands executed on this VM",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageSourceCommandHistory"
+                    }
+                },
                 "connectionName": {
                     "type": "string"
                 },
                 "creationDate": {
                     "type": "string"
+                },
+                "cspImageId": {
+                    "description": "CspImageId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "ami-0d399fba46a30a310"
                 },
                 "cspImageName": {
                     "type": "string",
@@ -1330,6 +1370,20 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "sourceCspImageName": {
+                    "description": "SourceCspImageName is the name of the source CSP image from which this image was created",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "sourceNodeUid": {
+                    "description": "SourceNodeUid is the UID of the source Node from which this image was created",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
                 "systemLabel": {
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
@@ -1340,39 +1394,50 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.ImageSourceCommandHistory": {
+            "type": "object",
+            "properties": {
+                "commandExecuted": {
+                    "description": "CommandExecuted is the actual SSH command executed on the VM (may be adjusted)",
+                    "type": "string",
+                    "example": "ls -la"
+                },
+                "index": {
+                    "description": "Index is sequential identifier for this command execution (1, 2, 3, ...)",
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
         "cloudmodel.ImageStatus": {
             "type": "string",
             "enum": [
+                "Creating",
                 "Available",
+                "Failed",
                 "Unavailable",
+                "Deleting",
                 "Deprecated",
                 "NA"
             ],
             "x-enum-varnames": [
+                "ImageCreating",
                 "ImageAvailable",
+                "ImageFailed",
                 "ImageUnavailable",
+                "ImageDeleting",
                 "ImageDeprecated",
                 "ImageNA"
             ]
         },
-        "cloudmodel.KeyValue": {
-            "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudmodel.MciCmdReq": {
+        "cloudmodel.InfraCmdReq": {
             "type": "object",
             "required": [
                 "command"
             ],
             "properties": {
                 "command": {
+                    "description": "Command is the list of commands to execute",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -1381,17 +1446,24 @@ const docTemplate = `{
                         "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
                     ]
                 },
+                "timeoutMinutes": {
+                    "description": "TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)\nIf not specified or set to 0, the default timeout (30 minutes) will be used",
+                    "type": "integer",
+                    "default": 30,
+                    "example": 30
+                },
                 "userName": {
+                    "description": "UserName is the SSH username to use for command execution",
                     "type": "string",
                     "example": "cb-user"
                 }
             }
         },
-        "cloudmodel.MciReq": {
+        "cloudmodel.InfraReq": {
             "type": "object",
             "required": [
                 "name",
-                "subGroups"
+                "nodeGroups"
             ],
             "properties": {
                 "description": {
@@ -1417,13 +1489,19 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string",
-                    "example": "mci01"
+                    "example": "infra01"
+                },
+                "nodeGroups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CreateNodeGroupReq"
+                    }
                 },
                 "placementAlgo": {
                     "type": "string"
                 },
                 "policyOnPartialFailure": {
-                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "description": "PolicyOnPartialFailure determines how to handle Node creation failures\n- \"continue\": Continue with partial Infra creation (default)\n- \"rollback\": Cleanup entire Infra when any Node fails\n- \"refine\": Mark failed Nodes for refinement",
                     "type": "string",
                     "default": "continue",
                     "enum": [
@@ -1434,23 +1512,28 @@ const docTemplate = `{
                     "example": "continue"
                 },
                 "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "description": "PostCommand is for the command to bootstrap the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
                         }
                     ]
                 },
-                "subGroups": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.CreateSubGroupReq"
-                    }
-                },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
+                }
+            }
+        },
+        "cloudmodel.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
                 }
             }
         },
@@ -1494,7 +1577,7 @@ const docTemplate = `{
                 "PlatformNA"
             ]
         },
-        "cloudmodel.RecommendedVmInfra": {
+        "cloudmodel.RecommendedInfra": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1506,10 +1589,25 @@ const docTemplate = `{
                 "targetCloud": {
                     "$ref": "#/definitions/cloudmodel.CloudProperty"
                 },
+                "targetInfra": {
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
                 "targetSecurityGroupList": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
                     }
                 },
                 "targetSshKey": {
@@ -1517,21 +1615,6 @@ const docTemplate = `{
                 },
                 "targetVNet": {
                     "$ref": "#/definitions/cloudmodel.VNetReq"
-                },
-                "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.MciReq"
-                },
-                "targetVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.ImageInfo"
-                    }
-                },
-                "targetVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.SpecInfo"
-                    }
                 }
             }
         },
@@ -1539,8 +1622,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "connectionName",
-                "name",
-                "vNetId"
+                "name"
             ],
             "properties": {
                 "connectionName": {
@@ -1565,6 +1647,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "vNetId": {
+                    "description": "Optional for registration: some CSPs (e.g., Azure, Tencent, NHN) don't bind SG to VPC",
                     "type": "string"
                 }
             }
@@ -1699,7 +1782,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "rootDiskSize": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "rootDiskType": {
                     "type": "string"
@@ -1818,7 +1901,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -1874,7 +1957,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                 },
                 "csp": {
                     "type": "string"
@@ -1912,7 +1995,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -2187,7 +2270,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -2450,7 +2533,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -2695,7 +2778,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                 },
                 "csp": {
                     "type": "string"
@@ -2733,7 +2816,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                 },
                 "cloudModelVersion": {
                     "type": "string"
@@ -3149,6 +3232,39 @@ const docTemplate = `{
                 }
             }
         },
+        "onpremisemodel.K8sClusterProperty": {
+            "type": "object",
+            "required": [
+                "name",
+                "version"
+            ],
+            "properties": {
+                "cniPlugin": {
+                    "description": "[Reference] CNI plugin name (e.g., \"calico\", \"flannel\", \"cilium\")",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "[Required] Cluster name",
+                    "type": "string"
+                },
+                "nodePortRange": {
+                    "description": "[Reference] NodePort range (e.g., \"30000-32767\")",
+                    "type": "string"
+                },
+                "podCIDR": {
+                    "description": "[Reference] Pod network CIDR (e.g., \"10.244.0.0/16\")",
+                    "type": "string"
+                },
+                "serviceCIDR": {
+                    "description": "[Reference] Service network CIDR (e.g., \"10.96.0.0/12\")",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "[Required] Kubernetes version (e.g., \"1.29.3\")",
+                    "type": "string"
+                }
+            }
+        },
         "onpremisemodel.MemoryProperty": {
             "type": "object",
             "required": [
@@ -3246,19 +3362,80 @@ const docTemplate = `{
                 }
             }
         },
+        "onpremisemodel.NodeProperty": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "$ref": "#/definitions/onpremisemodel.CpuProperty"
+                },
+                "dataDisks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                    }
+                },
+                "firewallTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
+                    }
+                },
+                "hostname": {
+                    "type": "string"
+                },
+                "interfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
+                    }
+                },
+                "machineId": {
+                    "description": "Unique identifier for the node (e.g., UUID)",
+                    "type": "string"
+                },
+                "memory": {
+                    "$ref": "#/definitions/onpremisemodel.MemoryProperty"
+                },
+                "os": {
+                    "$ref": "#/definitions/onpremisemodel.OsProperty"
+                },
+                "role": {
+                    "description": "Node role (e.g., \"control-plane\", \"worker\", \"standalone\")",
+                    "type": "string",
+                    "example": "control-plane"
+                },
+                "rootDisk": {
+                    "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                },
+                "routingTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.RouteProperty"
+                    }
+                }
+            }
+        },
         "onpremisemodel.OnpremInfra": {
             "type": "object",
             "required": [
-                "servers"
+                "nodes"
             ],
             "properties": {
+                "k8sCluster": {
+                    "description": "TODO: Extend to a general ClusterProperty if other orchestrators (e.g., OpenShift, Rancher) are needed.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/onpremisemodel.K8sClusterProperty"
+                        }
+                    ]
+                },
                 "network": {
                     "$ref": "#/definitions/onpremisemodel.NetworkProperty"
                 },
-                "servers": {
+                "nodes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/onpremisemodel.ServerProperty"
+                        "$ref": "#/definitions/onpremisemodel.NodeProperty"
                     }
                 }
             }
@@ -3338,63 +3515,24 @@ const docTemplate = `{
                 }
             }
         },
-        "onpremisemodel.ServerProperty": {
-            "type": "object",
-            "properties": {
-                "cpu": {
-                    "$ref": "#/definitions/onpremisemodel.CpuProperty"
-                },
-                "dataDisks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.DiskProperty"
-                    }
-                },
-                "firewallTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
-                    }
-                },
-                "hostname": {
-                    "type": "string"
-                },
-                "interfaces": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
-                    }
-                },
-                "machineId": {
-                    "description": "Unique identifier for the server (e.g., UUID)",
-                    "type": "string"
-                },
-                "memory": {
-                    "$ref": "#/definitions/onpremisemodel.MemoryProperty"
-                },
-                "os": {
-                    "$ref": "#/definitions/onpremisemodel.OsProperty"
-                },
-                "rootDisk": {
-                    "$ref": "#/definitions/onpremisemodel.DiskProperty"
-                },
-                "routingTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.RouteProperty"
-                    }
-                }
-            }
-        },
         "softwaremodel.Binary": {
             "type": "object",
             "required": [
+                "envs",
+                "gids",
                 "name",
+                "uids",
                 "version"
             ],
             "properties": {
                 "binary_path": {
                     "type": "string"
+                },
+                "cmdline_slice": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "custom_configs": {
                     "type": "array",
@@ -3407,6 +3545,21 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "envs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "gids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "is_wine": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
@@ -3417,6 +3570,12 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "uids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "version": {
                     "type": "string"
                 }
@@ -3425,12 +3584,21 @@ const docTemplate = `{
         "softwaremodel.BinaryMigrationInfo": {
             "type": "object",
             "required": [
+                "envs",
+                "gids",
                 "name",
+                "uids",
                 "version"
             ],
             "properties": {
                 "binary_path": {
                     "type": "string"
+                },
+                "cmdline_slice": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "custom_configs": {
                     "type": "array",
@@ -3443,6 +3611,21 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "envs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "gids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "is_wine": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
@@ -3455,6 +3638,12 @@ const docTemplate = `{
                 },
                 "order": {
                     "type": "integer"
+                },
+                "uids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "version": {
                     "type": "string"

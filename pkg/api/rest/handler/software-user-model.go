@@ -13,7 +13,7 @@ import (
 	// "github.com/davecgh/go-spew/spew"
 
 	model 			"github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
-	softwaremodel 	"github.com/cloud-barista/cm-model/sw"
+	softwaremodel 	"github.com/cloud-barista/cm-grasshopper/smdl"
 )
 
 type Release struct {
@@ -210,15 +210,15 @@ func CreateSourceSoftwareModel(c echo.Context) error {
 	model.ModelType 		= SWModel
 
 	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-grasshopper/smdl")
 	if err != nil {
-		msg := "Failed to Get the Module Verion!!"
+		msg := "Failed to Get the 'cm-grasshopper/smdl' module verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
 		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-model")
+			release, err := getLatestRelease("cloud-barista", "cm-grasshopper/smdl")
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				return err
@@ -638,15 +638,15 @@ func CreateTargetSoftwareModel(c echo.Context) error {
 	model.ModelType 		= SWModel
 
 	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-grasshopper/smdl")
 	if err != nil {
-		msg := "Failed to Get the Module Verion!!"
+		msg := "Failed to Get the 'cm-grasshopper/smdl' module verion!!"
 		log.Debug().Msg(msg)
 		// newErr := errors.New(msg)
 		// return c.JSON(http.StatusNotFound, newErr)
 	} else {
 		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-model")
+			release, err := getLatestRelease("cloud-barista", "cm-grasshopper/smdl")
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				return err

@@ -2,7 +2,7 @@
 ## Stage 1 - Go Build
 ##############################################################
 
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26.2-alpine AS builder
 
 ENV GO111MODULE=on
 

@@ -1,9 +1,10 @@
 module github.com/cloud-barista/cm-damselfly
 
-go 1.25.0
+go 1.26.2
 
 require (
-	github.com/cloud-barista/cm-model v0.0.21
+	github.com/cloud-barista/cm-beetle/imdl v0.1.6
+	github.com/cloud-barista/cm-grasshopper/smdl v0.1.0
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/rs/zerolog v1.33.0

@@ -9,10 +9,18 @@ definitions:
         example: ap-northeast-2
         type: string
     type: object
-  cloudmodel.CreateSubGroupReq:
+  cloudmodel.CreateNodeGroupReq:
     properties:
       connectionName:
         example: testcloud01-seoul
+        type: string
+      cspImageName:
+        description: |-
+          CspImageName is the CSP-side image identifier pre-resolved by EnsureImageAvailable
+          at nodegroup level (Alibaba/Azure latest-version resolution included). When non-empty
+          and the image is not a custom image, CreateNode skips the redundant per-VM GetImage
+          DB call, significantly reducing concurrent DB load during large infra creation.
+          Custom images always go through the full GetImage path (this field stays empty for them).
         type: string
       cspResourceId:
         description: CspResourceId is resource identifier managed by CSP (required
@@ -35,14 +43,23 @@ definitions:
         description: Label is for describing the object by keywords
         type: object
       name:
-        description: SubGroup name of VMs. Actual VM name will be generated with -N
-          postfix.
+        description: NodeGroup name of Nodes. Actual Node name will be generated with
+          -N postfix.
         example: g1-1
         type: string
-      rootDiskSize:
-        description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: default, 30, 42, ...
+      nodeGroupSize:
+        description: NodeGroupSize is the number of Nodes to create in this NodeGroup.
+          If > 0, nodeGroup will be generated.
+        example: 3
+        type: integer
+      nodeUserName:
         type: string
+      nodeUserPassword:
+        type: string
+      rootDiskSize:
+        description: Root disk size in GB. 0 = use CSP default.
+        example: 50
+        type: integer
       rootDiskType:
         description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
           ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
@@ -58,18 +75,9 @@ definitions:
         type: string
       sshKeyId:
         type: string
-      subGroupSize:
-        description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
-          VMs will be created accordingly.
-        example: "3"
-        type: string
       subnetId:
         type: string
       vNetId:
-        type: string
-      vmUserName:
-        type: string
-      vmUserPassword:
         type: string
     required:
     - connectionName
@@ -117,9 +125,19 @@ definitions:
     type: object
   cloudmodel.ImageInfo:
     properties:
+      commandHistory:
+        description: CommandHistory stores the status and history of remote commands
+          executed on this VM
+        items:
+          $ref: '#/definitions/cloudmodel.ImageSourceCommandHistory'
+        type: array
       connectionName:
         type: string
       creationDate:
+        type: string
+      cspImageId:
+        description: CspImageId is resource identifier managed by CSP
+        example: ami-0d399fba46a30a310
         type: string
       cspImageName:
         example: csp-06eb41e14121c550a
@@ -191,6 +209,19 @@ definitions:
         items:
           type: string
         type: array
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      sourceCspImageName:
+        description: SourceCspImageName is the name of the source CSP image from which
+          this image was created
+        example: csp-06eb41e14121c550a
+        type: string
+      sourceNodeUid:
+        description: SourceNodeUid is the UID of the source Node from which this image
+          was created
+        example: wef12awefadf1221edcf
+        type: string
       systemLabel:
         example: Managed by CB-Tumblebug
         type: string
@@ -198,41 +229,62 @@ definitions:
         example: wef12awefadf1221edcf
         type: string
     type: object
+  cloudmodel.ImageSourceCommandHistory:
+    properties:
+      commandExecuted:
+        description: CommandExecuted is the actual SSH command executed on the VM
+          (may be adjusted)
+        example: ls -la
+        type: string
+      index:
+        description: Index is sequential identifier for this command execution (1,
+          2, 3, ...)
+        example: 1
+        type: integer
+    type: object
   cloudmodel.ImageStatus:
     enum:
+    - Creating
     - Available
+    - Failed
     - Unavailable
+    - Deleting
     - Deprecated
     - NA
     type: string
     x-enum-varnames:
+    - ImageCreating
     - ImageAvailable
+    - ImageFailed
     - ImageUnavailable
+    - ImageDeleting
     - ImageDeprecated
     - ImageNA
-  cloudmodel.KeyValue:
-    properties:
-      key:
-        type: string
-      value:
-        type: string
-    type: object
-  cloudmodel.MciCmdReq:
+  cloudmodel.InfraCmdReq:
     properties:
       command:
+        description: Command is the list of commands to execute
         example:
         - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
           is: $client_ip'
         items:
           type: string
         type: array
+      timeoutMinutes:
+        default: 30
+        description: |-
+          TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
+          If not specified or set to 0, the default timeout (30 minutes) will be used
+        example: 30
+        type: integer
       userName:
+        description: UserName is the SSH username to use for command execution
         example: cb-user
         type: string
     required:
     - command
     type: object
-  cloudmodel.MciReq:
+  cloudmodel.InfraReq:
     properties:
       description:
         example: Made in CB-TB
@@ -252,17 +304,21 @@ definitions:
         description: Label is for describing the object by keywords
         type: object
       name:
-        example: mci01
+        example: infra01
         type: string
+      nodeGroups:
+        items:
+          $ref: '#/definitions/cloudmodel.CreateNodeGroupReq'
+        type: array
       placementAlgo:
         type: string
       policyOnPartialFailure:
         default: continue
         description: |-
-          PolicyOnPartialFailure determines how to handle VM creation failures
-          - "continue": Continue with partial MCI creation (default)
-          - "rollback": Cleanup entire MCI when any VM fails
-          - "refine": Mark failed VMs for refinement
+          PolicyOnPartialFailure determines how to handle Node creation failures
+          - "continue": Continue with partial Infra creation (default)
+          - "rollback": Cleanup entire Infra when any Node fails
+          - "refine": Mark failed Nodes for refinement
         enum:
         - continue
         - rollback
@@ -271,20 +327,23 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      subGroups:
-        items:
-          $ref: '#/definitions/cloudmodel.CreateSubGroupReq'
-        type: array
+        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
+        description: PostCommand is for the command to bootstrap the Nodes
       systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
+        description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
         example: ""
         type: string
     required:
     - name
-    - subGroups
+    - nodeGroups
+    type: object
+  cloudmodel.KeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
     type: object
   cloudmodel.OSArchitecture:
     enum:
@@ -320,7 +379,7 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
-  cloudmodel.RecommendedVmInfra:
+  cloudmodel.RecommendedInfra:
     properties:
       description:
         type: string
@@ -328,24 +387,24 @@ definitions:
         type: string
       targetCloud:
         $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetInfra:
+        $ref: '#/definitions/cloudmodel.InfraReq'
+      targetOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
       targetSecurityGroupList:
         items:
           $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
         type: array
       targetSshKey:
         $ref: '#/definitions/cloudmodel.SshKeyReq'
       targetVNet:
         $ref: '#/definitions/cloudmodel.VNetReq'
-      targetVmInfra:
-        $ref: '#/definitions/cloudmodel.MciReq'
-      targetVmOsImageList:
-        items:
-          $ref: '#/definitions/cloudmodel.ImageInfo'
-        type: array
-      targetVmSpecList:
-        items:
-          $ref: '#/definitions/cloudmodel.SpecInfo'
-        type: array
     type: object
   cloudmodel.SecurityGroupReq:
     properties:
@@ -365,11 +424,12 @@ definitions:
       name:
         type: string
       vNetId:
+        description: 'Optional for registration: some CSPs (e.g., Azure, Tencent,
+          NHN) don''t bind SG to VPC'
         type: string
     required:
     - connectionName
     - name
-    - vNetId
     type: object
   cloudmodel.SpecInfo:
     properties:
@@ -461,7 +521,7 @@ definitions:
       regionName:
         type: string
       rootDiskSize:
-        type: string
+        type: integer
       rootDiskType:
         type: string
       systemLabel:
@@ -546,7 +606,7 @@ definitions:
   handler.CloudModelRespInfo:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -583,7 +643,7 @@ definitions:
   handler.CreateCloudModelReq:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
       csp:
         type: string
       description:
@@ -608,7 +668,7 @@ definitions:
   handler.CreateCloudModelResp:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -789,7 +849,7 @@ definitions:
   handler.GetCloudModelResp:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -959,7 +1019,7 @@ definitions:
   handler.ModelRespInfo:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -1123,7 +1183,7 @@ definitions:
   handler.UpdateCloudModelReq:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
       csp:
         type: string
       description:
@@ -1148,7 +1208,7 @@ definitions:
   handler.UpdateCloudModelResp:
     properties:
       cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
       cloudModelVersion:
         type: string
       createTime:
@@ -1436,6 +1496,30 @@ definitions:
         description: Unique identifier for the machine (e.g., UUID)
         type: string
     type: object
+  onpremisemodel.K8sClusterProperty:
+    properties:
+      cniPlugin:
+        description: '[Reference] CNI plugin name (e.g., "calico", "flannel", "cilium")'
+        type: string
+      name:
+        description: '[Required] Cluster name'
+        type: string
+      nodePortRange:
+        description: '[Reference] NodePort range (e.g., "30000-32767")'
+        type: string
+      podCIDR:
+        description: '[Reference] Pod network CIDR (e.g., "10.244.0.0/16")'
+        type: string
+      serviceCIDR:
+        description: '[Reference] Service network CIDR (e.g., "10.96.0.0/12")'
+        type: string
+      version:
+        description: '[Required] Kubernetes version (e.g., "1.29.3")'
+        type: string
+    required:
+    - name
+    - version
+    type: object
   onpremisemodel.MemoryProperty:
     properties:
       available:
@@ -1503,16 +1587,57 @@ definitions:
         - $ref: '#/definitions/onpremisemodel.NetworkDetail'
         description: TBD
     type: object
+  onpremisemodel.NodeProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the node (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      role:
+        description: Node role (e.g., "control-plane", "worker", "standalone")
+        example: control-plane
+        type: string
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
+    type: object
   onpremisemodel.OnpremInfra:
     properties:
+      k8sCluster:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.K8sClusterProperty'
+        description: 'TODO: Extend to a general ClusterProperty if other orchestrators
+          (e.g., OpenShift, Rancher) are needed.'
       network:
         $ref: '#/definitions/onpremisemodel.NetworkProperty'
-      servers:
+      nodes:
         items:
-          $ref: '#/definitions/onpremisemodel.ServerProperty'
+          $ref: '#/definitions/onpremisemodel.NodeProperty'
         type: array
     required:
-    - servers
+    - nodes
     type: object
   onpremisemodel.OsProperty:
     properties:
@@ -1569,42 +1694,14 @@ definitions:
         description: Optionally stores the source address (used for policy-based routing)
         type: string
     type: object
-  onpremisemodel.ServerProperty:
-    properties:
-      cpu:
-        $ref: '#/definitions/onpremisemodel.CpuProperty'
-      dataDisks:
-        items:
-          $ref: '#/definitions/onpremisemodel.DiskProperty'
-        type: array
-      firewallTable:
-        items:
-          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
-        type: array
-      hostname:
-        type: string
-      interfaces:
-        items:
-          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
-        type: array
-      machineId:
-        description: Unique identifier for the server (e.g., UUID)
-        type: string
-      memory:
-        $ref: '#/definitions/onpremisemodel.MemoryProperty'
-      os:
-        $ref: '#/definitions/onpremisemodel.OsProperty'
-      rootDisk:
-        $ref: '#/definitions/onpremisemodel.DiskProperty'
-      routingTable:
-        items:
-          $ref: '#/definitions/onpremisemodel.RouteProperty'
-        type: array
-    type: object
   softwaremodel.Binary:
     properties:
       binary_path:
         type: string
+      cmdline_slice:
+        items:
+          type: string
+        type: array
       custom_configs:
         items:
           type: string
@@ -1613,22 +1710,43 @@ definitions:
         items:
           type: string
         type: array
+      envs:
+        items:
+          type: string
+        type: array
+      gids:
+        items:
+          type: integer
+        type: array
+      is_wine:
+        type: boolean
       name:
         type: string
       needed_libraries:
         items:
           type: string
         type: array
+      uids:
+        items:
+          type: integer
+        type: array
       version:
         type: string
     required:
+    - envs
+    - gids
     - name
+    - uids
     - version
     type: object
   softwaremodel.BinaryMigrationInfo:
     properties:
       binary_path:
         type: string
+      cmdline_slice:
+        items:
+          type: string
+        type: array
       custom_configs:
         items:
           type: string
@@ -1637,6 +1755,16 @@ definitions:
         items:
           type: string
         type: array
+      envs:
+        items:
+          type: string
+        type: array
+      gids:
+        items:
+          type: integer
+        type: array
+      is_wine:
+        type: boolean
       name:
         type: string
       needed_libraries:
@@ -1645,10 +1773,17 @@ definitions:
         type: array
       order:
         type: integer
+      uids:
+        items:
+          type: integer
+        type: array
       version:
         type: string
     required:
+    - envs
+    - gids
     - name
+    - uids
     - version
     type: object
   softwaremodel.Container:
@@ -2048,7 +2183,11 @@ paths:
           schema:
             type: object
         "404":
-          description: Not Found
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
       summary: Get a list of cloud user models
@@ -2077,6 +2216,14 @@ paths:
           description: Invalid Request
           schema:
             type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
       summary: Create a new cloud user model
       tags:
       - '[API] Cloud Migration User Models'
@@ -2106,7 +2253,7 @@ paths:
         "404":
           description: Model Not Found
           schema:
-            type: object
+            $ref: '#/definitions/model.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -2139,7 +2286,11 @@ paths:
         "404":
           description: Model Not Found
           schema:
-            type: object
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
       summary: Get a specific cloud user model
       tags:
       - '[API] Cloud Migration User Models'
@@ -2174,7 +2325,7 @@ paths:
         "404":
           description: Model Not Found
           schema:
-            type: object
+            $ref: '#/definitions/model.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -2227,7 +2378,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.GetModelsResp'
         "404":
-          description: Not Found
+          description: Model Not Found
           schema:
             $ref: '#/definitions/model.Response'
         "500":
@@ -2252,7 +2403,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.GetModelsVersionResp'
         "404":
-          description: Not Found
+          description: Model Not Found
           schema:
             $ref: '#/definitions/model.Response'
         "500":
@@ -2277,7 +2428,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.GetOnPremModelsResp'
         "404":
-          description: Not Found
+          description: Model Not Found
           schema:
             $ref: '#/definitions/model.Response'
         "500":
@@ -2311,7 +2462,7 @@ paths:
           schema:
             type: object
         "404":
-          description: Not Found
+          description: Model Not Found
           schema:
             $ref: '#/definitions/model.Response'
         "500":
@@ -2347,7 +2498,7 @@ paths:
         "404":
           description: Model Not Found
           schema:
-            type: object
+            $ref: '#/definitions/model.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -2380,7 +2531,7 @@ paths:
         "404":
           description: Model Not Found
           schema:
-            type: object
+            $ref: '#/definitions/model.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -2415,7 +2566,7 @@ paths:
         "404":
           description: Model Not Found
           schema:
-            type: object
+            $ref: '#/definitions/model.Response'
         "500":
           description: Internal Server Error
           schema:
