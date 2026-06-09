@@ -14,7 +14,7 @@ As a Cloud Computing Infrastructure Migration Framework (codename: cm-damselply)
 - Operating system (OS): 
     - Ubuntu 24.04
 - Programming Language: 
-    - Go 1.25.0+ (for building from source code)
+    - Go 1.26.0+ (for building from source code)
 - Docker Container & Docker Compose:
     - Latest stable version
 - API doc:
@@ -124,21 +124,22 @@ sudo make compose-up
   - ./cm-damselfly/cmd/cm-damselfly/log/damselfly.log
 
 ### Versions of models applied to the released Damselfly
-| **cm-damselfly version** | **cm-model version<BR>(OnpremInfraModel/CloudInfraModel/SoftwareModel)** |
-| :----: | :-----: |
-| v0.2.0 | v0.0.3 |
-| v0.2.1 | v0.0.3 |
-| v0.2.2 | v0.0.3 |
-| v0.3.0 | v0.0.3 |
-| v0.3.1 | v0.0.10 |
-| v0.3.2 | v0.0.10 |
-| v0.3.3 | v0.0.11 |
-| v0.3.4 | v0.0.12 |
-| v0.3.5 | v0.0.13 |
-| v0.3.6 | v0.0.14 |
-| v0.4.0 | v0.0.14 |
-| v0.4.1 | v0.0.15 |
-| v0.5.0 | v0.0.21 |
+| **cm-damselfly version** | **OnpremInfraModel<BR>/CloudInfraModel** |**SoftwareModel** |
+| :----: | :-----: |:-----: |
+| v0.2.0 | v0.0.3 | - |
+| v0.2.1 | v0.0.3 | - |
+| v0.2.2 | v0.0.3 | - |
+| v0.3.0 | v0.0.3 | - |
+| v0.3.1 | v0.0.10 | - |
+| v0.3.2 | v0.0.10 | - |
+| v0.3.3 | v0.0.11 | - |
+| v0.3.4 | v0.0.12 | - |
+| v0.3.5 | v0.0.13 | - |
+| v0.3.6 | v0.0.14 | - |
+| v0.4.0 | v0.0.14 | - |
+| v0.4.1 | v0.0.15 | - |
+| v0.5.0 | v0.0.21 | v0.0.21 |
+| v0.5.1 | v0.1.6 | v0.1.0 |
 
 ### CM-Damselfly REST API user guide
 - Discussion link : [How to use and test CM-Damselfly APIs (with test examples)](https://github.com/cloud-barista/cm-damselfly/discussions/25)
