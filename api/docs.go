@@ -310,6 +310,329 @@ const docTemplate = `{
                 }
             }
         },
+        "/infra-model": {
+            "get": {
+                "description": "Get a list of infra migration user models filtered by model type and source/target classification.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a list of infra migration user models (on-premise or cloud)",
+                "operationId": "GetInfraModels",
+                "parameters": [
+                    {
+                        "enum": [
+                            "onprem",
+                            "cloud"
+                        ],
+                        "type": "string",
+                        "description": "Type of infra model to retrieve",
+                        "name": "modelType",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "description": "Whether to retrieve target models (true) or source models (false)",
+                        "name": "isTargetModel",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained infra migration user models",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'isTargetModel' to select source or target model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Create a new infra migration user model (on-premise or cloud)",
+                "operationId": "CreateInfraModel",
+                "parameters": [
+                    {
+                        "enum": [
+                            "onprem",
+                            "cloud"
+                        ],
+                        "type": "string",
+                        "description": "Type of infra model to create",
+                        "name": "modelType",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "description": "Whether to create a target model (true) or a source model (false)",
+                        "name": "isTargetModel",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Infra model information",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateInfraModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created the infra migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/infra-model/{id}": {
+            "get": {
+                "description": "Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a specific infra migration user model (on-premise or cloud)",
+                "operationId": "GetInfraModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "onprem",
+                            "cloud"
+                        ],
+                        "type": "string",
+                        "description": "Type of infra model to retrieve",
+                        "name": "modelType",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained the infra migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Update a specific infra migration user model (on-premise or cloud)",
+                "operationId": "UpdateInfraModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "onprem",
+                            "cloud"
+                        ],
+                        "type": "string",
+                        "description": "Type of infra model to update",
+                        "name": "modelType",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Infra model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateInfraModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated the infra migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific infra migration user model by ID. Works for both on-premise and cloud models without requiring the caller to specify the model type.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Delete a specific infra migration user model (on-premise or cloud)",
+                "operationId": "DeleteInfraModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted the infra migration user model",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/model/version": {
             "get": {
                 "description": "Get the versions of all models(schemata of on-premise/cloud/software migration models)",
@@ -1302,6 +1625,10 @@ const docTemplate = `{
                     "description": "vm|k8s|kubernetes|container, etc.",
                     "type": "string"
                 },
+                "isBasicGpuImage": {
+                    "type": "boolean",
+                    "default": false
+                },
                 "isBasicImage": {
                     "type": "boolean",
                     "default": false
@@ -1537,6 +1864,81 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.NlbHealthCheckerReq": {
+            "type": "object",
+            "properties": {
+                "interval": {
+                    "description": "Health check interval in seconds",
+                    "type": "integer"
+                },
+                "threshold": {
+                    "description": "Unhealthy threshold count",
+                    "type": "integer"
+                },
+                "timeout": {
+                    "description": "Health check timeout in seconds",
+                    "type": "integer"
+                }
+            }
+        },
+        "cloudmodel.NlbListenerReq": {
+            "type": "object",
+            "properties": {
+                "port": {
+                    "description": "\"1\"–\"65535\"",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "TCP | UDP",
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.NlbReq": {
+            "type": "object",
+            "properties": {
+                "cspResourceId": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "healthChecker": {
+                    "$ref": "#/definitions/cloudmodel.NlbHealthCheckerReq"
+                },
+                "listener": {
+                    "$ref": "#/definitions/cloudmodel.NlbListenerReq"
+                },
+                "scope": {
+                    "description": "REGION | GLOBAL",
+                    "type": "string"
+                },
+                "targetGroup": {
+                    "$ref": "#/definitions/cloudmodel.NlbTargetGroupReq"
+                },
+                "type": {
+                    "description": "PUBLIC | INTERNAL",
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.NlbTargetGroupReq": {
+            "type": "object",
+            "properties": {
+                "nodeGroupId": {
+                    "description": "NodeGroup ID in the target Infra",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Backend port",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "TCP | HTTP | HTTPS",
+                    "type": "string"
+                }
+            }
+        },
         "cloudmodel.OSArchitecture": {
             "type": "string",
             "enum": [
@@ -1591,6 +1993,12 @@ const docTemplate = `{
                 },
                 "targetInfra": {
                     "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetNlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NlbReq"
+                    }
                 },
                 "targetOsImageList": {
                     "type": "array",
@@ -2028,6 +2436,41 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updateTime": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateInfraModelReq": {
+            "type": "object",
+            "properties": {
+                "cloudInfraModel": {
+                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                },
+                "region": {
                     "type": "string"
                 },
                 "userId": {
@@ -3362,6 +3805,116 @@ const docTemplate = `{
                 }
             }
         },
+        "onpremisemodel.NlbBackendProperty": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "description": "\"roundrobin\" | \"leastconn\" | \"source\" (note only)",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Backend section name",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "\"tcp\" | \"http\"",
+                    "type": "string"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NlbServerProperty"
+                    }
+                }
+            }
+        },
+        "onpremisemodel.NlbHealthCheckProperty": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "interval": {
+                    "description": "seconds; default 10",
+                    "type": "integer"
+                },
+                "port": {
+                    "description": "0 = same as server port",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "\"tcp\" | \"http\"",
+                    "type": "string"
+                },
+                "threshold": {
+                    "description": "default 3",
+                    "type": "integer"
+                },
+                "timeout": {
+                    "description": "seconds; default 10",
+                    "type": "integer"
+                }
+            }
+        },
+        "onpremisemodel.NlbListenerProperty": {
+            "type": "object",
+            "properties": {
+                "bindAddress": {
+                    "description": "\"*\" = all interfaces (→ PUBLIC), specific IP = INTERNAL",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Listener port (1–65535)",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "\"tcp\" | \"udp\"",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.NlbProperty": {
+            "type": "object",
+            "properties": {
+                "backend": {
+                    "$ref": "#/definitions/onpremisemodel.NlbBackendProperty"
+                },
+                "healthCheck": {
+                    "$ref": "#/definitions/onpremisemodel.NlbHealthCheckProperty"
+                },
+                "hostMachineId": {
+                    "description": "MachineId of the node running HAProxy",
+                    "type": "string"
+                },
+                "listener": {
+                    "$ref": "#/definitions/onpremisemodel.NlbListenerProperty"
+                },
+                "software": {
+                    "description": "\"haproxy\"",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.NlbServerProperty": {
+            "type": "object",
+            "properties": {
+                "ip": {
+                    "description": "Server IP; used for IP correlation at recommendation time",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Server port",
+                    "type": "integer"
+                },
+                "weight": {
+                    "description": "Traffic weight (reference only)",
+                    "type": "integer"
+                }
+            }
+        },
         "onpremisemodel.NodeProperty": {
             "type": "object",
             "properties": {
@@ -3431,6 +3984,13 @@ const docTemplate = `{
                 },
                 "network": {
                     "$ref": "#/definitions/onpremisemodel.NetworkProperty"
+                },
+                "nlbs": {
+                    "description": "NLBs holds on-premise NLB instances (HAProxy-based), one entry per frontend-backend pair.\nPopulated by cm-honeybee when HAProxy is detected on a node.\nUsed exclusively by POST /recommendation/infraWithNlb; ignored by POST /recommendation/infra.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NlbProperty"
+                    }
                 },
                 "nodes": {
                     "type": "array",
@@ -3561,6 +4121,10 @@ const docTemplate = `{
                 "is_wine": {
                     "type": "boolean"
                 },
+                "launch_type": {
+                    "description": "Launch provenance: how the software was started on the source host.",
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -3570,6 +4134,31 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "pid_file": {
+                    "description": "PIDFile= for forking services",
+                    "type": "string"
+                },
+                "required_packages": {
+                    "description": "OS packages the target must install (package-provided linked libs)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "service_type": {
+                    "description": "systemd Type= (\"simple\"|\"forking\"|...)",
+                    "type": "string"
+                },
+                "systemd_enabled": {
+                    "type": "boolean"
+                },
+                "systemd_unit_name": {
+                    "type": "string"
+                },
+                "systemd_unit_path": {
+                    "description": "source unit file path (to copy)",
+                    "type": "string"
+                },
                 "uids": {
                     "type": "array",
                     "items": {
@@ -3577,6 +4166,14 @@ const docTemplate = `{
                     }
                 },
                 "version": {
+                    "type": "string"
+                },
+                "wine_prefix": {
+                    "description": "WINEPREFIX bottle dir (Wine apps)",
+                    "type": "string"
+                },
+                "working_directory": {
+                    "description": "used to synthesize a unit",
                     "type": "string"
                 }
             }
@@ -3627,6 +4224,10 @@ const docTemplate = `{
                 "is_wine": {
                     "type": "boolean"
                 },
+                "launch_type": {
+                    "description": "Launch provenance: how the software was started on the source host.",
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -3639,6 +4240,28 @@ const docTemplate = `{
                 "order": {
                     "type": "integer"
                 },
+                "pid_file": {
+                    "type": "string"
+                },
+                "required_packages": {
+                    "description": "OS packages the target must install (package-provided linked libs)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "service_type": {
+                    "type": "string"
+                },
+                "systemd_enabled": {
+                    "type": "boolean"
+                },
+                "systemd_unit_name": {
+                    "type": "string"
+                },
+                "systemd_unit_path": {
+                    "type": "string"
+                },
                 "uids": {
                     "type": "array",
                     "items": {
@@ -3646,6 +4269,12 @@ const docTemplate = `{
                     }
                 },
                 "version": {
+                    "type": "string"
+                },
+                "wine_prefix": {
+                    "type": "string"
+                },
+                "working_directory": {
                     "type": "string"
                 }
             }

@@ -161,6 +161,9 @@ definitions:
       infraType:
         description: vm|k8s|kubernetes|container, etc.
         type: string
+      isBasicGpuImage:
+        default: false
+        type: boolean
       isBasicImage:
         default: false
         type: boolean
@@ -345,6 +348,58 @@ definitions:
       value:
         type: string
     type: object
+  cloudmodel.NlbHealthCheckerReq:
+    properties:
+      interval:
+        description: Health check interval in seconds
+        type: integer
+      threshold:
+        description: Unhealthy threshold count
+        type: integer
+      timeout:
+        description: Health check timeout in seconds
+        type: integer
+    type: object
+  cloudmodel.NlbListenerReq:
+    properties:
+      port:
+        description: '"1"–"65535"'
+        type: string
+      protocol:
+        description: TCP | UDP
+        type: string
+    type: object
+  cloudmodel.NlbReq:
+    properties:
+      cspResourceId:
+        type: string
+      description:
+        type: string
+      healthChecker:
+        $ref: '#/definitions/cloudmodel.NlbHealthCheckerReq'
+      listener:
+        $ref: '#/definitions/cloudmodel.NlbListenerReq'
+      scope:
+        description: REGION | GLOBAL
+        type: string
+      targetGroup:
+        $ref: '#/definitions/cloudmodel.NlbTargetGroupReq'
+      type:
+        description: PUBLIC | INTERNAL
+        type: string
+    type: object
+  cloudmodel.NlbTargetGroupReq:
+    properties:
+      nodeGroupId:
+        description: NodeGroup ID in the target Infra
+        type: string
+      port:
+        description: Backend port
+        type: string
+      protocol:
+        description: TCP | HTTP | HTTPS
+        type: string
+    type: object
   cloudmodel.OSArchitecture:
     enum:
     - arm32
@@ -389,6 +444,10 @@ definitions:
         $ref: '#/definitions/cloudmodel.CloudProperty'
       targetInfra:
         $ref: '#/definitions/cloudmodel.InfraReq'
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
       targetOsImageList:
         items:
           $ref: '#/definitions/cloudmodel.ImageInfo'
@@ -701,6 +760,29 @@ definitions:
         type: string
     required:
     - cloudInfraModel
+    type: object
+  handler.CreateInfraModelReq:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      csp:
+        type: string
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      region:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
     type: object
   handler.CreateOnPremModelReq:
     properties:
@@ -1587,6 +1669,83 @@ definitions:
         - $ref: '#/definitions/onpremisemodel.NetworkDetail'
         description: TBD
     type: object
+  onpremisemodel.NlbBackendProperty:
+    properties:
+      balance:
+        description: '"roundrobin" | "leastconn" | "source" (note only)'
+        type: string
+      name:
+        description: Backend section name
+        type: string
+      protocol:
+        description: '"tcp" | "http"'
+        type: string
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.NlbServerProperty'
+        type: array
+    type: object
+  onpremisemodel.NlbHealthCheckProperty:
+    properties:
+      enabled:
+        type: boolean
+      interval:
+        description: seconds; default 10
+        type: integer
+      port:
+        description: 0 = same as server port
+        type: integer
+      protocol:
+        description: '"tcp" | "http"'
+        type: string
+      threshold:
+        description: default 3
+        type: integer
+      timeout:
+        description: seconds; default 10
+        type: integer
+    type: object
+  onpremisemodel.NlbListenerProperty:
+    properties:
+      bindAddress:
+        description: '"*" = all interfaces (→ PUBLIC), specific IP = INTERNAL'
+        type: string
+      port:
+        description: Listener port (1–65535)
+        type: integer
+      protocol:
+        description: '"tcp" | "udp"'
+        type: string
+    type: object
+  onpremisemodel.NlbProperty:
+    properties:
+      backend:
+        $ref: '#/definitions/onpremisemodel.NlbBackendProperty'
+      healthCheck:
+        $ref: '#/definitions/onpremisemodel.NlbHealthCheckProperty'
+      hostMachineId:
+        description: MachineId of the node running HAProxy
+        type: string
+      listener:
+        $ref: '#/definitions/onpremisemodel.NlbListenerProperty'
+      software:
+        description: '"haproxy"'
+        type: string
+    type: object
+  onpremisemodel.NlbServerProperty:
+    properties:
+      ip:
+        description: Server IP; used for IP correlation at recommendation time
+        type: string
+      name:
+        type: string
+      port:
+        description: Server port
+        type: integer
+      weight:
+        description: Traffic weight (reference only)
+        type: integer
+    type: object
   onpremisemodel.NodeProperty:
     properties:
       cpu:
@@ -1632,6 +1791,14 @@ definitions:
           (e.g., OpenShift, Rancher) are needed.'
       network:
         $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      nlbs:
+        description: |-
+          NLBs holds on-premise NLB instances (HAProxy-based), one entry per frontend-backend pair.
+          Populated by cm-honeybee when HAProxy is detected on a node.
+          Used exclusively by POST /recommendation/infraWithNlb; ignored by POST /recommendation/infra.
+        items:
+          $ref: '#/definitions/onpremisemodel.NlbProperty'
+        type: array
       nodes:
         items:
           $ref: '#/definitions/onpremisemodel.NodeProperty'
@@ -1720,17 +1887,46 @@ definitions:
         type: array
       is_wine:
         type: boolean
+      launch_type:
+        description: 'Launch provenance: how the software was started on the source
+          host.'
+        type: string
       name:
         type: string
       needed_libraries:
         items:
           type: string
         type: array
+      pid_file:
+        description: PIDFile= for forking services
+        type: string
+      required_packages:
+        description: OS packages the target must install (package-provided linked
+          libs)
+        items:
+          type: string
+        type: array
+      service_type:
+        description: systemd Type= ("simple"|"forking"|...)
+        type: string
+      systemd_enabled:
+        type: boolean
+      systemd_unit_name:
+        type: string
+      systemd_unit_path:
+        description: source unit file path (to copy)
+        type: string
       uids:
         items:
           type: integer
         type: array
       version:
+        type: string
+      wine_prefix:
+        description: WINEPREFIX bottle dir (Wine apps)
+        type: string
+      working_directory:
+        description: used to synthesize a unit
         type: string
     required:
     - envs
@@ -1765,6 +1961,10 @@ definitions:
         type: array
       is_wine:
         type: boolean
+      launch_type:
+        description: 'Launch provenance: how the software was started on the source
+          host.'
+        type: string
       name:
         type: string
       needed_libraries:
@@ -1773,11 +1973,31 @@ definitions:
         type: array
       order:
         type: integer
+      pid_file:
+        type: string
+      required_packages:
+        description: OS packages the target must install (package-provided linked
+          libs)
+        items:
+          type: string
+        type: array
+      service_type:
+        type: string
+      systemd_enabled:
+        type: boolean
+      systemd_unit_name:
+        type: string
+      systemd_unit_path:
+        type: string
       uids:
         items:
           type: integer
         type: array
       version:
+        type: string
+      wine_prefix:
+        type: string
+      working_directory:
         type: string
     required:
     - envs
@@ -2358,6 +2578,232 @@ paths:
       summary: Check HTTP version of incoming request
       tags:
       - '[Admin] System management'
+  /infra-model:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of infra migration user models filtered by model type
+        and source/target classification.
+      operationId: GetInfraModels
+      parameters:
+      - description: Type of infra model to retrieve
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      - description: Whether to retrieve target models (true) or source models (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained infra migration user models
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of infra migration user models (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: Create a new infra migration user model. Use 'modelType' to select
+        on-premise or cloud, and 'isTargetModel' to select source or target model.
+      operationId: CreateInfraModel
+      parameters:
+      - description: Type of infra model to create
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      - description: Whether to create a target model (true) or a source model (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      - description: Infra model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateInfraModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created the infra migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Create a new infra migration user model (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+  /infra-model/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific infra migration user model by ID. Works for both
+        on-premise and cloud models without requiring the caller to specify the model
+        type.
+      operationId: DeleteInfraModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted the infra migration user model
+          schema:
+            type: string
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a specific infra migration user model (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific infra migration user model by ID. Use 'modelType'
+        to specify whether it is an on-premise or cloud model.
+      operationId: GetInfraModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Type of infra model to retrieve
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained the infra migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a specific infra migration user model (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: Update a specific infra migration user model by ID. Use 'modelType'
+        to specify whether it is an on-premise or cloud model.
+      operationId: UpdateInfraModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Type of infra model to update
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      - description: Infra model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateInfraModelReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated the infra migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a specific infra migration user model (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
   /model/{isTargetModel}:
     get:
       consumes:
