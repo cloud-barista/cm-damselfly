@@ -171,6 +171,12 @@ func RunServer(port string) {
 	gModel.GET("/model/:isTargetModel", handler.GetModels)
 	gModel.GET("/model/version", handler.GetModelsVersion)
 
+	gModel.GET("/infra-model", handler.GetInfraModels)
+	gModel.POST("/infra-model", handler.CreateInfraModel)
+	gModel.GET("/infra-model/:id", handler.GetInfraModel)
+	gModel.PUT("/infra-model/:id", handler.UpdateInfraModel)
+	gModel.DELETE("/infra-model/:id", handler.DeleteInfraModel)
+
 	gModel.POST("/onpremmodel", handler.CreateOnPremModel)
 	gModel.GET("/onpremmodel", handler.GetOnPremModels)
 	gModel.GET("/onpremmodel/:id", handler.GetOnPremModel)
