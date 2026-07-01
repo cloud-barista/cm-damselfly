@@ -248,9 +248,668 @@ type OnPremModelRespInfo struct {
 	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
 }
 
-// Caution!!)
-// Init Swagger : ]# swag init --parseDependency --parseInternal
-// Need to add '--parseDependency --parseInternal' in order to apply imported structures
+// ##############################################################################################
+// ### Unified Infra Migration User Model (On-Premise + Cloud)
+// ##############################################################################################
+
+// GetInfraModels godoc
+// @ID GetInfraModels
+// @Summary Get a list of infra migration user models (on-premise or cloud)
+// @Description Get a list of infra migration user models filtered by model type and source/target classification.
+// @Tags [API] Migration User Models
+// @Accept  json
+// @Produce  json
+// @Param modelType  query string true  "Type of infra model to retrieve" Enums(onprem, cloud)
+// @Param isTargetModel query string true "Whether to retrieve target models (true) or source models (false)" Enums(true, false)
+// @Success 200 {array}  map[string]interface{} "Successfully obtained infra migration user models"
+// @Failure 400 {object} model.Response "Invalid request parameter"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
+// @Router /infra-model [get]
+func GetInfraModels(c echo.Context) error {
+	modelTypeParam := c.QueryParam("modelType")
+	if !strings.EqualFold(modelTypeParam, "onprem") && !strings.EqualFold(modelTypeParam, "cloud") {
+		newErr := fmt.Errorf("invalid request: 'modelType' must be 'onprem' or 'cloud', got '%s'", modelTypeParam)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	isTargetModelParam := c.QueryParam("isTargetModel")
+	if !strings.EqualFold(isTargetModelParam, "true") && !strings.EqualFold(isTargetModelParam, "false") {
+		newErr := fmt.Errorf("invalid request: 'isTargetModel' must be 'true' or 'false', got '%s'", isTargetModelParam)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	isTargetModel, err := strconv.ParseBool(isTargetModelParam)
+	if err != nil {
+		newErr := fmt.Errorf("invalid request: failed to parse 'isTargetModel': [%v]", err)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
+
+	log.Info().Msgf("# GetInfraModels: modelType=[%s], isTargetModel=[%v]", modelTypeParam, isTargetModel)
+
+	modelList, exists := lkvstore.GetWithPrefix("")
+	if !exists {
+		return c.JSON(http.StatusOK, []map[string]interface{}{})
+	}
+
+	var result []map[string]interface{}
+	for _, item := range modelList {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Skip software models
+		if isSoftwareModel, exists := m["isSoftwareModel"]; exists && isSoftwareModel == true {
+			continue
+		}
+
+		// Filter by isCloudModel
+		isCloudModelVal, cloudModelExists := m["isCloudModel"]
+		if !cloudModelExists {
+			continue
+		}
+		isCloudModelBool, ok := isCloudModelVal.(bool)
+		if !ok {
+			continue
+		}
+		if isCloudModelBool != isCloudModelFilter {
+			continue
+		}
+
+		// Filter by isTargetModel
+		isTargetModelVal, targetModelExists := m["isTargetModel"]
+		if !targetModelExists {
+			continue
+		}
+		isTargetModelBool, ok := isTargetModelVal.(bool)
+		if !ok {
+			continue
+		}
+		if isTargetModelBool != isTargetModel {
+			continue
+		}
+
+		result = append(result, m)
+	}
+
+	if len(result) == 0 {
+		return c.JSON(http.StatusOK, []map[string]interface{}{})
+	}
+	return c.JSON(http.StatusOK, result)
+}
+
+// [Note]
+// CreateInfraModelReq is a unified request body for creating either an on-premise
+// or a cloud infra migration user model. Only the field matching the selected
+// 'modelType' needs to be provided (onpremiseInfraModel or cloudInfraModel).
+type CreateInfraModelReq struct {
+	UserId           string                      `json:"userId"`
+	IsInitUserModel  bool                        `json:"isInitUserModel"`
+	UserModelName    string                      `json:"userModelName"`
+	UserModelVer     string                      `json:"userModelVersion"`
+	Description      string                      `json:"description"`
+	CSP              string                      `json:"csp,omitempty"`
+	Region           string                      `json:"region,omitempty"`
+	Zone             string                      `json:"zone,omitempty"`
+	OnpremInfraModel onpremisemodel.OnpremInfra  `json:"onpremiseInfraModel,omitempty"`
+	CloudInfraModel  cloudmodel.RecommendedInfra `json:"cloudInfraModel,omitempty"`
+}
+
+// CreateInfraModel godoc
+// @ID CreateInfraModel
+// @Summary Create a new infra migration user model (on-premise or cloud)
+// @Description Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'isTargetModel' to select source or target model.
+// @Tags [API] Migration User Models
+// @Accept  json
+// @Produce  json
+// @Param modelType  query string true  "Type of infra model to create" Enums(onprem, cloud)
+// @Param isTargetModel query string true "Whether to create a target model (true) or a source model (false)" Enums(true, false)
+// @Param Model body CreateInfraModelReq true "Infra model information"
+// @Success 201 {object} object "Successfully created the infra migration user model"
+// @Failure 400 {object} model.Response "Invalid request parameter"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
+// @Router /infra-model [post]
+func CreateInfraModel(c echo.Context) error {
+	modelTypeParam := c.QueryParam("modelType")
+	if !strings.EqualFold(modelTypeParam, "onprem") && !strings.EqualFold(modelTypeParam, "cloud") {
+		newErr := fmt.Errorf("invalid request: 'modelType' must be 'onprem' or 'cloud', got '%s'", modelTypeParam)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	isTargetModelParam := c.QueryParam("isTargetModel")
+	if !strings.EqualFold(isTargetModelParam, "true") && !strings.EqualFold(isTargetModelParam, "false") {
+		newErr := fmt.Errorf("invalid request: 'isTargetModel' must be 'true' or 'false', got '%s'", isTargetModelParam)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	isTargetModel, err := strconv.ParseBool(isTargetModelParam)
+	if err != nil {
+		newErr := fmt.Errorf("invalid request: failed to parse 'isTargetModel': [%v]", err)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	reqBody := new(CreateInfraModelReq)
+	if err := c.Bind(reqBody); err != nil {
+		newErr := fmt.Errorf("invalid request : [%v]", err)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	isCloudModel := strings.EqualFold(modelTypeParam, "cloud")
+	log.Info().Msgf("# CreateInfraModel: modelType=[%s], isTargetModel=[%v]", modelTypeParam, isTargetModel)
+
+	id := uuid.New().String()
+
+	createTime, err := getSeoulCurrentTime()
+	if err != nil {
+		msg := "Failed to Get the Current time!!"
+		log.Debug().Msg(msg)
+	}
+
+	var resultVer string
+	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
+	if err != nil {
+		msg := "Failed to Get the 'cm-beetle/imdl' module verion!!"
+		log.Debug().Msg(msg)
+	} else {
+		if len(modelVer) > 10 {
+			release, err := getLatestRelease("cloud-barista", "cm-beetle/imdl")
+			if err != nil {
+				msg := "Failed to Get the latest release."
+				log.Error().Msgf("%s : [%v]", msg, err)
+				newErr := fmt.Errorf("%s : [%v]", msg, err)
+				res := model.Response{
+					Success: false,
+					Text:    newErr.Error(),
+				}
+				return c.JSON(http.StatusInternalServerError, res)
+			}
+			log.Info().Msgf("Latest version: %s\n", release.TagName)
+			resultVer = release.TagName
+		} else {
+			resultVer = modelVer
+		}
+	}
+
+	if isCloudModel {
+		// --- Create a Cloud migration user model ---
+		userModel := CloudModelRespInfo{
+			Id:              id,
+			UserId:          reqBody.UserId,
+			IsTargetModel:   isTargetModel,
+			IsInitUserModel: reqBody.IsInitUserModel,
+			UserModelName:   reqBody.UserModelName,
+			Description:     reqBody.Description,
+			UserModelVer:    reqBody.UserModelVer,
+			CreateTime:      createTime,
+			CSP:             reqBody.CSP,
+			Region:          reqBody.Region,
+			Zone:            reqBody.Zone,
+			IsCloudModel:    true,
+			CloudModelVer:   resultVer,
+			ModelType:       CloudModel,
+			CloudInfraModel: reqBody.CloudInfraModel,
+		}
+		log.Info().Msgf("Cloud Model version: %s", resultVer)
+
+		lkvstore.Put(userModel.Id, userModel)
+
+		if err := lkvstore.SaveLkvStore(); err != nil {
+			msg := "Failed to Save the lkvstore to file."
+			log.Error().Msgf("%s : [%v]", msg, err)
+			newErr := fmt.Errorf("%s : [%v]", msg, err)
+			return c.JSON(http.StatusInternalServerError, newErr)
+		}
+		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+
+		return c.JSON(http.StatusCreated, userModel)
+	}
+
+	// --- Create an On-premise migration user model ---
+	userModel := OnPremModelRespInfo{
+		Id:               id,
+		UserId:           reqBody.UserId,
+		IsInitUserModel:  reqBody.IsInitUserModel,
+		UserModelName:    reqBody.UserModelName,
+		UserModelVer:     reqBody.UserModelVer,
+		Description:      reqBody.Description,
+		OnPremModelVer:   resultVer,
+		CreateTime:       createTime,
+		IsTargetModel:    isTargetModel,
+		IsCloudModel:     false,
+		ModelType:        OnPremModel,
+		OnpremInfraModel: reqBody.OnpremInfraModel,
+	}
+	log.Info().Msgf("On-premise Model version: %s", resultVer)
+
+	lkvstore.Put(userModel.Id, userModel)
+
+	if err := lkvstore.SaveLkvStore(); err != nil {
+		msg := "Failed to Save the lkvstore to file."
+		log.Error().Msgf("%s : [%v]", msg, err)
+		newErr := fmt.Errorf("%s : [%v]", msg, err)
+		return c.JSON(http.StatusInternalServerError, newErr)
+	}
+	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+
+	return c.JSON(http.StatusCreated, userModel)
+}
+
+// GetInfraModel godoc
+// @ID GetInfraModel
+// @Summary Get a specific infra migration user model (on-premise or cloud)
+// @Description Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
+// @Tags [API] Migration User Models
+// @Accept  json
+// @Produce  json
+// @Param id          path  string true "Model ID"
+// @Param modelType  query string true  "Type of infra model to retrieve" Enums(onprem, cloud)
+// @Success 200 {object} object "Successfully obtained the infra migration user model"
+// @Failure 400 {object} model.Response "Invalid request parameter"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
+// @Router /infra-model/{id} [get]
+func GetInfraModel(c echo.Context) error {
+	if strings.EqualFold(c.Param("id"), "") {
+		newErr := fmt.Errorf("invalid request: model id is required")
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	modelTypeParam := c.QueryParam("modelType")
+	if !strings.EqualFold(modelTypeParam, "onprem") && !strings.EqualFold(modelTypeParam, "cloud") {
+		newErr := fmt.Errorf("invalid request: 'modelType' must be 'onprem' or 'cloud', got '%s'", modelTypeParam)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
+	log.Info().Msgf("# GetInfraModel: id=[%s], modelType=[%s]", c.Param("id"), modelTypeParam)
+
+	userModel, exists := lkvstore.Get(c.Param("id"))
+	if !exists {
+		newErr := fmt.Errorf("failed to find the model from db with id: [%s]", c.Param("id"))
+		log.Error().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusNotFound, res)
+	}
+
+	m, ok := userModel.(map[string]interface{})
+	if !ok {
+		newErr := fmt.Errorf("internal error: unexpected model data format")
+		log.Error().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+
+	// --- Verify modelType matches the stored model ---
+	isCloudModelVal, cloudModelExists := m["isCloudModel"]
+	if !cloudModelExists {
+		newErr := fmt.Errorf("'isCloudModel' does not exist. This is neither on-premise nor cloud user model")
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	isCloudModelBool, ok := isCloudModelVal.(bool)
+	if !ok {
+		newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	if isCloudModelBool != isCloudModelFilter {
+		expected := "onprem"
+		if isCloudModelBool {
+			expected = "cloud"
+		}
+		newErr := fmt.Errorf("model type mismatch: the model with id [%s] is a '%s' model, not '%s'", c.Param("id"), expected, modelTypeParam)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	return c.JSON(http.StatusOK, m)
+}
+
+// UpdateInfraModel godoc
+// @ID UpdateInfraModel
+// @Summary Update a specific infra migration user model (on-premise or cloud)
+// @Description Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
+// @Tags [API] Migration User Models
+// @Accept  json
+// @Produce  json
+// @Param id          path  string true "Model ID"
+// @Param modelType  query string true  "Type of infra model to update" Enums(onprem, cloud)
+// @Param Model body CreateInfraModelReq true "Infra model information to update"
+// @Success 200 {object} object "Successfully updated the infra migration user model"
+// @Failure 400 {object} model.Response "Invalid request parameter"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
+// @Router /infra-model/{id} [put]
+func UpdateInfraModel(c echo.Context) error {
+	if strings.EqualFold(c.Param("id"), "") {
+		newErr := fmt.Errorf("invalid request: model id is required")
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	reqId := c.Param("id")
+
+	modelTypeParam := c.QueryParam("modelType")
+	if !strings.EqualFold(modelTypeParam, "onprem") && !strings.EqualFold(modelTypeParam, "cloud") {
+		newErr := fmt.Errorf("invalid request: 'modelType' must be 'onprem' or 'cloud', got '%s'", modelTypeParam)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
+	log.Info().Msgf("# UpdateInfraModel: id=[%s], modelType=[%s]", reqId, modelTypeParam)
+
+	reqBody := new(CreateInfraModelReq)
+	if err := c.Bind(reqBody); err != nil {
+		newErr := fmt.Errorf("invalid request : [%v]", err)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	existingRaw, exists := lkvstore.Get(reqId)
+	if !exists {
+		newErr := fmt.Errorf("failed to find the model from db with id: [%s]", reqId)
+		log.Error().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusNotFound, res)
+	}
+
+	existing, ok := existingRaw.(map[string]interface{})
+	if !ok {
+		newErr := fmt.Errorf("internal error: unexpected model data format")
+		log.Error().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+
+	// --- Verify modelType matches the stored model ---
+	isCloudModelVal, cloudModelExists := existing["isCloudModel"]
+	if !cloudModelExists {
+		newErr := fmt.Errorf("'isCloudModel' does not exist. This is neither on-premise nor cloud user model")
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	isCloudModelBool, ok := isCloudModelVal.(bool)
+	if !ok {
+		newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	if isCloudModelBool != isCloudModelFilter {
+		expected := "onprem"
+		if isCloudModelBool {
+			expected = "cloud"
+		}
+		newErr := fmt.Errorf("model type mismatch: the model with id [%s] is a '%s' model, not '%s'", reqId, expected, modelTypeParam)
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	createTime, _ := existing["createTime"].(string)
+	isTargetModelBool, _ := existing["isTargetModel"].(bool)
+
+	updateTime, err := getSeoulCurrentTime()
+	if err != nil {
+		log.Debug().Msg("Failed to Get the Current time!!")
+	}
+
+	if isCloudModelFilter {
+		cloudModelVer, _ := existing["cloudModelVersion"].(string)
+
+		updatedModel := CloudModelRespInfo{
+			Id:              reqId,
+			UserId:          reqBody.UserId,
+			IsTargetModel:   isTargetModelBool,
+			IsInitUserModel: reqBody.IsInitUserModel,
+			UserModelName:   reqBody.UserModelName,
+			Description:     reqBody.Description,
+			UserModelVer:    reqBody.UserModelVer,
+			CreateTime:      createTime,
+			UpdateTime:      updateTime,
+			CSP:             reqBody.CSP,
+			Region:          reqBody.Region,
+			Zone:            reqBody.Zone,
+			IsCloudModel:    true,
+			CloudModelVer:   cloudModelVer,
+			ModelType:       CloudModel,
+			CloudInfraModel: reqBody.CloudInfraModel,
+		}
+		log.Info().Msgf("Cloud Model version (preserved): %s", cloudModelVer)
+
+		lkvstore.Put(reqId, updatedModel)
+		if err := lkvstore.SaveLkvStore(); err != nil {
+			msg := "Failed to Save the lkvstore to file."
+			log.Error().Msgf("%s : [%v]", msg, err)
+			newErr := fmt.Errorf("%s : [%v]", msg, err)
+			res := model.Response{
+				Success: false,
+				Text:    newErr.Error(),
+			}
+			return c.JSON(http.StatusInternalServerError, res)
+		}
+		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+
+		saved, _ := lkvstore.Get(reqId)
+		return c.JSON(http.StatusOK, saved)
+	}
+
+	onpremModelVer, _ := existing["onpremModelVersion"].(string)
+
+	updatedModel := OnPremModelRespInfo{
+		Id:               reqId,
+		UserId:           reqBody.UserId,
+		IsInitUserModel:  reqBody.IsInitUserModel,
+		UserModelName:    reqBody.UserModelName,
+		UserModelVer:     reqBody.UserModelVer,
+		Description:      reqBody.Description,
+		OnPremModelVer:   onpremModelVer,
+		CreateTime:       createTime,
+		UpdateTime:       updateTime,
+		IsTargetModel:    isTargetModelBool,
+		IsCloudModel:     false,
+		ModelType:        OnPremModel,
+		OnpremInfraModel: reqBody.OnpremInfraModel,
+	}
+	log.Info().Msgf("On-premise Model version (preserved): %s", onpremModelVer)
+
+	lkvstore.Put(reqId, updatedModel)
+	if err := lkvstore.SaveLkvStore(); err != nil {
+		msg := "Failed to Save the lkvstore to file."
+		log.Error().Msgf("%s : [%v]", msg, err)
+		newErr := fmt.Errorf("%s : [%v]", msg, err)
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+
+	saved, _ := lkvstore.Get(reqId)
+	return c.JSON(http.StatusOK, saved)
+}
+
+// DeleteInfraModel godoc
+// @ID DeleteInfraModel
+// @Summary Delete a specific infra migration user model (on-premise or cloud)
+// @Description Delete a specific infra migration user model by ID. Works for both on-premise and cloud models without requiring the caller to specify the model type.
+// @Tags [API] Migration User Models
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Model ID"
+// @Success 200 {string} string "Successfully deleted the infra migration user model"
+// @Failure 400 {object} model.Response "Invalid request parameter"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
+// @Router /infra-model/{id} [delete]
+func DeleteInfraModel(c echo.Context) error {
+	if strings.EqualFold(c.Param("id"), "") {
+		newErr := fmt.Errorf("invalid request: model id is required")
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	log.Info().Msgf("# DeleteInfraModel: id=[%s]", c.Param("id"))
+
+	existingRaw, exists := lkvstore.Get(c.Param("id"))
+	if !exists {
+		newErr := fmt.Errorf("failed to find the model from db with id: [%s]", c.Param("id"))
+		log.Error().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusNotFound, res)
+	}
+
+	existing, ok := existingRaw.(map[string]interface{})
+	if !ok {
+		newErr := fmt.Errorf("internal error: unexpected model data format")
+		log.Error().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+
+	// --- Verify this is an infra model (not a software model) ---
+	if isSoftwareModel, exists := existing["isSoftwareModel"]; exists && isSoftwareModel == true {
+		newErr := fmt.Errorf("invalid request: the model with id [%s] is a software model, not an infra model", c.Param("id"))
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	if _, cloudModelExists := existing["isCloudModel"]; !cloudModelExists {
+		newErr := fmt.Errorf("invalid request: the model with id [%s] is neither an on-premise nor a cloud infra model", c.Param("id"))
+		log.Warn().Msg(newErr.Error())
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	lkvstore.Delete(c.Param("id"))
+	log.Info().Msgf("Succeeded in Deleting the model : [%s]", c.Param("id"))
+
+	if err := lkvstore.SaveLkvStore(); err != nil {
+		msg := "Failed to Save the lkvstore to file."
+		log.Error().Msgf("%s : [%v]", msg, err)
+		newErr := fmt.Errorf("%s : [%v]", msg, err)
+		res := model.Response{
+			Success: false,
+			Text:    newErr.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
+
+	return c.JSON(http.StatusOK, "Succeeded in Deleting the infra model")
+}
 
 type GetOnPremModelsResp struct {
 	Models []OnPremModelRespInfo `json:"models"`
