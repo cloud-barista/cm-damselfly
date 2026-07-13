@@ -1,6 +1,6 @@
 services:
   cm-damselfly:
-    image: cloudbaristaorg/cm-damselfly:0.5.2
+    image: cloudbaristaorg/cm-damselfly:0.5.3
     # image: cloudbaristaorg/cm-damselfly:edge
     container_name: cm-damselfly
     pull_policy: missing
