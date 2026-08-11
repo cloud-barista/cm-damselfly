@@ -77,6 +77,15 @@ definitions:
         type: string
       subnetId:
         type: string
+      subnetIds:
+        description: |-
+          SubnetIds, when non-empty, spreads this NodeGroup's VMs across these subnets
+          (round-robin by VM index). SubnetId above is the primary/fallback (first subnet).
+          Populated by dynamic provisioning when DistributeSubnets is requested; empty means
+          all VMs use the single SubnetId (default behavior).
+        items:
+          type: string
+        type: array
       vNetId:
         type: string
     required:
@@ -263,30 +272,6 @@ definitions:
     - ImageDeleting
     - ImageDeprecated
     - ImageNA
-  cloudmodel.InfraCmdReq:
-    properties:
-      command:
-        description: Command is the list of commands to execute
-        example:
-        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
-          is: $client_ip'
-        items:
-          type: string
-        type: array
-      timeoutMinutes:
-        default: 30
-        description: |-
-          TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
-          If not specified or set to 0, the default timeout (30 minutes) will be used
-        example: 30
-        type: integer
-      userName:
-        description: UserName is the SSH username to use for command execution
-        example: cb-user
-        type: string
-    required:
-    - command
-    type: object
   cloudmodel.InfraReq:
     properties:
       description:
@@ -328,10 +313,16 @@ definitions:
         - refine
         example: continue
         type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
-        description: PostCommand is for the command to bootstrap the Nodes
+      postCommandAsync:
+        description: PostCommandAsync runs post-deployment commands in the background
+        example: false
+        type: boolean
+      postCommands:
+        description: PostCommands are sequential post-deployment command phases that
+          bootstrap the Nodes
+        items:
+          $ref: '#/definitions/cloudmodel.PostCommandReq'
+        type: array
       systemLabel:
         description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
@@ -340,6 +331,113 @@ definitions:
     required:
     - name
     - nodeGroups
+    type: object
+  cloudmodel.K8sClusterReq:
+    properties:
+      connectionName:
+        description: Namespace      string `json:"namespace" validate:"required" example:"default"`
+        example: alibaba-ap-northeast-2
+        type: string
+      cspResourceId:
+        description: |-
+          Fields for "Register existing K8sCluster" feature
+          @description CspResourceId is required to register a k8s cluster from CSP (option=register)
+        example: required when option is register
+        type: string
+      description:
+        example: My K8sCluster
+        type: string
+      k8sNodeGroupList:
+        description: (3) NodeGroupInfo List
+        items:
+          $ref: '#/definitions/cloudmodel.K8sNodeGroupReq'
+        type: array
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: (1) K8sCluster Info
+        example: k8scluster01
+        type: string
+      securityGroupIds:
+        example:
+        - sg-01
+        items:
+          type: string
+        type: array
+      subnetIds:
+        example:
+        - subnet-01
+        items:
+          type: string
+        type: array
+      systemLabel:
+        description: SystemLabel is for describing the k8scluster in a keyword (any
+          string can be used) for special System purpose
+        example: ""
+        type: string
+      vNetId:
+        description: (2) Network Info
+        example: vpc-01
+        type: string
+      version:
+        example: 1.30.1-aliyun.1
+        type: string
+    required:
+    - connectionName
+    - name
+    - securityGroupIds
+    - subnetIds
+    - vNetId
+    type: object
+  cloudmodel.K8sNodeGroupReq:
+    properties:
+      description:
+        example: Description
+        type: string
+      desiredNodeSize:
+        example: 1
+        type: integer
+      imageId:
+        example: image-01
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      maxNodeSize:
+        example: 3
+        type: integer
+      minNodeSize:
+        example: 1
+        type: integer
+      name:
+        example: k8sng01
+        type: string
+      onAutoScaling:
+        description: autoscale config.
+        example: "true"
+        type: string
+      rootDiskSize:
+        description: Root disk size in GB. 0 = use CSP default.
+        example: 40
+        type: integer
+      rootDiskType:
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: cloud_essd
+        type: string
+      specId:
+        example: spec-01
+        type: string
+      sshKeyId:
+        example: sshkey-01
+        type: string
     type: object
   cloudmodel.KeyValue:
     properties:
@@ -434,6 +532,48 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
+  cloudmodel.PostCommandReq:
+    properties:
+      command:
+        description: Command is the list of commands to execute
+        example:
+        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
+          is: $client_ip'
+        items:
+          type: string
+        type: array
+      continueOnError:
+        description: 'ContinueOnError keeps running the remaining phases when this
+          phase fails (default: false)'
+        example: false
+        type: boolean
+      labelSelector:
+        description: LabelSelector limits execution to nodes matching the selector
+          (e.g. "role=worker")
+        example: role=worker
+        type: string
+      nodeGroupId:
+        description: NodeGroupId limits execution to one nodeGroup
+        example: g1
+        type: string
+      nodeId:
+        description: NodeId limits execution to a single node
+        example: g1-1
+        type: string
+      timeoutMinutes:
+        default: 30
+        description: |-
+          TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
+          If not specified or set to 0, the default timeout (30 minutes) will be used
+        example: 30
+        type: integer
+      userName:
+        description: UserName is the SSH username to use for command execution
+        example: cb-user
+        type: string
+    required:
+    - command
+    type: object
   cloudmodel.RecommendedInfra:
     properties:
       description:
@@ -444,6 +584,8 @@ definitions:
         $ref: '#/definitions/cloudmodel.CloudProperty'
       targetInfra:
         $ref: '#/definitions/cloudmodel.InfraReq'
+      targetK8sCluster:
+        $ref: '#/definitions/cloudmodel.K8sClusterReq'
       targetNlbList:
         items:
           $ref: '#/definitions/cloudmodel.NlbReq'
@@ -1522,12 +1664,12 @@ definitions:
   onpremisemodel.DiskProperty:
     properties:
       available:
-        description: Unit GiB
+        description: Unit GB
         type: integer
       label:
         type: string
       totalSize:
-        description: Unit GiB
+        description: Unit GB
         example: 1024
         type: integer
       type:
@@ -1535,7 +1677,7 @@ definitions:
         example: SSD
         type: string
       used:
-        description: Unit GiB
+        description: Unit GB
         type: integer
     required:
     - label

@@ -1528,6 +1528,13 @@ const docTemplate = `{
                 "subnetId": {
                     "type": "string"
                 },
+                "subnetIds": {
+                    "description": "SubnetIds, when non-empty, spreads this NodeGroup's VMs across these subnets\n(round-robin by VM index). SubnetId above is the primary/fallback (first subnet).\nPopulated by dynamic provisioning when DistributeSubnets is requested; empty means\nall VMs use the single SubnetId (default behavior).",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "vNetId": {
                     "type": "string"
                 }
@@ -1757,35 +1764,6 @@ const docTemplate = `{
                 "ImageNA"
             ]
         },
-        "cloudmodel.InfraCmdReq": {
-            "type": "object",
-            "required": [
-                "command"
-            ],
-            "properties": {
-                "command": {
-                    "description": "Command is the list of commands to execute",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
-                    ]
-                },
-                "timeoutMinutes": {
-                    "description": "TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)\nIf not specified or set to 0, the default timeout (30 minutes) will be used",
-                    "type": "integer",
-                    "default": 30,
-                    "example": 30
-                },
-                "userName": {
-                    "description": "UserName is the SSH username to use for command execution",
-                    "type": "string",
-                    "example": "cb-user"
-                }
-            }
-        },
         "cloudmodel.InfraReq": {
             "type": "object",
             "required": [
@@ -1838,18 +1816,158 @@ const docTemplate = `{
                     ],
                     "example": "continue"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the Nodes",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
-                        }
-                    ]
+                "postCommandAsync": {
+                    "description": "PostCommandAsync runs post-deployment commands in the background",
+                    "type": "boolean",
+                    "example": false
+                },
+                "postCommands": {
+                    "description": "PostCommands are sequential post-deployment command phases that bootstrap the Nodes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
+                    }
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
+                }
+            }
+        },
+        "cloudmodel.K8sClusterReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name",
+                "securityGroupIds",
+                "subnetIds",
+                "vNetId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "description": "Namespace      string ` + "`" + `json:\"namespace\" validate:\"required\" example:\"default\"` + "`" + `",
+                    "type": "string",
+                    "example": "alibaba-ap-northeast-2"
+                },
+                "cspResourceId": {
+                    "description": "Fields for \"Register existing K8sCluster\" feature\n@description CspResourceId is required to register a k8s cluster from CSP (option=register)",
+                    "type": "string",
+                    "example": "required when option is register"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "My K8sCluster"
+                },
+                "k8sNodeGroupList": {
+                    "description": "(3) NodeGroupInfo List",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.K8sNodeGroupReq"
+                    }
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "(1) K8sCluster Info",
+                    "type": "string",
+                    "example": "k8scluster01"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "sg-01"
+                    ]
+                },
+                "subnetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "subnet-01"
+                    ]
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the k8scluster in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vNetId": {
+                    "description": "(2) Network Info",
+                    "type": "string",
+                    "example": "vpc-01"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.30.1-aliyun.1"
+                }
+            }
+        },
+        "cloudmodel.K8sNodeGroupReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "desiredNodeSize": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "imageId": {
+                    "type": "string",
+                    "example": "image-01"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "maxNodeSize": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "minNodeSize": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "k8sng01"
+                },
+                "onAutoScaling": {
+                    "description": "autoscale config.",
+                    "type": "string",
+                    "example": "true"
+                },
+                "rootDiskSize": {
+                    "description": "Root disk size in GB. 0 = use CSP default.",
+                    "type": "integer",
+                    "example": 40
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "cloud_essd"
+                },
+                "specId": {
+                    "type": "string",
+                    "example": "spec-01"
+                },
+                "sshKeyId": {
+                    "type": "string",
+                    "example": "sshkey-01"
                 }
             }
         },
@@ -1979,6 +2097,55 @@ const docTemplate = `{
                 "PlatformNA"
             ]
         },
+        "cloudmodel.PostCommandReq": {
+            "type": "object",
+            "required": [
+                "command"
+            ],
+            "properties": {
+                "command": {
+                    "description": "Command is the list of commands to execute",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
+                    ]
+                },
+                "continueOnError": {
+                    "description": "ContinueOnError keeps running the remaining phases when this phase fails (default: false)",
+                    "type": "boolean",
+                    "example": false
+                },
+                "labelSelector": {
+                    "description": "LabelSelector limits execution to nodes matching the selector (e.g. \"role=worker\")",
+                    "type": "string",
+                    "example": "role=worker"
+                },
+                "nodeGroupId": {
+                    "description": "NodeGroupId limits execution to one nodeGroup",
+                    "type": "string",
+                    "example": "g1"
+                },
+                "nodeId": {
+                    "description": "NodeId limits execution to a single node",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "timeoutMinutes": {
+                    "description": "TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)\nIf not specified or set to 0, the default timeout (30 minutes) will be used",
+                    "type": "integer",
+                    "default": 30,
+                    "example": 30
+                },
+                "userName": {
+                    "description": "UserName is the SSH username to use for command execution",
+                    "type": "string",
+                    "example": "cb-user"
+                }
+            }
+        },
         "cloudmodel.RecommendedInfra": {
             "type": "object",
             "properties": {
@@ -1993,6 +2160,9 @@ const docTemplate = `{
                 },
                 "targetInfra": {
                     "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetK8sCluster": {
+                    "$ref": "#/definitions/cloudmodel.K8sClusterReq"
                 },
                 "targetNlbList": {
                     "type": "array",
@@ -3603,14 +3773,14 @@ const docTemplate = `{
             ],
             "properties": {
                 "available": {
-                    "description": "Unit GiB",
+                    "description": "Unit GB",
                     "type": "integer"
                 },
                 "label": {
                     "type": "string"
                 },
                 "totalSize": {
-                    "description": "Unit GiB",
+                    "description": "Unit GB",
                     "type": "integer",
                     "example": 1024
                 },
@@ -3620,7 +3790,7 @@ const docTemplate = `{
                     "example": "SSD"
                 },
                 "used": {
-                    "description": "Unit GiB",
+                    "description": "Unit GB",
                     "type": "integer"
                 }
             }
