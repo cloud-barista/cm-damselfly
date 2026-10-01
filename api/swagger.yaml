@@ -151,6 +151,11 @@ definitions:
       cspImageName:
         example: csp-06eb41e14121c550a
         type: string
+      deletionRequestedAt:
+        description: |-
+          DeletionRequestedAt (RFC3339) marks a deletion tombstone (customImage only):
+          non-empty means the row is kept until CSP-side removal is confirmed
+        type: string
       description:
         type: string
       details:
@@ -236,6 +241,8 @@ definitions:
         type: string
       systemLabel:
         example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
         type: string
       uid:
         example: wef12awefadf1221edcf
@@ -428,7 +435,7 @@ definitions:
       rootDiskType:
         description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
           ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
-          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
           TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
         example: cloud_essd
         type: string
@@ -1720,6 +1727,69 @@ definitions:
         description: Unique identifier for the machine (e.g., UUID)
         type: string
     type: object
+  onpremisemodel.GpuCardProperty:
+    properties:
+      architecture:
+        description: GPU Microarchitecture (e.g., "Ampere", "Turing", "CDNA 4")
+        example: Ampere
+        type: string
+      cudaVersion:
+        description: CUDA or compute API version (e.g., "12.2", "ROCm 6.2")
+        example: "12.2"
+        type: string
+      driverIndex:
+        description: Driver device index (e.g., "0", "card0", "card10")
+        example: "0"
+        type: string
+      driverVersion:
+        description: Installed driver version for this device
+        example: 535.129.03
+        type: string
+      eccEnabled:
+        description: Whether Error-Correcting Code (ECC) memory protection is enabled
+        example: true
+        type: boolean
+      memoryFreeGB:
+        description: Available/Free memory in GB
+        example: 38
+        type: number
+      memoryReservedGB:
+        description: VRAM reserved for ECC parity and system overhead in GB
+        example: 2
+        type: number
+      memoryTotalGB:
+        description: Total physical VRAM capacity in GB (Total + Reserved)
+        example: 40
+        type: number
+      memoryUsedGB:
+        description: Used memory in GB
+        example: 2
+        type: number
+      model:
+        description: Specific model for this card/chip
+        example: NVIDIA A100-PCIE-40GB
+        type: string
+      pciBusId:
+        description: PCIe Bus identifier (e.g., "0000:01:00.0")
+        example: "0000:01:00.0"
+        type: string
+      slot:
+        description: Physical PCIe slot label if available (optional)
+        example: PCIe Slot 1
+        type: string
+      type:
+        description: 'Accelerator type: "GPU", "NPU", "TPU" (defaults to "GPU")'
+        example: GPU
+        type: string
+      uuid:
+        description: Unique device UUID from driver (e.g., NVML GPU UUID)
+        example: GPU-12345678-abcd-ef01-2345-...
+        type: string
+      vendor:
+        description: GPU Vendor (e.g., "NVIDIA", "AMD", "Intel")
+        example: NVIDIA
+        type: string
+    type: object
   onpremisemodel.K8sClusterProperty:
     properties:
       cniPlugin:
@@ -1899,6 +1969,11 @@ definitions:
       firewallTable:
         items:
           $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      gpuCards:
+        description: Physical GPU cards installed on the node
+        items:
+          $ref: '#/definitions/onpremisemodel.GpuCardProperty'
         type: array
       hostname:
         type: string

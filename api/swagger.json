@@ -1596,6 +1596,10 @@
                     "type": "string",
                     "example": "csp-06eb41e14121c550a"
                 },
+                "deletionRequestedAt": {
+                    "description": "DeletionRequestedAt (RFC3339) marks a deletion tombstone (customImage only):\nnon-empty means the row is kept until CSP-side removal is confirmed",
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1714,6 +1718,9 @@
                 "systemLabel": {
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "type": "string"
                 },
                 "uid": {
                     "type": "string",
@@ -1950,7 +1957,7 @@
                     "example": 40
                 },
                 "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
                     "type": "string",
                     "example": "cloud_essd"
                 },
@@ -3838,6 +3845,86 @@
                 }
             }
         },
+        "onpremisemodel.GpuCardProperty": {
+            "type": "object",
+            "properties": {
+                "architecture": {
+                    "description": "GPU Microarchitecture (e.g., \"Ampere\", \"Turing\", \"CDNA 4\")",
+                    "type": "string",
+                    "example": "Ampere"
+                },
+                "cudaVersion": {
+                    "description": "CUDA or compute API version (e.g., \"12.2\", \"ROCm 6.2\")",
+                    "type": "string",
+                    "example": "12.2"
+                },
+                "driverIndex": {
+                    "description": "Driver device index (e.g., \"0\", \"card0\", \"card10\")",
+                    "type": "string",
+                    "example": "0"
+                },
+                "driverVersion": {
+                    "description": "Installed driver version for this device",
+                    "type": "string",
+                    "example": "535.129.03"
+                },
+                "eccEnabled": {
+                    "description": "Whether Error-Correcting Code (ECC) memory protection is enabled",
+                    "type": "boolean",
+                    "example": true
+                },
+                "memoryFreeGB": {
+                    "description": "Available/Free memory in GB",
+                    "type": "number",
+                    "example": 38
+                },
+                "memoryReservedGB": {
+                    "description": "VRAM reserved for ECC parity and system overhead in GB",
+                    "type": "number",
+                    "example": 2
+                },
+                "memoryTotalGB": {
+                    "description": "Total physical VRAM capacity in GB (Total + Reserved)",
+                    "type": "number",
+                    "example": 40
+                },
+                "memoryUsedGB": {
+                    "description": "Used memory in GB",
+                    "type": "number",
+                    "example": 2
+                },
+                "model": {
+                    "description": "Specific model for this card/chip",
+                    "type": "string",
+                    "example": "NVIDIA A100-PCIE-40GB"
+                },
+                "pciBusId": {
+                    "description": "PCIe Bus identifier (e.g., \"0000:01:00.0\")",
+                    "type": "string",
+                    "example": "0000:01:00.0"
+                },
+                "slot": {
+                    "description": "Physical PCIe slot label if available (optional)",
+                    "type": "string",
+                    "example": "PCIe Slot 1"
+                },
+                "type": {
+                    "description": "Accelerator type: \"GPU\", \"NPU\", \"TPU\" (defaults to \"GPU\")",
+                    "type": "string",
+                    "example": "GPU"
+                },
+                "uuid": {
+                    "description": "Unique device UUID from driver (e.g., NVML GPU UUID)",
+                    "type": "string",
+                    "example": "GPU-12345678-abcd-ef01-2345-..."
+                },
+                "vendor": {
+                    "description": "GPU Vendor (e.g., \"NVIDIA\", \"AMD\", \"Intel\")",
+                    "type": "string",
+                    "example": "NVIDIA"
+                }
+            }
+        },
         "onpremisemodel.K8sClusterProperty": {
             "type": "object",
             "required": [
@@ -4094,6 +4181,13 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
+                    }
+                },
+                "gpuCards": {
+                    "description": "Physical GPU cards installed on the node",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.GpuCardProperty"
                     }
                 },
                 "hostname": {
