@@ -380,7 +380,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'isTargetModel' to select source or target model.",
+                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'isTargetModel' to select source or target model.\nThe 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
                 "consumes": [
                     "application/json"
                 ],
@@ -414,6 +414,18 @@ const docTemplate = `{
                         "name": "isTargetModel",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "On-premise model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=onprem (ignored for modelType=cloud only if it equals 'cloudModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "onpremModelVersion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cloud model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=cloud (ignored for modelType=onprem only if it equals 'onpremModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "cloudModelVersion",
+                        "in": "query"
                     },
                     {
                         "description": "Infra model information",
@@ -515,7 +527,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.",
+                "description": "Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.\nThe model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.",
                 "consumes": [
                     "application/json"
                 ],
@@ -635,7 +647,7 @@ const docTemplate = `{
         },
         "/model/version": {
             "get": {
-                "description": "Get the versions of all models(schemata of on-premise/cloud/software migration models)",
+                "description": "Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, and 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper.",
                 "consumes": [
                     "application/json"
                 ],
@@ -645,11 +657,11 @@ const docTemplate = `{
                 "tags": [
                     "[API] Migration Models"
                 ],
-                "summary": "Get the versions of all models(schemata of on-premise/cloud/software migration models)",
-                "operationId": "GetModelsVersion",
+                "summary": "Get all tagged versions of the migration models",
+                "operationId": "GetModelsVersions",
                 "responses": {
                     "200": {
-                        "description": "This is the versions of all models(schemata)",
+                        "description": "Tagged migration model versions",
                         "schema": {
                             "$ref": "#/definitions/handler.GetModelsVersionResp"
                         }
@@ -3224,13 +3236,22 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "cloudModelVersion": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "onpremModelVersion": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "softwareModelVersion": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

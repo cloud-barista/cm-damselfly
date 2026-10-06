@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"errors"
@@ -19,9 +20,9 @@ import (
 )
 
 type ModelsVersionRespInfo struct {
-	OnPremModelVer 		string `json:"onpremModelVersion"`
-	CloudModelVer  		string `json:"cloudModelVersion"`
-	SoftwareModelVer  	string `json:"softwareModelVersion"`
+	OnPremModelVer   []string `json:"onpremModelVersion"`
+	CloudModelVer    []string `json:"cloudModelVersion"`
+	SoftwareModelVer []string `json:"softwareModelVersion"`
 }
 
 type GetModelsVersionResp struct {
@@ -30,54 +31,25 @@ type GetModelsVersionResp struct {
 
 const (
 	OnPremModel string = "OnPremiseModel"
-	CloudModel 	string = "CloudModel"
-	SWModel 	string = "SoftwareModel"
+	CloudModel  string = "CloudModel"
+	SWModel     string = "SoftwareModel"
 )
 
-// GetModelsVersion godoc
-// @ID GetModelsVersion
-// @Summary Get the versions of all models(schemata of on-premise/cloud/software migration models)
-// @Description Get the versions of all models(schemata of on-premise/cloud/software migration models)
+// GetModelsVersions godoc
+// @ID GetModelsVersions
+// @Summary Get all tagged versions of the migration models
+// @Description Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, and 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper.
 // @Tags [API] Migration Models
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} GetModelsVersionResp "This is the versions of all models(schemata)"
+// @Success 200 {object} GetModelsVersionResp "Tagged migration model versions"
 // @Failure 404 {object} model.Response "Model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /model/version [get]
-func GetModelsVersion(c echo.Context) error {
-	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
+func GetModelsVersions(c echo.Context) error {
+	infraVersions, err := getInfraModelVersions()
 	if err != nil {
-		msg := "Failed to Get the Module Verion!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-beetle/imdl")
-			if err != nil {
-				msg := "Failed to Get the latest release."
-				log.Error().Msgf("%s : [%v]", msg, err)
-				newErr := fmt.Errorf("%s : [%v]", msg, err)
-				res := model.Response{
-        			Success: false,
-        			Text:    newErr.Error(),
-    			}
-    			return c.JSON(http.StatusInternalServerError, res)
-			}    
-			log.Info().Msgf("Latest version: %s\n", release.TagName)
-			// log.Info().Msgf("Release name: %s\n", release.Name)
-			resultVer = release.TagName
-		} else {
-			resultVer = modelVer
-		}
-		log.Info().Msgf("Cloud Model version: %s", resultVer)
-	}
-
-	cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
-	if err != nil {
-		newErr := fmt.Errorf("Failed to Get the 'cm-beetle/imdl' module version : [%v]", err)
+		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -86,9 +58,9 @@ func GetModelsVersion(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	swModelVer, err := getModuleVersion("github.com/cloud-barista/cm-grasshopper/smdl")
+	softwareVersions, err := getSoftwareModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("Failed to Get the 'cm-grasshopper/smdl' module version : [%v]", err)
+		newErr := fmt.Errorf("failed to get the tagged cm-grasshopper/smdl model versions: %w", err)
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -98,9 +70,9 @@ func GetModelsVersion(c echo.Context) error {
 	}
 
 	modelsVersionInfo := ModelsVersionRespInfo{
-		OnPremModelVer: 	resultVer,
-		CloudModelVer:  	cloudModelVer,
-		SoftwareModelVer:	swModelVer,
+		OnPremModelVer:   infraVersions,
+		CloudModelVer:    infraVersions,
+		SoftwareModelVer: softwareVersions,
 	}
 	res := GetModelsVersionResp{
 		ModelsVersion: modelsVersionInfo,
@@ -373,15 +345,41 @@ type CreateInfraModelReq struct {
 	CloudInfraModel  cloudmodel.RecommendedInfra `json:"cloudInfraModel,omitempty"`
 }
 
+// [Note]
+// infraModelRawReq is the actual request body of CreateInfraModel/UpdateInfraModel. The infra model is kept as
+// raw JSON (shadowing the typed fields of CreateInfraModelReq) so that it can be validated against the struct of
+// the selected cm-beetle/imdl tagged version instead of the version compiled into cm-damselfly.
+type infraModelRawReq struct {
+	CreateInfraModelReq
+	OnpremInfraModel json.RawMessage `json:"onpremiseInfraModel,omitempty"`
+	CloudInfraModel  json.RawMessage `json:"cloudInfraModel,omitempty"`
+}
+
+// onPremModelRecord and cloudModelRecord are the stored forms of infra models whose
+// 'onpremiseInfraModel' / 'cloudInfraModel' follow the struct of their own imdl version.
+type onPremModelRecord struct {
+	OnPremModelRespInfo
+	OnpremInfraModel json.RawMessage `json:"onpremiseInfraModel"`
+}
+
+type cloudModelRecord struct {
+	CloudModelRespInfo
+	CloudInfraModel json.RawMessage `json:"cloudInfraModel"`
+}
+
 // CreateInfraModel godoc
 // @ID CreateInfraModel
 // @Summary Create a new infra migration user model (on-premise or cloud)
 // @Description Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'isTargetModel' to select source or target model.
+// @Description The 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.
+// @Description (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param modelType  query string true  "Type of infra model to create" Enums(onprem, cloud)
 // @Param isTargetModel query string true "Whether to create a target model (true) or a source model (false)" Enums(true, false)
+// @Param onpremModelVersion query string false "On-premise model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=onprem (ignored for modelType=cloud only if it equals 'cloudModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions."
+// @Param cloudModelVersion query string false "Cloud model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=cloud (ignored for modelType=onprem only if it equals 'onpremModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions."
 // @Param Model body CreateInfraModelReq true "Infra model information"
 // @Success 201 {object} object "Successfully created the infra migration user model"
 // @Failure 400 {object} model.Response "Invalid request parameter"
@@ -422,7 +420,7 @@ func CreateInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	reqBody := new(CreateInfraModelReq)
+	reqBody := new(infraModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
 		newErr := fmt.Errorf("invalid request : [%v]", err)
 		log.Warn().Msg(newErr.Error())
@@ -436,6 +434,24 @@ func CreateInfraModel(c echo.Context) error {
 	isCloudModel := strings.EqualFold(modelTypeParam, "cloud")
 	log.Info().Msgf("# CreateInfraModel: modelType=[%s], isTargetModel=[%v]", modelTypeParam, isTargetModel)
 
+	onpremModelVerParam := strings.TrimSpace(c.QueryParam("onpremModelVersion"))
+	cloudModelVerParam := strings.TrimSpace(c.QueryParam("cloudModelVersion"))
+	requestedVer := onpremModelVerParam
+	// The parameter of the other model type is accepted only if it is the same version
+	// (both are pre-filled with the same version in the per-version API definition of Swagger UI).
+	if isCloudModel {
+		requestedVer = cloudModelVerParam
+		if onpremModelVerParam != "" && onpremModelVerParam != cloudModelVerParam {
+			newErr := fmt.Errorf("invalid request: 'onpremModelVersion' cannot be used with modelType 'cloud'. Use 'cloudModelVersion' instead")
+			log.Warn().Msg(newErr.Error())
+			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+		}
+	} else if cloudModelVerParam != "" && cloudModelVerParam != onpremModelVerParam {
+		newErr := fmt.Errorf("invalid request: 'cloudModelVersion' cannot be used with modelType 'onprem'. Use 'onpremModelVersion' instead")
+		log.Warn().Msg(newErr.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+	}
+
 	id := uuid.New().String()
 
 	createTime, err := getSeoulCurrentTime()
@@ -444,34 +460,33 @@ func CreateInfraModel(c echo.Context) error {
 		log.Debug().Msg(msg)
 	}
 
-	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
+	infraVersions, err := getInfraModelVersions()
 	if err != nil {
-		msg := "Failed to Get the 'cm-beetle/imdl' module verion!!"
-		log.Debug().Msg(msg)
-	} else {
-		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-beetle/imdl")
-			if err != nil {
-				msg := "Failed to Get the latest release."
-				log.Error().Msgf("%s : [%v]", msg, err)
-				newErr := fmt.Errorf("%s : [%v]", msg, err)
-				res := model.Response{
-					Success: false,
-					Text:    newErr.Error(),
-				}
-				return c.JSON(http.StatusInternalServerError, res)
-			}
-			log.Info().Msgf("Latest version: %s\n", release.TagName)
-			resultVer = release.TagName
-		} else {
-			resultVer = modelVer
-		}
+		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+	}
+
+	resultVer, err := selectModelVersion(requestedVer, infraVersions)
+	if err != nil {
+		newErr := fmt.Errorf("invalid infra model version: %w", err)
+		log.Warn().Msg(newErr.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+	}
+
+	rawInfraModel := reqBody.OnpremInfraModel
+	if isCloudModel {
+		rawInfraModel = reqBody.CloudInfraModel
+	}
+	infraModel, status, err := normalizeInfraModel(c.Request().Context(), resultVer, isCloudModel, rawInfraModel)
+	if err != nil {
+		log.Warn().Msg(err.Error())
+		return c.JSON(status, model.Response{Success: false, Text: err.Error()})
 	}
 
 	if isCloudModel {
 		// --- Create a Cloud migration user model ---
-		userModel := CloudModelRespInfo{
+		userModel := cloudModelRecord{CloudModelRespInfo: CloudModelRespInfo{
 			Id:              id,
 			UserId:          reqBody.UserId,
 			IsTargetModel:   isTargetModel,
@@ -486,8 +501,7 @@ func CreateInfraModel(c echo.Context) error {
 			IsCloudModel:    true,
 			CloudModelVer:   resultVer,
 			ModelType:       CloudModel,
-			CloudInfraModel: reqBody.CloudInfraModel,
-		}
+		}, CloudInfraModel: infraModel}
 		log.Info().Msgf("Cloud Model version: %s", resultVer)
 
 		lkvstore.Put(userModel.Id, userModel)
@@ -504,7 +518,7 @@ func CreateInfraModel(c echo.Context) error {
 	}
 
 	// --- Create an On-premise migration user model ---
-	userModel := OnPremModelRespInfo{
+	userModel := onPremModelRecord{OnPremModelRespInfo: OnPremModelRespInfo{
 		Id:               id,
 		UserId:           reqBody.UserId,
 		IsInitUserModel:  reqBody.IsInitUserModel,
@@ -516,8 +530,7 @@ func CreateInfraModel(c echo.Context) error {
 		IsTargetModel:    isTargetModel,
 		IsCloudModel:     false,
 		ModelType:        OnPremModel,
-		OnpremInfraModel: reqBody.OnpremInfraModel,
-	}
+	}, OnpremInfraModel: infraModel}
 	log.Info().Msgf("On-premise Model version: %s", resultVer)
 
 	lkvstore.Put(userModel.Id, userModel)
@@ -636,6 +649,7 @@ func GetInfraModel(c echo.Context) error {
 // @ID UpdateInfraModel
 // @Summary Update a specific infra migration user model (on-premise or cloud)
 // @Description Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
+// @Description The model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
@@ -673,7 +687,7 @@ func UpdateInfraModel(c echo.Context) error {
 	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
 	log.Info().Msgf("# UpdateInfraModel: id=[%s], modelType=[%s]", reqId, modelTypeParam)
 
-	reqBody := new(CreateInfraModelReq)
+	reqBody := new(infraModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
 		newErr := fmt.Errorf("invalid request : [%v]", err)
 		log.Warn().Msg(newErr.Error())
@@ -749,10 +763,37 @@ func UpdateInfraModel(c echo.Context) error {
 		log.Debug().Msg("Failed to Get the Current time!!")
 	}
 
+	preservedVer, _ := existing["onpremModelVersion"].(string)
+	rawInfraModel := reqBody.OnpremInfraModel
 	if isCloudModelFilter {
-		cloudModelVer, _ := existing["cloudModelVersion"].(string)
+		preservedVer, _ = existing["cloudModelVersion"].(string)
+		rawInfraModel = reqBody.CloudInfraModel
+	}
 
-		updatedModel := CloudModelRespInfo{
+	infraVersions, err := getInfraModelVersions()
+	if err != nil {
+		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+	}
+
+	var infraModel json.RawMessage
+	var status int
+	if _, verErr := selectModelVersion(preservedVer, infraVersions); preservedVer != "" && verErr == nil {
+		infraModel, status, err = normalizeInfraModel(c.Request().Context(), preservedVer, isCloudModelFilter, rawInfraModel)
+	} else {
+		log.Warn().Msgf("The stored model version [%s] is not a cm-beetle/imdl tag. Using the built-in model struct.", preservedVer)
+		infraModel, status, err = normalizeInfraModelWithCompiledStruct(isCloudModelFilter, rawInfraModel)
+	}
+	if err != nil {
+		log.Warn().Msg(err.Error())
+		return c.JSON(status, model.Response{Success: false, Text: err.Error()})
+	}
+
+	if isCloudModelFilter {
+		cloudModelVer := preservedVer
+
+		updatedModel := cloudModelRecord{CloudModelRespInfo: CloudModelRespInfo{
 			Id:              reqId,
 			UserId:          reqBody.UserId,
 			IsTargetModel:   isTargetModelBool,
@@ -768,8 +809,7 @@ func UpdateInfraModel(c echo.Context) error {
 			IsCloudModel:    true,
 			CloudModelVer:   cloudModelVer,
 			ModelType:       CloudModel,
-			CloudInfraModel: reqBody.CloudInfraModel,
-		}
+		}, CloudInfraModel: infraModel}
 		log.Info().Msgf("Cloud Model version (preserved): %s", cloudModelVer)
 
 		lkvstore.Put(reqId, updatedModel)
@@ -789,9 +829,9 @@ func UpdateInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusOK, saved)
 	}
 
-	onpremModelVer, _ := existing["onpremModelVersion"].(string)
+	onpremModelVer := preservedVer
 
-	updatedModel := OnPremModelRespInfo{
+	updatedModel := onPremModelRecord{OnPremModelRespInfo: OnPremModelRespInfo{
 		Id:               reqId,
 		UserId:           reqBody.UserId,
 		IsInitUserModel:  reqBody.IsInitUserModel,
@@ -804,8 +844,7 @@ func UpdateInfraModel(c echo.Context) error {
 		IsTargetModel:    isTargetModelBool,
 		IsCloudModel:     false,
 		ModelType:        OnPremModel,
-		OnpremInfraModel: reqBody.OnpremInfraModel,
-	}
+	}, OnpremInfraModel: infraModel}
 	log.Info().Msgf("On-premise Model version (preserved): %s", onpremModelVer)
 
 	lkvstore.Put(reqId, updatedModel)
@@ -1099,33 +1138,11 @@ func CreateOnPremModel(c echo.Context) error {
 	userModel.IsCloudModel 	= false
 	userModel.ModelType 	= OnPremModel
 
-	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
+	resultVer, err := getLatestInfraModelVersion()
 	if err != nil {
-		msg := "Failed to Get the 'cm-beetle/imdl' module verion!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-beetle/imdl")
-			if err != nil {
-				msg := "Failed to Get the latest release."
-				log.Error().Msgf("%s : [%v]", msg, err)
-				newErr := fmt.Errorf("%s : [%v]", msg, err)
-				res := model.Response{
-        			Success: false,
-        			Text:    newErr.Error(),
-    			}
-    			return c.JSON(http.StatusInternalServerError, res)
-			}    
-			log.Info().Msgf("Latest version: %s\n", release.TagName)
-			// log.Info().Msgf("Release name: %s\n", release.Name)
-			resultVer = release.TagName
-		} else {
-			resultVer = modelVer
-		}
-		log.Info().Msgf("On-premise Model version: %s", resultVer)
+		newErr := fmt.Errorf("failed to get the latest tagged cm-beetle/imdl model version: %w", err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
 	}
 	userModel.OnPremModelVer = resultVer
 
@@ -1599,33 +1616,11 @@ func CreateCloudModel(c echo.Context) error {
 	userModel.IsCloudModel 	= true
 	userModel.ModelType 	= CloudModel
 
-	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-beetle/imdl")
+	resultVer, err := getLatestInfraModelVersion()
 	if err != nil {
-		msg := "Failed to Get the 'cm-beetle/imdl' module verion!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-beetle/imdl")
-			if err != nil {
-				msg := "Failed to Get the Latest Release!!"
-				log.Error().Msgf("%s : [%v]", msg, err)
-				newErr := fmt.Errorf("%s : [%v]", msg, err)
-				res := model.Response{
-        			Success: false,
-        			Text:    newErr.Error(),
-    			}
-    			return c.JSON(http.StatusInternalServerError, res)
-			}    
-			log.Info().Msgf("Latest version: %s\n", release.TagName)
-			// log.Info().Msgf("Release name: %s\n", release.Name)
-			resultVer = release.TagName
-		} else {
-			resultVer = modelVer
-		}
-		log.Info().Msgf("Cloud Model version: %s", resultVer)
+		newErr := fmt.Errorf("failed to get the latest tagged cm-beetle/imdl model version: %w", err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
 	}
 	userModel.CloudModelVer = resultVer
 

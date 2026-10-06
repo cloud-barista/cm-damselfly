@@ -38,7 +38,6 @@ import (
 
 	// echo-swagger middleware
 	_ "github.com/cloud-barista/cm-damselfly/api"
-	echoSwagger "github.com/swaggo/echo-swagger"
 
 	// Black import (_) is for running a package's init() function without using its other contents.
 	"github.com/rs/zerolog/log"
@@ -156,7 +155,8 @@ func RunServer(port string) {
 	}
 	e.GET("/damselfly/api", swaggerRedirect)
 	e.GET("/damselfly/api/", swaggerRedirect)
-	e.GET("/damselfly/api/*", echoSwagger.WrapHandler)
+	e.GET("/damselfly/api/imdl/:version/doc.json", handler.GetImdlVersionSwaggerDoc)
+	e.GET("/damselfly/api/*", handler.SwaggerUIHandler)
 
 	e.GET("/damselfly/readyz", handler.RestGetReadyz)
 	e.GET("/damselfly/httpVersion", handler.RestCheckHTTPVersion)
@@ -169,7 +169,7 @@ func RunServer(port string) {
 	// gModel := groupBase.Group("/model")
 
 	gModel.GET("/model/:isTargetModel", handler.GetModels)
-	gModel.GET("/model/version", handler.GetModelsVersion)
+	gModel.GET("/model/version", handler.GetModelsVersions)
 
 	gModel.GET("/infra-model", handler.GetInfraModels)
 	gModel.POST("/infra-model", handler.CreateInfraModel)

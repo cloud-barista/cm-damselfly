@@ -1302,11 +1302,17 @@ definitions:
   handler.ModelsVersionRespInfo:
     properties:
       cloudModelVersion:
-        type: string
+        items:
+          type: string
+        type: array
       onpremModelVersion:
-        type: string
+        items:
+          type: string
+        type: array
       softwareModelVersion:
-        type: string
+        items:
+          type: string
+        type: array
     type: object
   handler.OnPremModelRespInfo:
     properties:
@@ -2925,8 +2931,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new infra migration user model. Use 'modelType' to select
-        on-premise or cloud, and 'isTargetModel' to select source or target model.
+      description: |-
+        Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'isTargetModel' to select source or target model.
+        The 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.
+        (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
       operationId: CreateInfraModel
       parameters:
       - description: Type of infra model to create
@@ -2944,6 +2952,20 @@ paths:
         in: query
         name: isTargetModel
         required: true
+        type: string
+      - description: On-premise model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g.
+          v0.1.15). Only for modelType=onprem (ignored for modelType=cloud only if
+          it equals 'cloudModelVersion'). If empty, the latest tag is used. See 'GET
+          /model/version' for available versions.
+        in: query
+        name: onpremModelVersion
+        type: string
+      - description: Cloud model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15).
+          Only for modelType=cloud (ignored for modelType=onprem only if it equals
+          'onpremModelVersion'). If empty, the latest tag is used. See 'GET /model/version'
+          for available versions.
+        in: query
+        name: cloudModelVersion
         type: string
       - description: Infra model information
         in: body
@@ -3054,8 +3076,9 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update a specific infra migration user model by ID. Use 'modelType'
-        to specify whether it is an on-premise or cloud model.
+      description: |-
+        Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
+        The model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.
       operationId: UpdateInfraModel
       parameters:
       - description: Model ID
@@ -3133,14 +3156,15 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get the versions of all models(schemata of on-premise/cloud/software
-        migration models)
-      operationId: GetModelsVersion
+      description: Get all tagged versions (in ascending order) of the migration models.
+        'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of
+        cm-beetle, and 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper.
+      operationId: GetModelsVersions
       produces:
       - application/json
       responses:
         "200":
-          description: This is the versions of all models(schemata)
+          description: Tagged migration model versions
           schema:
             $ref: '#/definitions/handler.GetModelsVersionResp'
         "404":
@@ -3151,8 +3175,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Get the versions of all models(schemata of on-premise/cloud/software
-        migration models)
+      summary: Get all tagged versions of the migration models
       tags:
       - '[API] Migration Models'
   /onpremmodel:
