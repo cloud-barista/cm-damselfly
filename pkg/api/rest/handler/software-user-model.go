@@ -16,11 +16,6 @@ import (
 	softwaremodel 	"github.com/cloud-barista/cm-grasshopper/smdl"
 )
 
-type Release struct {
-    TagName string `json:"tag_name"`
-    Name    string `json:"name"`
-}
-
 // ##############################################################################################
 // ### Source Software Migration User Model
 // ##############################################################################################
@@ -209,27 +204,11 @@ func CreateSourceSoftwareModel(c echo.Context) error {
 	model.IsTargetModel 	= false
 	model.ModelType 		= SWModel
 
-	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-grasshopper/smdl")
+	resultVer, err := getLatestSoftwareModelVersion()
 	if err != nil {
-		msg := "Failed to Get the 'cm-grasshopper/smdl' module verion!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-grasshopper/smdl")
-			if err != nil {
-				fmt.Printf("Error: %v\n", err)
-				return err
-			}    
-			log.Info().Msgf("Latest version: %s\n", release.TagName)
-			// log.Info().Msgf("Release name: %s\n", release.Name)
-			resultVer = release.TagName
-		} else {
-			resultVer = modelVer
-		}
-		log.Info().Msgf("Software Model version: %s", resultVer)
+		newErr := fmt.Errorf("failed to get the latest tagged cm-grasshopper/smdl model version: %w", err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"success": false, "text": newErr.Error()})
 	}
 	model.SoftwareModelVer = resultVer
 
@@ -637,27 +616,11 @@ func CreateTargetSoftwareModel(c echo.Context) error {
 	model.IsTargetModel 	= true
 	model.ModelType 		= SWModel
 
-	var resultVer string
-	modelVer, err := getModuleVersion("github.com/cloud-barista/cm-grasshopper/smdl")
+	resultVer, err := getLatestSoftwareModelVersion()
 	if err != nil {
-		msg := "Failed to Get the 'cm-grasshopper/smdl' module verion!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		if len(modelVer) > 10 {
-			release, err := getLatestRelease("cloud-barista", "cm-grasshopper/smdl")
-			if err != nil {
-				fmt.Printf("Error: %v\n", err)
-				return err
-			}    
-			log.Info().Msgf("Latest version: %s\n", release.TagName)
-			// log.Info().Msgf("Release name: %s\n", release.Name)
-			resultVer = release.TagName
-		} else {
-			resultVer = modelVer
-		}
-		log.Info().Msgf("Software Model version: %s", resultVer)
+		newErr := fmt.Errorf("failed to get the latest tagged cm-grasshopper/smdl model version: %w", err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"success": false, "text": newErr.Error()})
 	}
 	model.SoftwareModelVer = resultVer
 
