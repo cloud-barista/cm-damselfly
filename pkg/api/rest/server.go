@@ -156,6 +156,7 @@ func RunServer(port string) {
 	e.GET("/damselfly/api", swaggerRedirect)
 	e.GET("/damselfly/api/", swaggerRedirect)
 	e.GET("/damselfly/api/imdl/:version/doc.json", handler.GetImdlVersionSwaggerDoc)
+	e.GET("/damselfly/api/smdl/:version/doc.json", handler.GetSmdlVersionSwaggerDoc)
 	e.GET("/damselfly/api/*", handler.SwaggerUIHandler)
 
 	e.GET("/damselfly/readyz", handler.RestGetReadyz)
@@ -176,6 +177,12 @@ func RunServer(port string) {
 	gModel.GET("/infra-model/:id", handler.GetInfraModel)
 	gModel.PUT("/infra-model/:id", handler.UpdateInfraModel)
 	gModel.DELETE("/infra-model/:id", handler.DeleteInfraModel)
+
+	gModel.GET("/software-model", handler.GetSoftwareModels)
+	gModel.POST("/software-model", handler.CreateSoftwareModel)
+	gModel.GET("/software-model/:id", handler.GetSoftwareModel)
+	gModel.PUT("/software-model/:id", handler.UpdateSoftwareModel)
+	gModel.DELETE("/software-model/:id", handler.DeleteSoftwareModel)
 
 	gModel.POST("/onpremmodel", handler.CreateOnPremModel)
 	gModel.GET("/onpremmodel", handler.GetOnPremModels)

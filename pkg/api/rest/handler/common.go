@@ -22,6 +22,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremisemodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/cloud-barista/cm-damselfly/pkg/modelschema"
+	softwaremodel "github.com/cloud-barista/cm-grasshopper/smdl"
 	"github.com/rs/zerolog/log"
 )
 
@@ -411,6 +412,83 @@ func normalizeInfraModelWithCompiledStruct(isCloudModel bool, raw json.RawMessag
 		if err := json.Unmarshal(trimmed, target); err != nil {
 			return nil, http.StatusBadRequest, fmt.Errorf("invalid infra model : [%v]", err)
 		}
+	}
+	normalized, err := json.Marshal(target)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return normalized, 0, nil
+}
+
+// softwareModelSchemaSource is where the Go source of each tagged cm-grasshopper/smdl version is downloaded from
+// in order to validate software models against the struct of the selected version.
+var softwareModelSchemaSource = modelschema.Source{
+	ModulePath: softwareModelTagSource.ModulePath,
+	Owner:      softwareModelTagSource.Owner,
+	Repo:       softwareModelTagSource.Repo,
+	RepoSubdir: strings.TrimSuffix(softwareModelTagSource.TagPrefix, "/"),
+	TagPrefix:  softwareModelTagSource.TagPrefix,
+}
+
+type softwareModelSchemaInfo struct {
+	RootType  string
+	FieldName string
+}
+
+// The software model structs are declared in the root package of the cm-grasshopper/smdl module.
+var (
+	sourceSoftwareModelSchema = softwareModelSchemaInfo{RootType: "SourceGroupSoftwareProperty", FieldName: "sourceSoftwareModel"}
+	targetSoftwareModelSchema = softwareModelSchemaInfo{RootType: "TargetGroupSoftwareProperty", FieldName: "targetSoftwareModel"}
+)
+
+// normalizeSoftwareModel validates the raw software model against the Go struct (SourceGroupSoftwareProperty or
+// TargetGroupSoftwareProperty) of the given cm-grasshopper/smdl tagged version and returns it as that struct would be serialized.
+// On failure, it also returns the HTTP status code to respond with.
+func normalizeSoftwareModel(ctx context.Context, version string, isTargetModel bool, raw json.RawMessage) (json.RawMessage, int, error) {
+	schema := sourceSoftwareModelSchema
+	if isTargetModel {
+		schema = targetSoftwareModelSchema
+	}
+
+	if trimmed := bytes.TrimSpace(raw); len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'isTargetModel' is %v", schema.FieldName, isTargetModel)
+	}
+
+	pkg, err := modelschema.LoadPackage(ctx, softwareModelSchemaSource, version, "")
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-grasshopper/smdl %s model : [%v]", version, err)
+	}
+	if !pkg.HasType(schema.RootType) {
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-grasshopper/smdl %s. Use another version", schema.RootType, version)
+	}
+
+	normalized, err := pkg.Normalize(raw, schema.RootType, schema.FieldName)
+	if err != nil {
+		var validationErr *modelschema.ValidationError
+		if errors.As(err, &validationErr) {
+			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match the '%s' struct of cm-grasshopper/smdl %s : [%v]", schema.FieldName, schema.RootType, version, err)
+		}
+		return nil, http.StatusInternalServerError, err
+	}
+	log.Info().Msgf("Validated '%s' against the '%s' struct of cm-grasshopper/smdl %s", schema.FieldName, schema.RootType, version)
+	return normalized, 0, nil
+}
+
+// normalizeSoftwareModelWithCompiledStruct decodes the raw software model with the cm-grasshopper/smdl version compiled into
+// cm-damselfly. It is used only for existing models whose version is not a cm-grasshopper/smdl tag.
+func normalizeSoftwareModelWithCompiledStruct(isTargetModel bool, raw json.RawMessage) (json.RawMessage, int, error) {
+	schema := sourceSoftwareModelSchema
+	var target interface{} = new(softwaremodel.SourceGroupSoftwareProperty)
+	if isTargetModel {
+		schema = targetSoftwareModelSchema
+		target = new(softwaremodel.TargetGroupSoftwareProperty)
+	}
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'isTargetModel' is %v", schema.FieldName, isTargetModel)
+	}
+	if err := json.Unmarshal(trimmed, target); err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid software model : [%v]", err)
 	}
 	normalized, err := json.Marshal(target)
 	if err != nil {
