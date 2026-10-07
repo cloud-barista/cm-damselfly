@@ -39,7 +39,7 @@ var (
 	packageCache   = map[string]*Package{}
 )
 
-// LoadPackage returns the parsed Go package 'pkgDir' (relative to the module root) of the given tagged version.
+// LoadPackage returns the parsed Go package 'pkgDir' (relative to the module root; empty for the root package) of the given tagged version.
 // Tagged versions are immutable, so successfully parsed packages are cached for the lifetime of the process.
 func LoadPackage(ctx context.Context, src Source, version, pkgDir string) (*Package, error) {
 	cacheKey := src.ModulePath + "@" + version + "/" + pkgDir
@@ -118,7 +118,10 @@ func fetchFromModuleProxy(ctx context.Context, src Source, version, pkgDir strin
 			continue
 		}
 
-		dirPrefix := src.ModulePath + "@" + version + "/" + strings.Trim(pkgDir, "/") + "/"
+		dirPrefix := src.ModulePath + "@" + version + "/"
+		if dir := strings.Trim(pkgDir, "/"); dir != "" {
+			dirPrefix += dir + "/"
+		}
 		files := map[string][]byte{}
 		for _, f := range zr.File {
 			if !strings.HasPrefix(f.Name, dirPrefix) || !isPackageSourceFile(strings.TrimPrefix(f.Name, dirPrefix)) {
