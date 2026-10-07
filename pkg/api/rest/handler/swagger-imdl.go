@@ -36,7 +36,7 @@ var (
 )
 
 // SwaggerUIHandler serves Swagger UI, listing the default API definition and one API definition per
-// cm-beetle/imdl tagged version (latest first) in the 'Select a definition' drop-down.
+// cm-beetle/imdl and cm-grasshopper/smdl tagged version (latest first) in the 'Select a definition' drop-down.
 func SwaggerUIHandler(c echo.Context) error {
 	urls := []string{defaultSwaggerDocURL, defaultSwaggerDocYAMLURL}
 	if strings.HasSuffix(c.Request().URL.Path, "/index.html") {
@@ -50,6 +50,14 @@ func SwaggerUIHandler(c echo.Context) error {
 		}
 		for i := len(versions) - 1; i >= 0; i-- {
 			urls = append(urls, fmt.Sprintf(imdlSwaggerDocURLTemplate, versions[i]))
+		}
+
+		swVersions, err := getSoftwareModelVersions()
+		if err != nil {
+			log.Warn().Msgf("Failed to get the cm-grasshopper/smdl versions for Swagger UI : [%v]", err)
+		}
+		for i := len(swVersions) - 1; i >= 0; i-- {
+			urls = append(urls, fmt.Sprintf(smdlSwaggerDocURLTemplate, swVersions[i]))
 		}
 	}
 	return echoSwagger.EchoWrapHandler(func(config *echoSwagger.Config) {

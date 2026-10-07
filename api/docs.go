@@ -995,6 +995,312 @@ const docTemplate = `{
                 }
             }
         },
+        "/software-model": {
+            "get": {
+                "description": "Get a list of software migration user models. Use 'isTargetModel' to select source or target models.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a list of software migration user models (source or target)",
+                "operationId": "GetSoftwareModels",
+                "parameters": [
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "description": "Whether to retrieve target models (true) or source models (false)",
+                        "name": "isTargetModel",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained software migration user models",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new software migration user model. Use 'isTargetModel' to select source or target model.\nProvide 'sourceSoftwareModel' for a source model (isTargetModel=false), or 'targetSoftwareModel' for a target model (isTargetModel=true).\nThe 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n(The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Create a new software migration user model (source or target)",
+                "operationId": "CreateSoftwareModel",
+                "parameters": [
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "description": "Whether to create a target model (true) or a source model (false)",
+                        "name": "isTargetModel",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Software model version (a cm-grasshopper 'smdl/vX.Y.Z' tag, e.g. v0.1.3). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "softwareModelVersion",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Software model information",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateSoftwareModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created the software migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/software-model/{id}": {
+            "get": {
+                "description": "Get a specific software migration user model by ID. Use 'isTargetModel' to specify whether it is a source or target model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a specific software migration user model (source or target)",
+                "operationId": "GetSoftwareModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "description": "Whether the model is a target model (true) or a source model (false)",
+                        "name": "isTargetModel",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained the software migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a specific software migration user model by ID. Use 'isTargetModel' to specify whether it is a source or target model.\nProvide 'sourceSoftwareModel' for a source model (isTargetModel=false), or 'targetSoftwareModel' for a target model (isTargetModel=true).\n'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Update a specific software migration user model (source or target)",
+                "operationId": "UpdateSoftwareModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "description": "Whether the model is a target model (true) or a source model (false)",
+                        "name": "isTargetModel",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Software model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateSoftwareModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated the software migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific software migration user model by ID. Use 'isTargetModel' to specify whether it is a source or target model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Delete a specific software migration user model (source or target)",
+                "operationId": "DeleteSoftwareModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "description": "Whether the model is a target model (true) or a source model (false)",
+                        "name": "isTargetModel",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted the software migration user model",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/softwaremodel/source": {
             "get": {
                 "description": "Get a list of source software user models.",
@@ -2749,6 +3055,35 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CreateSoftwareModelReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "sourceSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
+                },
+                "targetSoftwareModel": {
+                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.CreateSourceSoftwareModelReq": {
             "type": "object",
             "required": [
@@ -2800,6 +3135,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "modelType": {
+                    "type": "string"
+                },
+                "nodeId": {
                     "type": "string"
                 },
                 "softwareModelVersion": {
@@ -2873,6 +3211,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "modelType": {
+                    "type": "string"
+                },
+                "nodeId": {
                     "type": "string"
                 },
                 "softwareModelVersion": {
@@ -3066,6 +3407,9 @@ const docTemplate = `{
                 "modelType": {
                     "type": "string"
                 },
+                "nodeId": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -3122,6 +3466,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "modelType": {
+                    "type": "string"
+                },
+                "nodeId": {
                     "type": "string"
                 },
                 "softwareModelVersion": {
@@ -3345,6 +3692,9 @@ const docTemplate = `{
                 "modelType": {
                     "type": "string"
                 },
+                "nodeId": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -3390,6 +3740,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "modelType": {
+                    "type": "string"
+                },
+                "nodeId": {
                     "type": "string"
                 },
                 "softwareModelVersion": {
@@ -3632,6 +3985,9 @@ const docTemplate = `{
                 "modelType": {
                     "type": "string"
                 },
+                "nodeId": {
+                    "type": "string"
+                },
                 "softwareModelVersion": {
                     "type": "string"
                 },
@@ -3703,6 +4059,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "modelType": {
+                    "type": "string"
+                },
+                "nodeId": {
                     "type": "string"
                 },
                 "softwareModelVersion": {
