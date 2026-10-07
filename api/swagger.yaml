@@ -981,6 +981,25 @@ definitions:
     required:
     - onpremiseInfraModel
     type: object
+  handler.CreateSoftwareModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      nodeId:
+        type: string
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    type: object
   handler.CreateSourceSoftwareModelReq:
     properties:
       description:
@@ -1013,6 +1032,8 @@ definitions:
       isTargetModel:
         type: boolean
       modelType:
+        type: string
+      nodeId:
         type: string
       softwareModelVersion:
         type: string
@@ -1061,6 +1082,8 @@ definitions:
       isTargetModel:
         type: boolean
       modelType:
+        type: string
+      nodeId:
         type: string
       softwareModelVersion:
         type: string
@@ -1187,6 +1210,8 @@ definitions:
         type: boolean
       modelType:
         type: string
+      nodeId:
+        type: string
       softwareModelVersion:
         type: string
       sourceSoftwareModel:
@@ -1224,6 +1249,8 @@ definitions:
       isTargetModel:
         type: boolean
       modelType:
+        type: string
+      nodeId:
         type: string
       softwareModelVersion:
         type: string
@@ -1371,6 +1398,8 @@ definitions:
         type: boolean
       modelType:
         type: string
+      nodeId:
+        type: string
       softwareModelVersion:
         type: string
       sourceSoftwareModel:
@@ -1401,6 +1430,8 @@ definitions:
       isTargetModel:
         type: boolean
       modelType:
+        type: string
+      nodeId:
         type: string
       softwareModelVersion:
         type: string
@@ -1560,6 +1591,8 @@ definitions:
         type: boolean
       modelType:
         type: string
+      nodeId:
+        type: string
       softwareModelVersion:
         type: string
       sourceSoftwareModel:
@@ -1607,6 +1640,8 @@ definitions:
       isTargetModel:
         type: boolean
       modelType:
+        type: string
+      nodeId:
         type: string
       softwareModelVersion:
         type: string
@@ -3358,6 +3393,230 @@ paths:
       summary: Check Damselfly is ready
       tags:
       - '[Admin] System management'
+  /software-model:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of software migration user models. Use 'isTargetModel'
+        to select source or target models.
+      operationId: GetSoftwareModels
+      parameters:
+      - description: Whether to retrieve target models (true) or source models (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained software migration user models
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of software migration user models (source or target)
+      tags:
+      - '[API] Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Create a new software migration user model. Use 'isTargetModel' to select source or target model.
+        Provide 'sourceSoftwareModel' for a source model (isTargetModel=false), or 'targetSoftwareModel' for a target model (isTargetModel=true).
+        The 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.
+        'nodeId' is an optional identifier of the node the model is associated with.
+        (The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
+      operationId: CreateSoftwareModel
+      parameters:
+      - description: Whether to create a target model (true) or a source model (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      - description: Software model version (a cm-grasshopper 'smdl/vX.Y.Z' tag, e.g.
+          v0.1.3). If empty, the latest tag is used. See 'GET /model/version' for
+          available versions.
+        in: query
+        name: softwareModelVersion
+        type: string
+      - description: Software model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSoftwareModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created the software migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Create a new software migration user model (source or target)
+      tags:
+      - '[API] Migration User Models'
+  /software-model/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific software migration user model by ID. Use 'isTargetModel'
+        to specify whether it is a source or target model.
+      operationId: DeleteSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Whether the model is a target model (true) or a source model
+          (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted the software migration user model
+          schema:
+            type: string
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a specific software migration user model (source or target)
+      tags:
+      - '[API] Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific software migration user model by ID. Use 'isTargetModel'
+        to specify whether it is a source or target model.
+      operationId: GetSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Whether the model is a target model (true) or a source model
+          (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained the software migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a specific software migration user model (source or target)
+      tags:
+      - '[API] Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Update a specific software migration user model by ID. Use 'isTargetModel' to specify whether it is a source or target model.
+        Provide 'sourceSoftwareModel' for a source model (isTargetModel=false), or 'targetSoftwareModel' for a target model (isTargetModel=true).
+        'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.
+      operationId: UpdateSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Whether the model is a target model (true) or a source model
+          (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      - description: Software model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSoftwareModelReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated the software migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a specific software migration user model (source or target)
+      tags:
+      - '[API] Migration User Models'
   /softwaremodel/source:
     get:
       consumes:
