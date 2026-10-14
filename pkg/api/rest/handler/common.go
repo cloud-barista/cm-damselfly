@@ -23,6 +23,7 @@ import (
 	onpremisemodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/cloud-barista/cm-damselfly/pkg/modelschema"
 	softwaremodel "github.com/cloud-barista/cm-grasshopper/smdl"
+	echo "github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
 
@@ -441,17 +442,23 @@ var (
 	targetSoftwareModelSchema = softwareModelSchemaInfo{RootType: "TargetGroupSoftwareProperty", FieldName: "targetSoftwareModel"}
 )
 
+// softwareModelSchemaOf returns the software model struct used for the given model stage.
+// A source model follows 'SourceGroupSoftwareProperty', and a planning or target model follows 'TargetGroupSoftwareProperty'.
+func softwareModelSchemaOf(stage ModelStage) softwareModelSchemaInfo {
+	if stage == StageSource {
+		return sourceSoftwareModelSchema
+	}
+	return targetSoftwareModelSchema
+}
+
 // normalizeSoftwareModel validates the raw software model against the Go struct (SourceGroupSoftwareProperty or
 // TargetGroupSoftwareProperty) of the given cm-grasshopper/smdl tagged version and returns it as that struct would be serialized.
 // On failure, it also returns the HTTP status code to respond with.
-func normalizeSoftwareModel(ctx context.Context, version string, isTargetModel bool, raw json.RawMessage) (json.RawMessage, int, error) {
-	schema := sourceSoftwareModelSchema
-	if isTargetModel {
-		schema = targetSoftwareModelSchema
-	}
+func normalizeSoftwareModel(ctx context.Context, version string, stage ModelStage, raw json.RawMessage) (json.RawMessage, int, error) {
+	schema := softwareModelSchemaOf(stage)
 
 	if trimmed := bytes.TrimSpace(raw); len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'isTargetModel' is %v", schema.FieldName, isTargetModel)
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
 	}
 
 	pkg, err := modelschema.LoadPackage(ctx, softwareModelSchemaSource, version, "")
@@ -476,16 +483,15 @@ func normalizeSoftwareModel(ctx context.Context, version string, isTargetModel b
 
 // normalizeSoftwareModelWithCompiledStruct decodes the raw software model with the cm-grasshopper/smdl version compiled into
 // cm-damselfly. It is used only for existing models whose version is not a cm-grasshopper/smdl tag.
-func normalizeSoftwareModelWithCompiledStruct(isTargetModel bool, raw json.RawMessage) (json.RawMessage, int, error) {
-	schema := sourceSoftwareModelSchema
-	var target interface{} = new(softwaremodel.SourceGroupSoftwareProperty)
-	if isTargetModel {
-		schema = targetSoftwareModelSchema
-		target = new(softwaremodel.TargetGroupSoftwareProperty)
+func normalizeSoftwareModelWithCompiledStruct(stage ModelStage, raw json.RawMessage) (json.RawMessage, int, error) {
+	schema := softwareModelSchemaOf(stage)
+	var target interface{} = new(softwaremodel.TargetGroupSoftwareProperty)
+	if stage == StageSource {
+		target = new(softwaremodel.SourceGroupSoftwareProperty)
 	}
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'isTargetModel' is %v", schema.FieldName, isTargetModel)
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
 	}
 	if err := json.Unmarshal(trimmed, target); err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid software model : [%v]", err)
@@ -495,4 +501,68 @@ func normalizeSoftwareModelWithCompiledStruct(isTargetModel bool, raw json.RawMe
 		return nil, http.StatusInternalServerError, err
 	}
 	return normalized, 0, nil
+}
+
+// ModelStage is the stage of a migration user model (infra or software) in the migration process.
+type ModelStage string
+
+const (
+	StageSource   ModelStage = "source"
+	StagePlanning ModelStage = "planning"
+	StageTarget   ModelStage = "target"
+)
+
+func (s ModelStage) isValid() bool {
+	return s == StageSource || s == StagePlanning || s == StageTarget
+}
+
+// legacyIsTargetModel returns the 'isTargetModel' value kept in the stored model for the legacy APIs
+// (e.g., 'GET /model/{isTargetModel}'). It is nil for the planning stage, which has no legacy equivalent.
+func (s ModelStage) legacyIsTargetModel() *bool {
+	if s == StagePlanning {
+		return nil
+	}
+	isTargetModel := s == StageTarget
+	return &isTargetModel
+}
+
+// parseModelStageParam parses the required 'modelStage' query parameter ('source', 'planning' or 'target').
+func parseModelStageParam(c echo.Context) (ModelStage, error) {
+	stage := ModelStage(strings.ToLower(strings.TrimSpace(c.QueryParam("modelStage"))))
+	if !stage.isValid() {
+		return "", fmt.Errorf("invalid request: 'modelStage' must be '%s', '%s' or '%s', got '%s'",
+			StageSource, StagePlanning, StageTarget, c.QueryParam("modelStage"))
+	}
+	return stage, nil
+}
+
+// storedModelStage returns the stage of a stored model. For a model stored before 'modelStage' was
+// introduced, the stage is derived from 'isTargetModel' (true: target, false: source).
+func storedModelStage(m map[string]interface{}) (ModelStage, bool) {
+	if s, ok := m["modelStage"].(string); ok {
+		if stage := ModelStage(s); stage.isValid() {
+			return stage, true
+		}
+	}
+	if isTargetModel, ok := m["isTargetModel"].(bool); ok {
+		if isTargetModel {
+			return StageTarget, true
+		}
+		return StageSource, true
+	}
+	return "", false
+}
+
+// withModelStage returns the stored model with 'modelStage' filled in (for a model stored before
+// 'modelStage' was introduced). The stored map is copied rather than modified.
+func withModelStage(m map[string]interface{}, stage ModelStage) map[string]interface{} {
+	if _, exists := m["modelStage"]; exists {
+		return m
+	}
+	copied := make(map[string]interface{}, len(m)+1)
+	for k, v := range m {
+		copied[k] = v
+	}
+	copied["modelStage"] = string(stage)
+	return copied
 }

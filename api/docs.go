@@ -312,7 +312,7 @@ const docTemplate = `{
         },
         "/infra-model": {
             "get": {
-                "description": "Get a list of infra migration user models filtered by model type and source/target classification.",
+                "description": "Get a list of infra migration user models filtered by model type and model stage.",
                 "consumes": [
                     "application/json"
                 ],
@@ -338,12 +338,13 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "true",
-                            "false"
+                            "source",
+                            "planning",
+                            "target"
                         ],
                         "type": "string",
-                        "description": "Whether to retrieve target models (true) or source models (false)",
-                        "name": "isTargetModel",
+                        "description": "Stage of infra model to retrieve",
+                        "name": "modelStage",
                         "in": "query",
                         "required": true
                     }
@@ -380,7 +381,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'isTargetModel' to select source or target model.\nThe 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
+                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.\nThe 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
                 "consumes": [
                     "application/json"
                 ],
@@ -406,12 +407,13 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "true",
-                            "false"
+                            "source",
+                            "planning",
+                            "target"
                         ],
                         "type": "string",
-                        "description": "Whether to create a target model (true) or a source model (false)",
-                        "name": "isTargetModel",
+                        "description": "Stage of infra model to create",
+                        "name": "modelStage",
                         "in": "query",
                         "required": true
                     },
@@ -527,7 +529,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.\nThe model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.",
+                "description": "Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nThe model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.",
                 "consumes": [
                     "application/json"
                 ],
@@ -557,6 +559,17 @@ const docTemplate = `{
                         "name": "modelType",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage to change the infra model to. If empty, the stored stage is preserved.",
+                        "name": "modelStage",
+                        "in": "query"
                     },
                     {
                         "description": "Infra model information to update",
@@ -997,7 +1010,7 @@ const docTemplate = `{
         },
         "/software-model": {
             "get": {
-                "description": "Get a list of software migration user models. Use 'isTargetModel' to select source or target models.",
+                "description": "Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1012,12 +1025,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "enum": [
-                            "true",
-                            "false"
+                            "source",
+                            "planning",
+                            "target"
                         ],
                         "type": "string",
-                        "description": "Whether to retrieve target models (true) or source models (false)",
-                        "name": "isTargetModel",
+                        "description": "Stage of software model to retrieve",
+                        "name": "modelStage",
                         "in": "query",
                         "required": true
                     }
@@ -1048,7 +1062,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new software migration user model. Use 'isTargetModel' to select source or target model.\nProvide 'sourceSoftwareModel' for a source model (isTargetModel=false), or 'targetSoftwareModel' for a target model (isTargetModel=true).\nThe 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n(The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
+                "description": "Create a new software migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.\nProvide 'sourceSoftwareModel' for a source model (modelStage=source), or 'targetSoftwareModel' for a planning or target model (modelStage=planning or target).\nThe 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n(The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1063,12 +1077,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "enum": [
-                            "true",
-                            "false"
+                            "source",
+                            "planning",
+                            "target"
                         ],
                         "type": "string",
-                        "description": "Whether to create a target model (true) or a source model (false)",
-                        "name": "isTargetModel",
+                        "description": "Stage of software model to create",
+                        "name": "modelStage",
                         "in": "query",
                         "required": true
                     },
@@ -1112,7 +1127,7 @@ const docTemplate = `{
         },
         "/software-model/{id}": {
             "get": {
-                "description": "Get a specific software migration user model by ID. Use 'isTargetModel' to specify whether it is a source or target model.",
+                "description": "Get a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1134,12 +1149,13 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "true",
-                            "false"
+                            "source",
+                            "planning",
+                            "target"
                         ],
                         "type": "string",
-                        "description": "Whether the model is a target model (true) or a source model (false)",
-                        "name": "isTargetModel",
+                        "description": "Stage of the software model",
+                        "name": "modelStage",
                         "in": "query",
                         "required": true
                     }
@@ -1172,7 +1188,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a specific software migration user model by ID. Use 'isTargetModel' to specify whether it is a source or target model.\nProvide 'sourceSoftwareModel' for a source model (isTargetModel=false), or 'targetSoftwareModel' for a target model (isTargetModel=true).\n'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.",
+                "description": "Update a specific software migration user model by ID.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nProvide 'sourceSoftwareModel' if the (resulting) stage is source, or 'targetSoftwareModel' if it is planning or target.\n'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1194,14 +1210,14 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "true",
-                            "false"
+                            "source",
+                            "planning",
+                            "target"
                         ],
                         "type": "string",
-                        "description": "Whether the model is a target model (true) or a source model (false)",
-                        "name": "isTargetModel",
-                        "in": "query",
-                        "required": true
+                        "description": "Stage to change the software model to. If empty, the stored stage is preserved.",
+                        "name": "modelStage",
+                        "in": "query"
                     },
                     {
                         "description": "Software model information to update",
@@ -1241,7 +1257,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific software migration user model by ID. Use 'isTargetModel' to specify whether it is a source or target model.",
+                "description": "Delete a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1263,12 +1279,13 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "true",
-                            "false"
+                            "source",
+                            "planning",
+                            "target"
                         ],
                         "type": "string",
-                        "description": "Whether the model is a target model (true) or a source model (false)",
-                        "name": "isTargetModel",
+                        "description": "Stage of the software model",
+                        "name": "modelStage",
                         "in": "query",
                         "required": true
                     }

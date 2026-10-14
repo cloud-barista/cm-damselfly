@@ -227,12 +227,12 @@ type OnPremModelRespInfo struct {
 // GetInfraModels godoc
 // @ID GetInfraModels
 // @Summary Get a list of infra migration user models (on-premise or cloud)
-// @Description Get a list of infra migration user models filtered by model type and source/target classification.
+// @Description Get a list of infra migration user models filtered by model type and model stage.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param modelType  query string true  "Type of infra model to retrieve" Enums(onprem, cloud)
-// @Param isTargetModel query string true "Whether to retrieve target models (true) or source models (false)" Enums(true, false)
+// @Param modelStage query string true  "Stage of infra model to retrieve" Enums(source, planning, target)
 // @Success 200 {array}  map[string]interface{} "Successfully obtained infra migration user models"
 // @Failure 400 {object} model.Response "Invalid request parameter"
 // @Failure 404 {object} model.Response "Model Not Found"
@@ -250,31 +250,15 @@ func GetInfraModels(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	isTargetModelParam := c.QueryParam("isTargetModel")
-	if !strings.EqualFold(isTargetModelParam, "true") && !strings.EqualFold(isTargetModelParam, "false") {
-		newErr := fmt.Errorf("invalid request: 'isTargetModel' must be 'true' or 'false', got '%s'", isTargetModelParam)
-		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-
-	isTargetModel, err := strconv.ParseBool(isTargetModelParam)
+	modelStage, err := parseModelStageParam(c)
 	if err != nil {
-		newErr := fmt.Errorf("invalid request: failed to parse 'isTargetModel': [%v]", err)
-		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
 	}
 
 	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
 
-	log.Info().Msgf("# GetInfraModels: modelType=[%s], isTargetModel=[%v]", modelTypeParam, isTargetModel)
+	log.Info().Msgf("# GetInfraModels: modelType=[%s], modelStage=[%s]", modelTypeParam, modelStage)
 
 	modelList, exists := lkvstore.GetWithPrefix("")
 	if !exists {
@@ -306,20 +290,13 @@ func GetInfraModels(c echo.Context) error {
 			continue
 		}
 
-		// Filter by isTargetModel
-		isTargetModelVal, targetModelExists := m["isTargetModel"]
-		if !targetModelExists {
-			continue
-		}
-		isTargetModelBool, ok := isTargetModelVal.(bool)
-		if !ok {
-			continue
-		}
-		if isTargetModelBool != isTargetModel {
+		// Filter by modelStage
+		stage, ok := storedModelStage(m)
+		if !ok || stage != modelStage {
 			continue
 		}
 
-		result = append(result, m)
+		result = append(result, withModelStage(m, stage))
 	}
 
 	if len(result) == 0 {
@@ -357,27 +334,32 @@ type infraModelRawReq struct {
 
 // onPremModelRecord and cloudModelRecord are the stored forms of infra models whose
 // 'onpremiseInfraModel' / 'cloudInfraModel' follow the struct of their own imdl version.
+// 'IsTargetModel' shadows the one of the embedded struct so that it is omitted for the planning stage.
 type onPremModelRecord struct {
 	OnPremModelRespInfo
+	ModelStage       ModelStage      `json:"modelStage"`
+	IsTargetModel    *bool           `json:"isTargetModel,omitempty"`
 	OnpremInfraModel json.RawMessage `json:"onpremiseInfraModel"`
 }
 
 type cloudModelRecord struct {
 	CloudModelRespInfo
+	ModelStage      ModelStage      `json:"modelStage"`
+	IsTargetModel   *bool           `json:"isTargetModel,omitempty"`
 	CloudInfraModel json.RawMessage `json:"cloudInfraModel"`
 }
 
 // CreateInfraModel godoc
 // @ID CreateInfraModel
 // @Summary Create a new infra migration user model (on-premise or cloud)
-// @Description Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'isTargetModel' to select source or target model.
+// @Description Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.
 // @Description The 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.
 // @Description (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param modelType  query string true  "Type of infra model to create" Enums(onprem, cloud)
-// @Param isTargetModel query string true "Whether to create a target model (true) or a source model (false)" Enums(true, false)
+// @Param modelStage query string true  "Stage of infra model to create" Enums(source, planning, target)
 // @Param onpremModelVersion query string false "On-premise model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=onprem (ignored for modelType=cloud only if it equals 'cloudModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions."
 // @Param cloudModelVersion query string false "Cloud model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=cloud (ignored for modelType=onprem only if it equals 'onpremModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions."
 // @Param Model body CreateInfraModelReq true "Infra model information"
@@ -398,26 +380,10 @@ func CreateInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	isTargetModelParam := c.QueryParam("isTargetModel")
-	if !strings.EqualFold(isTargetModelParam, "true") && !strings.EqualFold(isTargetModelParam, "false") {
-		newErr := fmt.Errorf("invalid request: 'isTargetModel' must be 'true' or 'false', got '%s'", isTargetModelParam)
-		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-
-	isTargetModel, err := strconv.ParseBool(isTargetModelParam)
+	modelStage, err := parseModelStageParam(c)
 	if err != nil {
-		newErr := fmt.Errorf("invalid request: failed to parse 'isTargetModel': [%v]", err)
-		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
 	}
 
 	reqBody := new(infraModelRawReq)
@@ -432,7 +398,7 @@ func CreateInfraModel(c echo.Context) error {
 	}
 
 	isCloudModel := strings.EqualFold(modelTypeParam, "cloud")
-	log.Info().Msgf("# CreateInfraModel: modelType=[%s], isTargetModel=[%v]", modelTypeParam, isTargetModel)
+	log.Info().Msgf("# CreateInfraModel: modelType=[%s], modelStage=[%s]", modelTypeParam, modelStage)
 
 	onpremModelVerParam := strings.TrimSpace(c.QueryParam("onpremModelVersion"))
 	cloudModelVerParam := strings.TrimSpace(c.QueryParam("cloudModelVersion"))
@@ -489,7 +455,6 @@ func CreateInfraModel(c echo.Context) error {
 		userModel := cloudModelRecord{CloudModelRespInfo: CloudModelRespInfo{
 			Id:              id,
 			UserId:          reqBody.UserId,
-			IsTargetModel:   isTargetModel,
 			IsInitUserModel: reqBody.IsInitUserModel,
 			UserModelName:   reqBody.UserModelName,
 			Description:     reqBody.Description,
@@ -501,7 +466,7 @@ func CreateInfraModel(c echo.Context) error {
 			IsCloudModel:    true,
 			CloudModelVer:   resultVer,
 			ModelType:       CloudModel,
-		}, CloudInfraModel: infraModel}
+		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), CloudInfraModel: infraModel}
 		log.Info().Msgf("Cloud Model version: %s", resultVer)
 
 		lkvstore.Put(userModel.Id, userModel)
@@ -527,10 +492,9 @@ func CreateInfraModel(c echo.Context) error {
 		Description:      reqBody.Description,
 		OnPremModelVer:   resultVer,
 		CreateTime:       createTime,
-		IsTargetModel:    isTargetModel,
 		IsCloudModel:     false,
 		ModelType:        OnPremModel,
-	}, OnpremInfraModel: infraModel}
+	}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), OnpremInfraModel: infraModel}
 	log.Info().Msgf("On-premise Model version: %s", resultVer)
 
 	lkvstore.Put(userModel.Id, userModel)
@@ -642,6 +606,9 @@ func GetInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
+	if stage, ok := storedModelStage(m); ok {
+		m = withModelStage(m, stage)
+	}
 	return c.JSON(http.StatusOK, m)
 }
 
@@ -649,12 +616,14 @@ func GetInfraModel(c echo.Context) error {
 // @ID UpdateInfraModel
 // @Summary Update a specific infra migration user model (on-premise or cloud)
 // @Description Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
+// @Description The model stage is changed to 'modelStage' if it is given, and is preserved otherwise.
 // @Description The model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id          path  string true "Model ID"
 // @Param modelType  query string true  "Type of infra model to update" Enums(onprem, cloud)
+// @Param modelStage query string false "Stage to change the infra model to. If empty, the stored stage is preserved." Enums(source, planning, target)
 // @Param Model body CreateInfraModelReq true "Infra model information to update"
 // @Success 200 {object} object "Successfully updated the infra migration user model"
 // @Failure 400 {object} model.Response "Invalid request parameter"
@@ -684,8 +653,19 @@ func UpdateInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
+	// 'modelStage' is optional. If it is empty, the stored stage is preserved.
+	var requestedStage ModelStage
+	if strings.TrimSpace(c.QueryParam("modelStage")) != "" {
+		stage, err := parseModelStageParam(c)
+		if err != nil {
+			log.Warn().Msg(err.Error())
+			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
+		}
+		requestedStage = stage
+	}
+
 	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
-	log.Info().Msgf("# UpdateInfraModel: id=[%s], modelType=[%s]", reqId, modelTypeParam)
+	log.Info().Msgf("# UpdateInfraModel: id=[%s], modelType=[%s], modelStage=[%s]", reqId, modelTypeParam, requestedStage)
 
 	reqBody := new(infraModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
@@ -755,8 +735,20 @@ func UpdateInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
+	storedStage, hasStoredStage := storedModelStage(existing)
+	modelStage := storedStage
+	if requestedStage != "" {
+		modelStage = requestedStage
+		if requestedStage != storedStage {
+			log.Info().Msgf("Changing the model stage of [%s]: [%s] -> [%s]", reqId, storedStage, requestedStage)
+		}
+	} else if !hasStoredStage {
+		newErr := fmt.Errorf("the model with id [%s] has neither a valid 'modelStage' nor 'isTargetModel'. Specify 'modelStage' to set it", reqId)
+		log.Warn().Msg(newErr.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+	}
+
 	createTime, _ := existing["createTime"].(string)
-	isTargetModelBool, _ := existing["isTargetModel"].(bool)
 
 	updateTime, err := getSeoulCurrentTime()
 	if err != nil {
@@ -796,7 +788,6 @@ func UpdateInfraModel(c echo.Context) error {
 		updatedModel := cloudModelRecord{CloudModelRespInfo: CloudModelRespInfo{
 			Id:              reqId,
 			UserId:          reqBody.UserId,
-			IsTargetModel:   isTargetModelBool,
 			IsInitUserModel: reqBody.IsInitUserModel,
 			UserModelName:   reqBody.UserModelName,
 			Description:     reqBody.Description,
@@ -809,7 +800,7 @@ func UpdateInfraModel(c echo.Context) error {
 			IsCloudModel:    true,
 			CloudModelVer:   cloudModelVer,
 			ModelType:       CloudModel,
-		}, CloudInfraModel: infraModel}
+		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), CloudInfraModel: infraModel}
 		log.Info().Msgf("Cloud Model version (preserved): %s", cloudModelVer)
 
 		lkvstore.Put(reqId, updatedModel)
@@ -841,10 +832,9 @@ func UpdateInfraModel(c echo.Context) error {
 		OnPremModelVer:   onpremModelVer,
 		CreateTime:       createTime,
 		UpdateTime:       updateTime,
-		IsTargetModel:    isTargetModelBool,
 		IsCloudModel:     false,
 		ModelType:        OnPremModel,
-	}, OnpremInfraModel: infraModel}
+	}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), OnpremInfraModel: infraModel}
 	log.Info().Msgf("On-premise Model version (preserved): %s", onpremModelVer)
 
 	lkvstore.Put(reqId, updatedModel)
