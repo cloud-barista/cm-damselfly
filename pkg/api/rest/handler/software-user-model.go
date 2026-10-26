@@ -13,6 +13,7 @@ import (
 	// "github.com/davecgh/go-spew/spew"
 
 	model 			"github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	softwaremodel 	"github.com/cloud-barista/cm-grasshopper/smdl"
 )
 
@@ -857,6 +858,7 @@ type CreateSoftwareModelReq struct {
 	UserModelName       string                                      `json:"userModelName"`
 	UserModelVer        string                                      `json:"userModelVersion"`
 	Description         string                                      `json:"description"`
+	ModelLineageReq
 	SourceSoftwareModel *softwaremodel.SourceGroupSoftwareProperty `json:"sourceSoftwareModel,omitempty"`
 	TargetSoftwareModel *softwaremodel.TargetGroupSoftwareProperty `json:"targetSoftwareModel,omitempty"`
 }
@@ -877,16 +879,18 @@ type softwareModelRawReq struct {
 // 'IsTargetModel' shadows the one of the embedded struct so that it is omitted for the planning stage.
 type sourceSoftwareModelRecord struct {
 	SourceSoftwareModelRespInfo
-	ModelStage          ModelStage      `json:"modelStage"`
-	IsTargetModel       *bool           `json:"isTargetModel,omitempty"`
-	SourceSoftwareModel json.RawMessage `json:"sourceSoftwareModel"`
+	ModelStage          ModelStage               `json:"modelStage"`
+	IsTargetModel       *bool                    `json:"isTargetModel,omitempty"`
+	Lineage             lineage.MigrationLineage `json:"lineage"`
+	SourceSoftwareModel json.RawMessage          `json:"sourceSoftwareModel"`
 }
 
 type targetSoftwareModelRecord struct {
 	TargetSoftwareModelRespInfo
-	ModelStage          ModelStage      `json:"modelStage"`
-	IsTargetModel       *bool           `json:"isTargetModel,omitempty"`
-	TargetSoftwareModel json.RawMessage `json:"targetSoftwareModel"`
+	ModelStage          ModelStage               `json:"modelStage"`
+	IsTargetModel       *bool                    `json:"isTargetModel,omitempty"`
+	Lineage             lineage.MigrationLineage `json:"lineage"`
+	TargetSoftwareModel json.RawMessage          `json:"targetSoftwareModel"`
 }
 
 // rawSoftwareModel returns the raw software model field matching the model stage.
@@ -933,7 +937,7 @@ func getSoftwareModelFromStore(id string, stage ModelStage) (map[string]interfac
 			id, storedStage, stage)
 	}
 
-	return withModelStage(m, storedStage), storedStage, http.StatusOK, nil
+	return withLineage(withModelStage(m, storedStage), storedStage), storedStage, http.StatusOK, nil
 }
 
 // saveSoftwareModelToStore puts the model to the key-value store and saves the store to file.
@@ -952,10 +956,15 @@ func saveSoftwareModelToStore(id string, userModel interface{}) error {
 // @ID GetSoftwareModels
 // @Summary Get a list of software migration user models (source or target)
 // @Description Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.
+// @Description The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param modelStage query string true "Stage of software model to retrieve" Enums(source, planning, target)
+// @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
+// @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
+// @Param planningModelId query string false "Filter by 'lineage.planningModelId'"
+// @Param targetModelId   query string false "Filter by 'lineage.targetModelId'"
 // @Success 200 {array}  map[string]interface{} "Successfully obtained software migration user models"
 // @Failure 400 {object} model.Response "Invalid request parameter"
 // @Failure 500 {object} model.Response
@@ -965,7 +974,8 @@ func GetSoftwareModels(c echo.Context) error {
 	if err != nil {
 		return softwareModelErrResp(c, http.StatusBadRequest, err)
 	}
-	log.Info().Msgf("# GetSoftwareModels: modelStage=[%s]", modelStage)
+	lineageFilter := parseLineageFilter(c)
+	log.Info().Msgf("# GetSoftwareModels: modelStage=[%s], lineage=[%+v]", modelStage, lineageFilter)
 
 	result := []map[string]interface{}{}
 	modelList, exists := lkvstore.GetWithPrefix("")
@@ -985,7 +995,10 @@ func GetSoftwareModels(c echo.Context) error {
 		if !ok || stage != modelStage {
 			continue
 		}
-		result = append(result, withModelStage(m, stage))
+		if !matchLineageFilter(storedLineage(m, stage), lineageFilter) {
+			continue
+		}
+		result = append(result, withLineage(withModelStage(m, stage), stage))
 	}
 
 	return c.JSON(http.StatusOK, result)
@@ -995,6 +1008,7 @@ func GetSoftwareModels(c echo.Context) error {
 // @ID GetSoftwareModel
 // @Summary Get a specific software migration user model (source or target)
 // @Description Get a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
+// @Description The 'lineage' of the model refers to its upstream models and itself.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
@@ -1032,6 +1046,8 @@ func GetSoftwareModel(c echo.Context) error {
 // @Description Provide 'sourceSoftwareModel' for a source model (modelStage=source), or 'targetSoftwareModel' for a planning or target model (modelStage=planning or target).
 // @Description The 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.
 // @Description 'nodeId' is an optional identifier of the node the model is associated with.
+// @Description [Lineage] 'parentId' is the ID of the software model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
+// @Description 'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
 // @Description (The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
 // @Tags [API] Migration User Models
 // @Accept  json
@@ -1041,6 +1057,7 @@ func GetSoftwareModel(c echo.Context) error {
 // @Param Model body CreateSoftwareModelReq true "Software model information"
 // @Success 201 {object} object "Successfully created the software migration user model"
 // @Failure 400 {object} model.Response "Invalid request parameter"
+// @Failure 404 {object} model.Response "Parent (or lineage) model Not Found"
 // @Failure 500 {object} model.Response
 // @Router /software-model [post]
 func CreateSoftwareModel(c echo.Context) error {
@@ -1076,6 +1093,11 @@ func CreateSoftwareModel(c echo.Context) error {
 	id := uuid.New().String()
 	log.Info().Msgf("Generated UUID : [%s]", id)
 
+	modelLineage, status, err := resolveLineage(lookupStoredModel, id, categorySoftware, modelStage, lineage.MigrationLineage{}, reqBody.ModelLineageReq)
+	if err != nil {
+		return softwareModelErrResp(c, status, err)
+	}
+
 	createTime, err := getSeoulCurrentTime()
 	if err != nil {
 		log.Debug().Msg("Failed to Get the Current time!!")
@@ -1095,7 +1117,7 @@ func CreateSoftwareModel(c echo.Context) error {
 			CreateTime:       createTime,
 			IsSoftwareModel:  true,
 			ModelType:        SWModel,
-		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), TargetSoftwareModel: softwareModel}
+		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, TargetSoftwareModel: softwareModel}
 	} else {
 		userModel = sourceSoftwareModelRecord{SourceSoftwareModelRespInfo: SourceSoftwareModelRespInfo{
 			Id:               id,
@@ -1109,7 +1131,7 @@ func CreateSoftwareModel(c echo.Context) error {
 			CreateTime:       createTime,
 			IsSoftwareModel:  true,
 			ModelType:        SWModel,
-		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), SourceSoftwareModel: softwareModel}
+		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, SourceSoftwareModel: softwareModel}
 	}
 
 	if err := saveSoftwareModelToStore(id, userModel); err != nil {
@@ -1126,6 +1148,8 @@ func CreateSoftwareModel(c echo.Context) error {
 // @Description The model stage is changed to 'modelStage' if it is given, and is preserved otherwise.
 // @Description Provide 'sourceSoftwareModel' if the (resulting) stage is source, or 'targetSoftwareModel' if it is planning or target.
 // @Description 'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.
+// @Description [Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).
+// @Description The stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
@@ -1135,6 +1159,7 @@ func CreateSoftwareModel(c echo.Context) error {
 // @Success 200 {object} object "Successfully updated the software migration user model"
 // @Failure 400 {object} model.Response "Invalid request parameter"
 // @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 409 {object} model.Response "The stage cannot be changed: the model is referred to by the lineage of other models"
 // @Failure 500 {object} model.Response
 // @Router /software-model/{id} [put]
 func UpdateSoftwareModel(c echo.Context) error {
@@ -1166,8 +1191,17 @@ func UpdateSoftwareModel(c echo.Context) error {
 
 	modelStage := storedStage
 	if requestedStage != "" && requestedStage != storedStage {
+		// The stage of a model referred to by other models is not changed, so as not to break their lineage.
+		if referrers := findLineageReferrers(id); len(referrers) > 0 {
+			return lineageConflictResp(c, id, "change the stage of", referrers)
+		}
 		modelStage = requestedStage
 		log.Info().Msgf("Changing the model stage of [%s]: [%s] -> [%s]", id, storedStage, requestedStage)
+	}
+
+	modelLineage, status, err := resolveLineage(lookupStoredModel, id, categorySoftware, modelStage, storedLineage(existing, storedStage), reqBody.ModelLineageReq)
+	if err != nil {
+		return softwareModelErrResp(c, status, err)
 	}
 
 	existingBytes, err := json.Marshal(existing)
@@ -1220,6 +1254,7 @@ func UpdateSoftwareModel(c echo.Context) error {
 		fullModel.IsSoftwareModel = true
 		fullModel.ModelStage = modelStage
 		fullModel.IsTargetModel = modelStage.legacyIsTargetModel()
+		fullModel.Lineage = modelLineage
 		fullModel.ModelType = SWModel
 		fullModel.TargetSoftwareModel = softwareModel
 		updatedModel = fullModel
@@ -1239,6 +1274,7 @@ func UpdateSoftwareModel(c echo.Context) error {
 		fullModel.IsSoftwareModel = true
 		fullModel.ModelStage = modelStage
 		fullModel.IsTargetModel = modelStage.legacyIsTargetModel()
+		fullModel.Lineage = modelLineage
 		fullModel.ModelType = SWModel
 		fullModel.SourceSoftwareModel = softwareModel
 		updatedModel = fullModel
@@ -1256,14 +1292,17 @@ func UpdateSoftwareModel(c echo.Context) error {
 // @ID DeleteSoftwareModel
 // @Summary Delete a specific software migration user model (source or target)
 // @Description Delete a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
+// @Description If the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
 // @Param modelStage query string true "Stage of the software model" Enums(source, planning, target)
+// @Param force query boolean false "Delete the model even if it is referred to by the lineage of other models" default(false)
 // @Success 200 {string} string "Successfully deleted the software migration user model"
 // @Failure 400 {object} model.Response "Invalid request parameter"
 // @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 409 {object} model.Response "The model is referred to by the lineage of other models (listed in 'list')"
 // @Failure 500 {object} model.Response
 // @Router /software-model/{id} [delete]
 func DeleteSoftwareModel(c echo.Context) error {
@@ -1276,10 +1315,22 @@ func DeleteSoftwareModel(c echo.Context) error {
 	if err != nil {
 		return softwareModelErrResp(c, http.StatusBadRequest, err)
 	}
-	log.Info().Msgf("# DeleteSoftwareModel: id=[%s], modelStage=[%s]", id, modelStage)
+	force, err := parseForceParam(c)
+	if err != nil {
+		return softwareModelErrResp(c, http.StatusBadRequest, err)
+	}
+	log.Info().Msgf("# DeleteSoftwareModel: id=[%s], modelStage=[%s], force=[%t]", id, modelStage, force)
 
 	if _, _, status, err := getSoftwareModelFromStore(id, modelStage); err != nil {
 		return softwareModelErrResp(c, status, err)
+	}
+
+	// Verify that no other model refers to this model in its lineage
+	if referrers := findLineageReferrers(id); len(referrers) > 0 {
+		if !force {
+			return lineageConflictResp(c, id, "delete", referrers)
+		}
+		log.Warn().Msgf("Deleting the model [%s] referred to by the lineage of %d model(s) (force=true)", id, len(referrers))
 	}
 
 	lkvstore.Delete(id)

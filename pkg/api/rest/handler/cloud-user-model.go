@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"errors"
-	"strconv"
 	"strings"
 	"github.com/google/uuid"
 	echo "github.com/labstack/echo/v4"
@@ -14,9 +13,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	model 			"github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	onpremisemodel 	"github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	cloudmodel 		"github.com/cloud-barista/cm-beetle/imdl/cloud-model"
-	softwaremodel 	"github.com/cloud-barista/cm-grasshopper/smdl"
 )
 
 type ModelsVersionRespInfo struct {
@@ -84,111 +83,76 @@ func GetModelsVersions(c echo.Context) error {
 // ### On-premise, Cloud, Software Migration User Model
 // ##############################################################################################
 
-type ModelRespInfo struct {
-	Id               string                  		`json:"id"`
-	UserId           string                  		`json:"userId"`
-	IsInitUserModel  bool                    		`json:"isInitUserModel"`
-	UserModelName    string                  		`json:"userModelName"`
-	Description      string                  		`json:"description"`
-	UserModelVer     string                  		`json:"userModelVersion"`
-	CreateTime       string                  	   	`json:"createTime"`
-	UpdateTime       string                  	   	`json:"updateTime"`
-	IsTargetModel    bool                    	   	`json:"isTargetModel"`
-	IsCloudModel     bool                    	   	`json:"isCloudModel"`
-	IsSoftwareModel  bool                    		`json:"isSoftwareModel"`
-	ModelType 		 string                  	   	`json:"modelType"`
-	OnPremModelVer   string                  	   	`json:"onpremModelVersion"`
-	CloudModelVer    string                  	   	`json:"cloudModelVersion"`
-	SoftwareModelVer string                  		`json:"softwareModelVersion"`
-	CSP              string                  	   	`json:"csp"`
-	Region           string                  	   	`json:"region"`
-	Zone             string                  	   	`json:"zone"`
-	OnpremInfraModel onpremisemodel.OnpremInfra   	`json:"onpremiseInfraModel" validate:"required"`
-	CloudInfraModel  cloudmodel.RecommendedInfra 	`json:"cloudInfraModel" validate:"required"`
-	SourceSoftwareModel softwaremodel.SourceGroupSoftwareProperty	`json:"sourceSoftwareModel" validate:"required"`
-	TargetSoftwareModel softwaremodel.TargetGroupSoftwareProperty	`json:"targetSoftwareModel" validate:"required"`		
-}
-
-// Caution!!)
-// Init Swagger : ]# swag init --parseDependency --parseInternal
-// Need to add '--parseDependency --parseInternal' in order to apply imported structures
-
-type GetModelsResp struct {
-	Models []ModelRespInfo `json:"models"`
-}
-
 // GetModels godoc
 // @ID GetModels
-// @Summary Get a list of all user models
-// @Description Get a list of all user models.
+// @Summary Get a list of migration user models (infra and software)
+// @Description Get a list of migration user models of both categories (infra and software).
+// @Description Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or both categories) are returned.
+// @Description The models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
-// @Param isTargetModel path bool true "Is TargetModel ?"
-// @Success 200 {object} GetModelsResp "Successfully Obtained Migration User Models."
-// @Failure 404 {object} model.Response "Model Not Found"
+// @Param modelStage      query string false "Stage of models to retrieve. If empty, the models of all stages are returned." Enums(source, planning, target)
+// @Param category        query string false "Category of models to retrieve. If empty, the models of both categories are returned." Enums(infra, software)
+// @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
+// @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
+// @Param planningModelId query string false "Filter by 'lineage.planningModelId'"
+// @Param targetModelId   query string false "Filter by 'lineage.targetModelId'"
+// @Success 200 {array}  map[string]interface{} "Successfully obtained migration user models"
+// @Failure 400 {object} model.Response "Invalid request parameter"
 // @Failure 500 {object} model.Response
-// @Router /model/{isTargetModel} [get]
+// @Router /model [get]
 func GetModels(c echo.Context) error {
-	param := c.Param("isTargetModel")
-	// fmt.Printf("# The value of 'isTargetModel' parameter : [%v]", isTargetModel)
+	// 'modelStage' is optional. If it is empty, the models of all stages are returned.
+	var modelStage ModelStage
+	if strings.TrimSpace(c.QueryParam("modelStage")) != "" {
+		stage, err := parseModelStageParam(c)
+		if err != nil {
+			log.Warn().Msg(err.Error())
+			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
+		}
+		modelStage = stage
+	}
 
-	if strings.EqualFold(param, "true") || strings.EqualFold(param, "false") {
-		// if strings.EqualFold(param, "true") {
-		// 	fmt.Printf("# Models to Get : Target models")
-		// } else {
-		// 	fmt.Printf("# Models to Get : Source models")
-		// }
-	} else {
-		newErr := fmt.Errorf("invalid request, invalid type of parameter")
+	// 'category' is optional. If it is empty, the models of both categories are returned.
+	category := modelCategory(strings.ToLower(strings.TrimSpace(c.QueryParam("category"))))
+	if category != "" && category != categoryInfra && category != categorySoftware {
+		newErr := fmt.Errorf("invalid request: 'category' must be '%s' or '%s', got '%s'", categoryInfra, categorySoftware, c.QueryParam("category"))
 		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
 	}
 
-	// Convert the string to a boolean	
-	isTargetmodel, err := strconv.ParseBool(param)
-	if err != nil {
-		newErr := fmt.Errorf("invalid request : [%v]", err)
-		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
+	lineageFilter := parseLineageFilter(c)
+	log.Info().Msgf("# GetModels: modelStage=[%s], category=[%s], lineage=[%+v]", modelStage, category, lineageFilter)
 
-	var models []map[string]interface{}
-	modelList, exists := lkvstore.GetWithPrefix("")
-	if exists {
-		if isTargetmodel { // Only Tareget models
-			for _, model := range modelList {
-				if model, ok := model.(map[string]interface{}); ok {
-					// if model["modelType"] != SWModel { // Software models are not included
-						if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == true {
-						models = append(models, model)
-						}
-					// }					
-				}
-			}
-		} else { // Only Source models
-			for _, model := range modelList {
-				if model, ok := model.(map[string]interface{}); ok {
-					// if model["modelType"] != SWModel { // Software models are not included
-						if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == false {
-							models = append(models, model)
-						}
-					// }
-				}
-			}
+	modelList, _ := lkvstore.GetWithPrefix("")
+	return c.JSON(http.StatusOK, filterModels(modelList, modelStage, category, lineageFilter))
+}
+
+// filterModels returns the stored models of the given stage and category whose lineage matches the filter,
+// with 'modelStage' and 'lineage' filled in. An empty stage or category matches all stages or categories.
+// The models without a valid category or stage are skipped.
+func filterModels(modelList []interface{}, stage ModelStage, category modelCategory, filter lineage.MigrationLineage) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	for _, item := range modelList {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
 		}
-		return c.JSON(http.StatusOK, models)
-	} else {
-		return c.JSON(http.StatusOK, nil)
+		c, ok := storedModelCategory(m)
+		if !ok || (category != "" && c != category) {
+			continue
+		}
+		s, ok := storedModelStage(m)
+		if !ok || (stage != "" && s != stage) {
+			continue
+		}
+		if !matchLineageFilter(storedLineage(m, s), filter) {
+			continue
+		}
+		result = append(result, withLineage(withModelStage(m, s), s))
 	}
+	return result
 }
 
 // ##############################################################################################
@@ -228,11 +192,16 @@ type OnPremModelRespInfo struct {
 // @ID GetInfraModels
 // @Summary Get a list of infra migration user models (on-premise or cloud)
 // @Description Get a list of infra migration user models filtered by model type and model stage.
+// @Description The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param modelType  query string true  "Type of infra model to retrieve" Enums(onprem, cloud)
 // @Param modelStage query string true  "Stage of infra model to retrieve" Enums(source, planning, target)
+// @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
+// @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
+// @Param planningModelId query string false "Filter by 'lineage.planningModelId'"
+// @Param targetModelId   query string false "Filter by 'lineage.targetModelId'"
 // @Success 200 {array}  map[string]interface{} "Successfully obtained infra migration user models"
 // @Failure 400 {object} model.Response "Invalid request parameter"
 // @Failure 404 {object} model.Response "Model Not Found"
@@ -257,8 +226,9 @@ func GetInfraModels(c echo.Context) error {
 	}
 
 	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
+	lineageFilter := parseLineageFilter(c)
 
-	log.Info().Msgf("# GetInfraModels: modelType=[%s], modelStage=[%s]", modelTypeParam, modelStage)
+	log.Info().Msgf("# GetInfraModels: modelType=[%s], modelStage=[%s], lineage=[%+v]", modelTypeParam, modelStage, lineageFilter)
 
 	modelList, exists := lkvstore.GetWithPrefix("")
 	if !exists {
@@ -296,7 +266,12 @@ func GetInfraModels(c echo.Context) error {
 			continue
 		}
 
-		result = append(result, withModelStage(m, stage))
+		// Filter by lineage
+		if !matchLineageFilter(storedLineage(m, stage), lineageFilter) {
+			continue
+		}
+
+		result = append(result, withLineage(withModelStage(m, stage), stage))
 	}
 
 	if len(result) == 0 {
@@ -318,6 +293,7 @@ type CreateInfraModelReq struct {
 	CSP              string                      `json:"csp,omitempty"`
 	Region           string                      `json:"region,omitempty"`
 	Zone             string                      `json:"zone,omitempty"`
+	ModelLineageReq
 	OnpremInfraModel onpremisemodel.OnpremInfra  `json:"onpremiseInfraModel,omitempty"`
 	CloudInfraModel  cloudmodel.RecommendedInfra `json:"cloudInfraModel,omitempty"`
 }
@@ -337,16 +313,18 @@ type infraModelRawReq struct {
 // 'IsTargetModel' shadows the one of the embedded struct so that it is omitted for the planning stage.
 type onPremModelRecord struct {
 	OnPremModelRespInfo
-	ModelStage       ModelStage      `json:"modelStage"`
-	IsTargetModel    *bool           `json:"isTargetModel,omitempty"`
-	OnpremInfraModel json.RawMessage `json:"onpremiseInfraModel"`
+	ModelStage       ModelStage               `json:"modelStage"`
+	IsTargetModel    *bool                    `json:"isTargetModel,omitempty"`
+	Lineage          lineage.MigrationLineage `json:"lineage"`
+	OnpremInfraModel json.RawMessage          `json:"onpremiseInfraModel"`
 }
 
 type cloudModelRecord struct {
 	CloudModelRespInfo
-	ModelStage      ModelStage      `json:"modelStage"`
-	IsTargetModel   *bool           `json:"isTargetModel,omitempty"`
-	CloudInfraModel json.RawMessage `json:"cloudInfraModel"`
+	ModelStage      ModelStage               `json:"modelStage"`
+	IsTargetModel   *bool                    `json:"isTargetModel,omitempty"`
+	Lineage         lineage.MigrationLineage `json:"lineage"`
+	CloudInfraModel json.RawMessage          `json:"cloudInfraModel"`
 }
 
 // CreateInfraModel godoc
@@ -355,6 +333,8 @@ type cloudModelRecord struct {
 // @Description Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.
 // @Description The 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.
 // @Description (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
+// @Description [Lineage] 'parentId' is the ID of the infra model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
+// @Description 'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
@@ -450,6 +430,12 @@ func CreateInfraModel(c echo.Context) error {
 		return c.JSON(status, model.Response{Success: false, Text: err.Error()})
 	}
 
+	modelLineage, status, err := resolveLineage(lookupStoredModel, id, categoryInfra, modelStage, lineage.MigrationLineage{}, reqBody.ModelLineageReq)
+	if err != nil {
+		log.Warn().Msg(err.Error())
+		return c.JSON(status, model.Response{Success: false, Text: err.Error()})
+	}
+
 	if isCloudModel {
 		// --- Create a Cloud migration user model ---
 		userModel := cloudModelRecord{CloudModelRespInfo: CloudModelRespInfo{
@@ -466,7 +452,7 @@ func CreateInfraModel(c echo.Context) error {
 			IsCloudModel:    true,
 			CloudModelVer:   resultVer,
 			ModelType:       CloudModel,
-		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), CloudInfraModel: infraModel}
+		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, CloudInfraModel: infraModel}
 		log.Info().Msgf("Cloud Model version: %s", resultVer)
 
 		lkvstore.Put(userModel.Id, userModel)
@@ -494,7 +480,7 @@ func CreateInfraModel(c echo.Context) error {
 		CreateTime:       createTime,
 		IsCloudModel:     false,
 		ModelType:        OnPremModel,
-	}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), OnpremInfraModel: infraModel}
+	}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, OnpremInfraModel: infraModel}
 	log.Info().Msgf("On-premise Model version: %s", resultVer)
 
 	lkvstore.Put(userModel.Id, userModel)
@@ -514,6 +500,7 @@ func CreateInfraModel(c echo.Context) error {
 // @ID GetInfraModel
 // @Summary Get a specific infra migration user model (on-premise or cloud)
 // @Description Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
+// @Description The 'lineage' of the model refers to its upstream models and itself.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
@@ -607,7 +594,7 @@ func GetInfraModel(c echo.Context) error {
 	}
 
 	if stage, ok := storedModelStage(m); ok {
-		m = withModelStage(m, stage)
+		m = withLineage(withModelStage(m, stage), stage)
 	}
 	return c.JSON(http.StatusOK, m)
 }
@@ -618,6 +605,8 @@ func GetInfraModel(c echo.Context) error {
 // @Description Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
 // @Description The model stage is changed to 'modelStage' if it is given, and is preserved otherwise.
 // @Description The model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.
+// @Description [Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).
+// @Description The stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
@@ -628,6 +617,7 @@ func GetInfraModel(c echo.Context) error {
 // @Success 200 {object} object "Successfully updated the infra migration user model"
 // @Failure 400 {object} model.Response "Invalid request parameter"
 // @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 409 {object} model.Response "The stage cannot be changed: the model is referred to by the lineage of other models"
 // @Failure 500 {object} model.Response
 // @Router /infra-model/{id} [put]
 func UpdateInfraModel(c echo.Context) error {
@@ -748,6 +738,19 @@ func UpdateInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
 	}
 
+	// The stage of a model referred to by other models is not changed, so as not to break their lineage.
+	if hasStoredStage && modelStage != storedStage {
+		if referrers := findLineageReferrers(reqId); len(referrers) > 0 {
+			return lineageConflictResp(c, reqId, "change the stage of", referrers)
+		}
+	}
+
+	modelLineage, status, err := resolveLineage(lookupStoredModel, reqId, categoryInfra, modelStage, storedLineage(existing, storedStage), reqBody.ModelLineageReq)
+	if err != nil {
+		log.Warn().Msg(err.Error())
+		return c.JSON(status, model.Response{Success: false, Text: err.Error()})
+	}
+
 	createTime, _ := existing["createTime"].(string)
 
 	updateTime, err := getSeoulCurrentTime()
@@ -770,7 +773,6 @@ func UpdateInfraModel(c echo.Context) error {
 	}
 
 	var infraModel json.RawMessage
-	var status int
 	if _, verErr := selectModelVersion(preservedVer, infraVersions); preservedVer != "" && verErr == nil {
 		infraModel, status, err = normalizeInfraModel(c.Request().Context(), preservedVer, isCloudModelFilter, rawInfraModel)
 	} else {
@@ -800,7 +802,7 @@ func UpdateInfraModel(c echo.Context) error {
 			IsCloudModel:    true,
 			CloudModelVer:   cloudModelVer,
 			ModelType:       CloudModel,
-		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), CloudInfraModel: infraModel}
+		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, CloudInfraModel: infraModel}
 		log.Info().Msgf("Cloud Model version (preserved): %s", cloudModelVer)
 
 		lkvstore.Put(reqId, updatedModel)
@@ -834,7 +836,7 @@ func UpdateInfraModel(c echo.Context) error {
 		UpdateTime:       updateTime,
 		IsCloudModel:     false,
 		ModelType:        OnPremModel,
-	}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), OnpremInfraModel: infraModel}
+	}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, OnpremInfraModel: infraModel}
 	log.Info().Msgf("On-premise Model version (preserved): %s", onpremModelVer)
 
 	lkvstore.Put(reqId, updatedModel)
@@ -858,13 +860,16 @@ func UpdateInfraModel(c echo.Context) error {
 // @ID DeleteInfraModel
 // @Summary Delete a specific infra migration user model (on-premise or cloud)
 // @Description Delete a specific infra migration user model by ID. Works for both on-premise and cloud models without requiring the caller to specify the model type.
+// @Description If the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
+// @Param force query boolean false "Delete the model even if it is referred to by the lineage of other models" default(false)
 // @Success 200 {string} string "Successfully deleted the infra migration user model"
 // @Failure 400 {object} model.Response "Invalid request parameter"
 // @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 409 {object} model.Response "The model is referred to by the lineage of other models (listed in 'list')"
 // @Failure 500 {object} model.Response
 // @Router /infra-model/{id} [delete]
 func DeleteInfraModel(c echo.Context) error {
@@ -878,7 +883,13 @@ func DeleteInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	log.Info().Msgf("# DeleteInfraModel: id=[%s]", c.Param("id"))
+	force, err := parseForceParam(c)
+	if err != nil {
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
+	}
+
+	log.Info().Msgf("# DeleteInfraModel: id=[%s], force=[%t]", c.Param("id"), force)
 
 	existingRaw, exists := lkvstore.Get(c.Param("id"))
 	if !exists {
@@ -920,6 +931,14 @@ func DeleteInfraModel(c echo.Context) error {
 			Text:    newErr.Error(),
 		}
 		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	// --- Verify that no other model refers to this model in its lineage ---
+	if referrers := findLineageReferrers(c.Param("id")); len(referrers) > 0 {
+		if !force {
+			return lineageConflictResp(c, c.Param("id"), "delete", referrers)
+		}
+		log.Warn().Msgf("Deleting the model [%s] referred to by the lineage of %d model(s) (force=true)", c.Param("id"), len(referrers))
 	}
 
 	lkvstore.Delete(c.Param("id"))

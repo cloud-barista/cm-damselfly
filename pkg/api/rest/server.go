@@ -169,7 +169,7 @@ func RunServer(port string) {
 	gModel := groupBase.Group("")
 	// gModel := groupBase.Group("/model")
 
-	gModel.GET("/model/:isTargetModel", handler.GetModels)
+	gModel.GET("/model", handler.GetModels)
 	gModel.GET("/model/version", handler.GetModelsVersions)
 
 	gModel.GET("/infra-model", handler.GetInfraModels)
