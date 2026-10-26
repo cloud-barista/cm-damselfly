@@ -517,7 +517,7 @@ func (s ModelStage) isValid() bool {
 }
 
 // legacyIsTargetModel returns the 'isTargetModel' value kept in the stored model for the legacy APIs
-// (e.g., 'GET /model/{isTargetModel}'). It is nil for the planning stage, which has no legacy equivalent.
+// (e.g., 'GET /onpremmodel', 'GET /softwaremodel/source'). It is nil for the planning stage, which has no legacy equivalent.
 func (s ModelStage) legacyIsTargetModel() *bool {
 	if s == StagePlanning {
 		return nil
