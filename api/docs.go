@@ -312,7 +312,7 @@ const docTemplate = `{
         },
         "/infra-model": {
             "get": {
-                "description": "Get a list of infra migration user models filtered by model type and model stage.",
+                "description": "Get a list of infra migration user models filtered by model type and model stage.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).",
                 "consumes": [
                     "application/json"
                 ],
@@ -347,6 +347,30 @@ const docTemplate = `{
                         "name": "modelStage",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceGroupId'",
+                        "name": "sourceGroupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceModelId'",
+                        "name": "sourceModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.planningModelId'",
+                        "name": "planningModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.targetModelId'",
+                        "name": "targetModelId",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -381,7 +405,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.\nThe 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
+                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.\nThe 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)\n[Lineage] 'parentId' is the ID of the infra model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.\n'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.",
                 "consumes": [
                     "application/json"
                 ],
@@ -469,7 +493,7 @@ const docTemplate = `{
         },
         "/infra-model/{id}": {
             "get": {
-                "description": "Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.",
+                "description": "Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.\nThe 'lineage' of the model refers to its upstream models and itself.",
                 "consumes": [
                     "application/json"
                 ],
@@ -529,7 +553,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nThe model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.",
+                "description": "Update a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nThe model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.\n[Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).\nThe stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').",
                 "consumes": [
                     "application/json"
                 ],
@@ -600,6 +624,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.Response"
                         }
                     },
+                    "409": {
+                        "description": "The stage cannot be changed: the model is referred to by the lineage of other models",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -609,7 +639,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific infra migration user model by ID. Works for both on-premise and cloud models without requiring the caller to specify the model type.",
+                "description": "Delete a specific infra migration user model by ID. Works for both on-premise and cloud models without requiring the caller to specify the model type.\nIf the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.",
                 "consumes": [
                     "application/json"
                 ],
@@ -628,6 +658,13 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Delete the model even if it is referred to by the lineage of other models",
+                        "name": "force",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -645,6 +682,99 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "The model is referred to by the lineage of other models (listed in 'list')",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/model": {
+            "get": {
+                "description": "Get a list of migration user models of both categories (infra and software).\nUse 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or both categories) are returned.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a list of migration user models (infra and software)",
+                "operationId": "GetModels",
+                "parameters": [
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of models to retrieve. If empty, the models of all stages are returned.",
+                        "name": "modelStage",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "infra",
+                            "software"
+                        ],
+                        "type": "string",
+                        "description": "Category of models to retrieve. If empty, the models of both categories are returned.",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceGroupId'",
+                        "name": "sourceGroupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceModelId'",
+                        "name": "sourceModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.planningModelId'",
+                        "name": "planningModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.targetModelId'",
+                        "name": "targetModelId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained migration user models",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
                         }
@@ -677,51 +807,6 @@ const docTemplate = `{
                         "description": "Tagged migration model versions",
                         "schema": {
                             "$ref": "#/definitions/handler.GetModelsVersionResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/model/{isTargetModel}": {
-            "get": {
-                "description": "Get a list of all user models.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Migration User Models"
-                ],
-                "summary": "Get a list of all user models",
-                "operationId": "GetModels",
-                "parameters": [
-                    {
-                        "type": "boolean",
-                        "description": "Is TargetModel ?",
-                        "name": "isTargetModel",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained Migration User Models.",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetModelsResp"
                         }
                     },
                     "404": {
@@ -1010,7 +1095,7 @@ const docTemplate = `{
         },
         "/software-model": {
             "get": {
-                "description": "Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.",
+                "description": "Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1034,6 +1119,30 @@ const docTemplate = `{
                         "name": "modelStage",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceGroupId'",
+                        "name": "sourceGroupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceModelId'",
+                        "name": "sourceModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.planningModelId'",
+                        "name": "planningModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.targetModelId'",
+                        "name": "targetModelId",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1062,7 +1171,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new software migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.\nProvide 'sourceSoftwareModel' for a source model (modelStage=source), or 'targetSoftwareModel' for a planning or target model (modelStage=planning or target).\nThe 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n(The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
+                "description": "Create a new software migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.\nProvide 'sourceSoftwareModel' for a source model (modelStage=source), or 'targetSoftwareModel' for a planning or target model (modelStage=planning or target).\nThe 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n[Lineage] 'parentId' is the ID of the software model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.\n'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.\n(The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1116,6 +1225,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.Response"
                         }
                     },
+                    "404": {
+                        "description": "Parent (or lineage) model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1127,7 +1242,7 @@ const docTemplate = `{
         },
         "/software-model/{id}": {
             "get": {
-                "description": "Get a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.",
+                "description": "Get a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1188,7 +1303,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a specific software migration user model by ID.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nProvide 'sourceSoftwareModel' if the (resulting) stage is source, or 'targetSoftwareModel' if it is planning or target.\n'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.",
+                "description": "Update a specific software migration user model by ID.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nProvide 'sourceSoftwareModel' if the (resulting) stage is source, or 'targetSoftwareModel' if it is planning or target.\n'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.\n[Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).\nThe stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').",
                 "consumes": [
                     "application/json"
                 ],
@@ -1248,6 +1363,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.Response"
                         }
                     },
+                    "409": {
+                        "description": "The stage cannot be changed: the model is referred to by the lineage of other models",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1257,7 +1378,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.",
+                "description": "Delete a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nIf the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1288,6 +1409,13 @@ const docTemplate = `{
                         "name": "modelStage",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Delete the model even if it is referred to by the lineage of other models",
+                        "name": "force",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1305,6 +1433,12 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "The model is referred to by the lineage of other models (listed in 'list')",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
                         }
@@ -2979,8 +3113,21 @@ const docTemplate = `{
                 "isInitUserModel": {
                     "type": "boolean"
                 },
+                "lineage": {
+                    "description": "Lineage is given to set the lineage explicitly (e.g. 'sourceGroupId'). The field of the model's own stage is set by the server.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/lineage.MigrationLineage"
+                        }
+                    ]
+                },
                 "onpremiseInfraModel": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                },
+                "parentId": {
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra or software) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "type": "string",
+                    "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
                 },
                 "region": {
                     "type": "string"
@@ -3081,8 +3228,21 @@ const docTemplate = `{
                 "isInitUserModel": {
                     "type": "boolean"
                 },
+                "lineage": {
+                    "description": "Lineage is given to set the lineage explicitly (e.g. 'sourceGroupId'). The field of the model's own stage is set by the server.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/lineage.MigrationLineage"
+                        }
+                    ]
+                },
                 "nodeId": {
                     "type": "string"
+                },
+                "parentId": {
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra or software) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "type": "string",
+                    "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
                 },
                 "sourceSoftwareModel": {
                     "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
@@ -3320,17 +3480,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GetModelsResp": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.ModelRespInfo"
-                    }
-                }
-            }
-        },
         "handler.GetModelsVersionResp": {
             "type": "object",
             "properties": {
@@ -3516,83 +3665,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.TargetSoftwareModelRespInfo"
                     }
-                }
-            }
-        },
-        "handler.ModelRespInfo": {
-            "type": "object",
-            "required": [
-                "cloudInfraModel",
-                "onpremiseInfraModel",
-                "sourceSoftwareModel",
-                "targetSoftwareModel"
-            ],
-            "properties": {
-                "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
-                },
-                "cloudModelVersion": {
-                    "type": "string"
-                },
-                "createTime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "onpremModelVersion": {
-                    "type": "string"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "sourceSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
-                },
-                "targetSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
                 }
             }
         },
@@ -4098,6 +4170,27 @@ const docTemplate = `{
                 },
                 "userModelVersion": {
                     "type": "string"
+                }
+            }
+        },
+        "lineage.MigrationLineage": {
+            "type": "object",
+            "properties": {
+                "planningModelId": {
+                    "type": "string",
+                    "example": "plan-mdl-101"
+                },
+                "sourceGroupId": {
+                    "type": "string",
+                    "example": "sg-ecommerce-prod"
+                },
+                "sourceModelId": {
+                    "type": "string",
+                    "example": "src-mdl-101"
+                },
+                "targetModelId": {
+                    "type": "string",
+                    "example": "tgt-mdl-201"
                 }
             }
         },
@@ -5128,17 +5221,16 @@ const docTemplate = `{
         "softwaremodel.Kubernetes": {
             "type": "object",
             "required": [
-                "kube_config",
                 "resources",
                 "version"
             ],
             "properties": {
                 "kube_config": {
+                    "description": "Empty: the consumer fetches it from cm-honeybee by connection id",
                     "type": "string"
                 },
                 "resources": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "$ref": "#/definitions/softwaremodel.KubernetesResources"
                 },
                 "version": {
                     "description": "Same as release",
@@ -5146,30 +5238,186 @@ const docTemplate = `{
                 }
             }
         },
+        "softwaremodel.KubernetesHelmRelease": {
+            "type": "object",
+            "required": [
+                "name",
+                "namespace"
+            ],
+            "properties": {
+                "chart": {
+                    "type": "string"
+                },
+                "chartVersion": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                }
+            }
+        },
         "softwaremodel.KubernetesMigrationInfo": {
             "type": "object",
             "required": [
-                "kube_config",
                 "resources",
                 "velero",
                 "version"
             ],
             "properties": {
                 "kube_config": {
+                    "description": "Empty: the consumer fetches it from cm-honeybee by connection id",
                     "type": "string"
                 },
                 "order": {
                     "type": "integer"
                 },
                 "resources": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "$ref": "#/definitions/softwaremodel.KubernetesResources"
                 },
                 "velero": {
                     "$ref": "#/definitions/softwaremodel.KubernetesVelero"
                 },
                 "version": {
                     "description": "Same as release",
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.KubernetesPersistentVolume": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "accessModes": {
+                    "description": "ReadWriteOnce, ReadWriteMany, ...; the target storage has to offer the same",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "capacity": {
+                    "description": "as the cluster reports it, e.g. \"1Gi\"",
+                    "type": "string"
+                },
+                "claimName": {
+                    "type": "string"
+                },
+                "claimNamespace": {
+                    "description": "the PVC it is bound to; a PV is cluster-scoped",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "reclaimPolicy": {
+                    "description": "Retain leaves the source volume behind, Delete does not",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Bound, Available, Released, Failed",
+                    "type": "string"
+                },
+                "storageClass": {
+                    "description": "the class that provisioned it",
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.KubernetesPersistentVolumeClaim": {
+            "type": "object",
+            "required": [
+                "name",
+                "namespace"
+            ],
+            "properties": {
+                "accessModes": {
+                    "description": "ReadWriteOnce, ReadWriteMany, ...; the target storage has to offer the same",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "storageClass": {
+                    "description": "the class it was bound through, mapped onto a target class",
+                    "type": "string"
+                }
+            }
+        },
+        "softwaremodel.KubernetesResources": {
+            "type": "object",
+            "properties": {
+                "clusterScopedWorkloads": {
+                    "description": "kind -\u003e count, for the kinds that belong to no namespace",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "helmReleases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.KubernetesHelmRelease"
+                    }
+                },
+                "namespaces": {
+                    "description": "what included namespaces are picked from",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "persistentVolumeClaims": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.KubernetesPersistentVolumeClaim"
+                    }
+                },
+                "persistentVolumes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.KubernetesPersistentVolume"
+                    }
+                },
+                "storageClasses": {
+                    "description": "what storage class mappings are picked from",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/softwaremodel.KubernetesStorageClass"
+                    }
+                },
+                "workloads": {
+                    "description": "namespace -\u003e kind -\u003e count; Velero migrates a namespace at a time",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "softwaremodel.KubernetesStorageClass": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "provisioner": {
+                    "description": "what a source class is matched to a target class on",
                     "type": "string"
                 }
             }
