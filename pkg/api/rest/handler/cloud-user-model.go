@@ -332,7 +332,8 @@ type cloudModelRecord struct {
 // @ID CreateInfraModel
 // @Summary Create a new infra migration user model (on-premise or cloud)
 // @Description Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.
-// @Description The 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.
+// @Description The 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'modelVersion', and is stored in that struct's form.
+// @Description The former query parameters 'onpremModelVersion' and 'cloudModelVersion' are no longer accepted (400 Bad Request). Use 'modelVersion' instead.
 // @Description (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
 // @Description [Lineage] 'parentId' is the ID of the infra model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
 // @Description 'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
@@ -341,8 +342,7 @@ type cloudModelRecord struct {
 // @Produce  json
 // @Param modelType  query string true  "Type of infra model to create" Enums(onprem, cloud)
 // @Param modelStage query string true  "Stage of infra model to create" Enums(source, planning, target)
-// @Param onpremModelVersion query string false "On-premise model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=onprem (ignored for modelType=cloud only if it equals 'cloudModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions."
-// @Param cloudModelVersion query string false "Cloud model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=cloud (ignored for modelType=onprem only if it equals 'onpremModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions."
+// @Param modelVersion query string false "Model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). If empty, the latest tag is used. See 'GET /model/version' for available versions."
 // @Param Model body CreateInfraModelReq true "Infra model information"
 // @Success 201 {object} object "Successfully created the infra migration user model"
 // @Failure 400 {object} model.Response "Invalid request parameter"
@@ -381,23 +381,15 @@ func CreateInfraModel(c echo.Context) error {
 	isCloudModel := strings.EqualFold(modelTypeParam, "cloud")
 	log.Info().Msgf("# CreateInfraModel: modelType=[%s], modelStage=[%s]", modelTypeParam, modelStage)
 
-	onpremModelVerParam := strings.TrimSpace(c.QueryParam("onpremModelVersion"))
-	cloudModelVerParam := strings.TrimSpace(c.QueryParam("cloudModelVersion"))
-	requestedVer := onpremModelVerParam
-	// The parameter of the other model type is accepted only if it is the same version
-	// (both are pre-filled with the same version in the per-version API definition of Swagger UI).
-	if isCloudModel {
-		requestedVer = cloudModelVerParam
-		if onpremModelVerParam != "" && onpremModelVerParam != cloudModelVerParam {
-			newErr := fmt.Errorf("invalid request: 'onpremModelVersion' cannot be used with modelType 'cloud'. Use 'cloudModelVersion' instead")
+	// The former parameters are rejected instead of being ignored, because an ignored version would silently select the latest tag.
+	for _, formerParam := range []string{"onpremModelVersion", "cloudModelVersion"} {
+		if c.QueryParams().Has(formerParam) {
+			newErr := fmt.Errorf("invalid request: '%s' is no longer supported. Use 'modelVersion' instead", formerParam)
 			log.Warn().Msg(newErr.Error())
 			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
 		}
-	} else if cloudModelVerParam != "" && cloudModelVerParam != onpremModelVerParam {
-		newErr := fmt.Errorf("invalid request: 'cloudModelVersion' cannot be used with modelType 'onprem'. Use 'onpremModelVersion' instead")
-		log.Warn().Msg(newErr.Error())
-		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
 	}
+	requestedVer := strings.TrimSpace(c.QueryParam("modelVersion"))
 
 	id := uuid.New().String()
 

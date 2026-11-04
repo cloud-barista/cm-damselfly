@@ -1,5 +1,19 @@
 basePath: /damselfly
 definitions:
+  cloudmodel.AvailabilityStatus:
+    enum:
+    - Available
+    - SoldOut
+    - QuotaExceeded
+    - Unsupported
+    - Unverified
+    type: string
+    x-enum-varnames:
+    - AvailabilityAvailable
+    - AvailabilitySoldOut
+    - AvailabilityQuotaExceeded
+    - AvailabilityUnsupported
+    - AvailabilityUnverified
   cloudmodel.CloudProperty:
     properties:
       csp:
@@ -374,6 +388,12 @@ definitions:
         items:
           type: string
         type: array
+      storage:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.K8sClusterStorageReq'
+        description: |-
+          Storage (optional) prepares abstract storage types after the cluster becomes Active.
+          A storage preparation failure does not fail the cluster creation.
       subnetIds:
         example:
         - subnet-01
@@ -398,6 +418,16 @@ definitions:
     - securityGroupIds
     - subnetIds
     - vNetId
+    type: object
+  cloudmodel.K8sClusterStorageReq:
+    properties:
+      storageTypes:
+        description: StorageTypes to prepare. Empty means ["ssd-general"].
+        example:
+        - ssd-general
+        items:
+          type: string
+        type: array
     type: object
   cloudmodel.K8sNodeGroupReq:
     properties:
@@ -656,6 +686,22 @@ definitions:
         items:
           type: string
         type: array
+      availabilityCheckedAt:
+        type: string
+      availabilityReason:
+        type: string
+      availabilityRefreshAfter:
+        type: string
+      availabilityStatus:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.AvailabilityStatus'
+        description: Runtime-only availability fields (never persisted to PostgreSQL;
+          populated from cache or live CSP check).
+        example: Available
+      availableZones:
+        items:
+          type: string
+        type: array
       connectionName:
         type: string
       costPerHour:
@@ -742,6 +788,10 @@ definitions:
           labelSelector
         example: wef12awefadf1221edcf
         type: string
+      unavailableZones:
+        items:
+          type: string
+        type: array
       vCPU:
         type: integer
     type: object
@@ -3075,7 +3125,8 @@ paths:
       - application/json
       description: |-
         Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.
-        The 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.
+        The 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'modelVersion', and is stored in that struct's form.
+        The former query parameters 'onpremModelVersion' and 'cloudModelVersion' are no longer accepted (400 Bad Request). Use 'modelVersion' instead.
         (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
         [Lineage] 'parentId' is the ID of the infra model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
         'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
@@ -3098,19 +3149,11 @@ paths:
         name: modelStage
         required: true
         type: string
-      - description: On-premise model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g.
-          v0.1.15). Only for modelType=onprem (ignored for modelType=cloud only if
-          it equals 'cloudModelVersion'). If empty, the latest tag is used. See 'GET
-          /model/version' for available versions.
+      - description: Model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15).
+          If empty, the latest tag is used. See 'GET /model/version' for available
+          versions.
         in: query
-        name: onpremModelVersion
-        type: string
-      - description: Cloud model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15).
-          Only for modelType=cloud (ignored for modelType=onprem only if it equals
-          'onpremModelVersion'). If empty, the latest tag is used. See 'GET /model/version'
-          for available versions.
-        in: query
-        name: cloudModelVersion
+        name: modelVersion
         type: string
       - description: Infra model information
         in: body

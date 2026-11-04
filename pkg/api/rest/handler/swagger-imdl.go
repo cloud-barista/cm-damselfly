@@ -19,10 +19,10 @@ import (
 
 // [Note]
 // Swagger UI loads an API definition once, so the body schema cannot follow the value typed into the
-// 'onpremModelVersion' / 'cloudModelVersion' query parameters. Instead, an API definition per cm-beetle/imdl
-// tagged version is provided and listed in the 'Select a definition' drop-down of Swagger UI. In the definition
-// of a version, the body of CreateInfraModel / UpdateInfraModel follows the 'OnpremInfra' / 'RecommendedInfra'
-// struct of that version, and the version query parameters default to that version.
+// 'modelVersion' query parameter. Instead, an API definition per cm-beetle/imdl tagged version is provided and
+// listed in the 'Select a definition' drop-down of Swagger UI. In the definition of a version, the body of
+// CreateInfraModel / UpdateInfraModel follows the 'OnpremInfra' / 'RecommendedInfra' struct of that version,
+// and the 'modelVersion' query parameter defaults to that version.
 
 const (
 	defaultSwaggerDocURL      = "doc.json"
@@ -173,7 +173,7 @@ func buildImdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, er
 			switch {
 			case param["in"] == "body":
 				param["schema"] = map[string]interface{}{"$ref": "#/definitions/" + reqDefName}
-			case param["in"] == "query" && (param["name"] == "onpremModelVersion" || param["name"] == "cloudModelVersion"):
+			case param["in"] == "query" && param["name"] == "modelVersion":
 				param["default"] = version
 			}
 		}
