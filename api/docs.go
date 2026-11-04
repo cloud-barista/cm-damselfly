@@ -701,6 +701,74 @@ const docTemplate = `{
                 }
             }
         },
+        "/infra-model/{id}/convert": {
+            "get": {
+                "description": "Get a stored infra migration user model converted to the struct of the cm-beetle/imdl tagged version given by 'modelVersion'. The stored model is not changed.\nOnly the conversion to the same or a newer version is allowed. A cloud model cannot be converted to a version older than v0.1.2, and a model whose stored version is not a cm-beetle/imdl tag cannot be converted.\nThe response has the fields of 'GET /infra-model/{id}', with the model version and 'onpremiseInfraModel' (or 'cloudInfraModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).\nThe values are not changed by the conversion unless a field's structure requires it. e.g. the disk sizes are kept as they are although their unit was changed from GiB to GB in the comments of v0.1.11.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Convert a stored infra migration user model to a newer model version",
+                "operationId": "ConvertInfraModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "onprem",
+                            "cloud"
+                        ],
+                        "type": "string",
+                        "description": "Type of infra model to convert",
+                        "name": "modelType",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Model version to convert to (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.19). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "modelVersion",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained the converted infra migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter, or the model cannot be converted to the version",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/model": {
             "get": {
                 "description": "Get a list of migration user models of both categories (infra and software).\nUse 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or both categories) are returned.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).",

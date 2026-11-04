@@ -3296,6 +3296,59 @@ paths:
       summary: Update a specific infra migration user model (on-premise or cloud)
       tags:
       - '[API] Migration User Models'
+  /infra-model/{id}/convert:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get a stored infra migration user model converted to the struct of the cm-beetle/imdl tagged version given by 'modelVersion'. The stored model is not changed.
+        Only the conversion to the same or a newer version is allowed. A cloud model cannot be converted to a version older than v0.1.2, and a model whose stored version is not a cm-beetle/imdl tag cannot be converted.
+        The response has the fields of 'GET /infra-model/{id}', with the model version and 'onpremiseInfraModel' (or 'cloudInfraModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
+        The values are not changed by the conversion unless a field's structure requires it. e.g. the disk sizes are kept as they are although their unit was changed from GiB to GB in the comments of v0.1.11.
+      operationId: ConvertInfraModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Type of infra model to convert
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      - description: Model version to convert to (a cm-beetle 'imdl/vX.Y.Z' tag, e.g.
+          v0.1.19). If empty, the latest tag is used. See 'GET /model/version' for
+          available versions.
+        in: query
+        name: modelVersion
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained the converted infra migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter, or the model cannot be converted
+            to the version
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Convert a stored infra migration user model to a newer model version
+      tags:
+      - '[API] Migration User Models'
   /model:
     get:
       consumes:

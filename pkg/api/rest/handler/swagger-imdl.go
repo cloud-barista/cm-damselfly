@@ -110,7 +110,7 @@ func getImdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, erro
 }
 
 // buildImdlVersionSwaggerDoc derives the API definition of a cm-beetle/imdl version from the default one.
-// Only CreateInfraModel / UpdateInfraModel are changed; the other APIs keep the built-in struct.
+// Only CreateInfraModel / UpdateInfraModel (the body) and ConvertInfraModel (the default 'modelVersion') are changed; the other APIs keep the built-in struct.
 func buildImdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, error) {
 	baseDoc, err := swag.ReadDoc()
 	if err != nil {
@@ -179,6 +179,16 @@ func buildImdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, er
 		}
 		if desc, ok := operation["description"].(string); ok {
 			operation["description"] = desc + fmt.Sprintf("\n\n(This API definition shows the request body of cm-beetle/imdl %s.)", version)
+		}
+	}
+
+	convertPathItem, _ := paths["/infra-model/{id}/convert"].(map[string]interface{})
+	convertOperation, _ := convertPathItem["get"].(map[string]interface{})
+	convertParams, _ := convertOperation["parameters"].([]interface{})
+	for _, p := range convertParams {
+		param, _ := p.(map[string]interface{})
+		if param["in"] == "query" && param["name"] == "modelVersion" {
+			param["default"] = version
 		}
 	}
 

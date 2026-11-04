@@ -120,26 +120,41 @@ func (e *ValidationError) Error() string {
 // reported as a *ValidationError, keys are canonicalized and missing fields are filled with zero values.
 // rootPath is used as a prefix in validation messages (e.g. "onpremiseInfraModel").
 func (p *Package) Normalize(data []byte, typeName, rootPath string) (json.RawMessage, error) {
+	out, _, err := p.normalize(data, typeName, rootPath, false)
+	return out, err
+}
+
+// NormalizeDroppingUnknown works like Normalize, except that the fields which the named type does not declare
+// are removed instead of being reported. The paths of the removed fields are returned.
+func (p *Package) NormalizeDroppingUnknown(data []byte, typeName, rootPath string) (json.RawMessage, []string, error) {
+	return p.normalize(data, typeName, rootPath, true)
+}
+
+func (p *Package) normalize(data []byte, typeName, rootPath string, dropUnknown bool) (json.RawMessage, []string, error) {
 	if !p.HasType(typeName) {
-		return nil, fmt.Errorf("type %q is not defined", typeName)
+		return nil, nil, fmt.Errorf("type %q is not defined", typeName)
 	}
 
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.UseNumber()
 	var v interface{}
 	if err := dec.Decode(&v); err != nil {
-		return nil, &ValidationError{Issues: []string{fmt.Sprintf("%s: invalid JSON: %v", rootPath, err)}, Total: 1}
+		return nil, nil, &ValidationError{Issues: []string{fmt.Sprintf("%s: invalid JSON: %v", rootPath, err)}, Total: 1}
 	}
 	if _, err := dec.Token(); err != io.EOF {
-		return nil, &ValidationError{Issues: []string{fmt.Sprintf("%s: invalid JSON: unexpected data after the top-level value", rootPath)}, Total: 1}
+		return nil, nil, &ValidationError{Issues: []string{fmt.Sprintf("%s: invalid JSON: unexpected data after the top-level value", rootPath)}, Total: 1}
 	}
 
-	n := &normalizer{pkg: p, fieldCache: map[*ast.StructType][]field{}}
+	n := &normalizer{pkg: p, fieldCache: map[*ast.StructType][]field{}, dropUnknown: dropUnknown}
 	out := n.value(v, ast.NewIdent(typeName), rootPath, 0)
 	if n.total > 0 {
-		return nil, &ValidationError{Issues: n.issues, Total: n.total}
+		return nil, nil, &ValidationError{Issues: n.issues, Total: n.total}
 	}
-	return json.Marshal(out)
+	normalized, err := json.Marshal(out)
+	if err != nil {
+		return nil, nil, err
+	}
+	return normalized, n.dropped, nil
 }
 
 // structObject is a normalized Go struct value. It is distinguished from a map value because
@@ -164,6 +179,9 @@ type normalizer struct {
 	fieldCache map[*ast.StructType][]field
 	issues     []string
 	total      int
+	// dropUnknown removes the undeclared fields and records their paths in 'dropped' instead of reporting them as issues.
+	dropUnknown bool
+	dropped     []string
 }
 
 func (n *normalizer) addf(path, format string, args ...interface{}) {
@@ -735,6 +753,10 @@ func (n *normalizer) structValue(v interface{}, st *ast.StructType, path string,
 	for _, k := range sortedKeys(obj) {
 		idx := matchField(fields, k)
 		if idx < 0 {
+			if n.dropUnknown {
+				n.dropped = append(n.dropped, joinPath(path, k))
+				continue
+			}
 			n.addf(joinPath(path, k), "unknown field")
 			continue
 		}

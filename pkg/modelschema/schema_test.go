@@ -313,3 +313,39 @@ func TestNormalizeSample(t *testing.T) {
 		t.Error("expected an error for an undefined type")
 	}
 }
+
+func TestNormalizeDroppingUnknown(t *testing.T) {
+	src := "package m\n" +
+		"type Root struct {\n" +
+		"\tName string `json:\"name\"`\n" +
+		"\tItems []Item `json:\"items\"`\n" +
+		"\tLabels map[string]string `json:\"labels,omitempty\"`\n" +
+		"}\n" +
+		"type Item struct {\n" +
+		"\tId int `json:\"id\"`\n" +
+		"}\n"
+	pkg, err := ParsePackage(map[string][]byte{"m.go": []byte(src)})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	data := []byte(`{"name":"n","old":1,"items":[{"id":1,"extra":true},{"id":2}],"labels":{"any":"kept"}}`)
+	out, dropped, err := pkg.NormalizeDroppingUnknown(data, "Root", "root")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"items":[{"id":1},{"id":2}],"labels":{"any":"kept"},"name":"n"}`
+	if string(out) != want {
+		t.Fatalf("got  %s\nwant %s", out, want)
+	}
+	if strings.Join(dropped, ",") != "root.items[0].extra,root.old" {
+		t.Fatalf("unexpected dropped fields: %v", dropped)
+	}
+
+	if _, _, err := pkg.NormalizeDroppingUnknown([]byte(`{"name":1}`), "Root", "root"); err == nil {
+		t.Fatal("a type mismatch must still be an error")
+	}
+	if _, err := pkg.Normalize(data, "Root", "root"); err == nil {
+		t.Fatal("Normalize must still report unknown fields")
+	}
+}
