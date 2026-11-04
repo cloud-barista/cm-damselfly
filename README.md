@@ -32,6 +32,10 @@ Every migration user model belongs to one of the three stages, given by the `mod
 - When creating a model, the model version can be selected by the query parameters `onpremModelVersion`, `cloudModelVersion` or `softwareModelVersion`. If omitted, the latest tag is used.
 - The model body is validated against (and stored in the form of) the struct of the selected tagged version. The Go source of that version is downloaded and parsed at runtime ([pkg/modelschema](pkg/modelschema)), so a new model version can be used without rebuilding CM-Damselfly.
 - On update, the stored model version is preserved and the body is validated against that version.
+- `GET /damselfly/infra-model/{id}/convert?modelType=onprem&modelVersion=v0.1.19` returns a stored infra model converted to the struct of a newer version, for backward compatibility. If `modelVersion` is omitted, the latest tag is used. The stored model is not changed.
+  - **Only the conversion to the same or a newer version is allowed.**
+  - A cloud model cannot be converted to a version older than `v0.1.2`, and a model whose stored version is not a tag cannot be converted (`400`).
+  - The `conversion` field of the response shows `originVersion` (the stored version), `currentVersion` (the version of the returned model), `converted`, `droppedFields` (the fields which the requested version does not have) and `warnings` (what could not be converted as it was).
 - Swagger UI lists an API definition per tagged version (`imdl/{version}/doc.json`, `smdl/{version}/doc.json`) in the **Select a definition** drop-down, so that the request body schema of each version can be checked.
 
 > [!NOTE]
@@ -58,6 +62,7 @@ All APIs are served under `http://localhost:8088/damselfly` with basic auth (def
 | GET | `/model` | Get migration user models of all categories (filters: `modelStage`, `category`, lineage) |
 | GET / POST | `/infra-model` | List / create infra models (`modelType=onprem\|cloud`, `modelStage`) |
 | GET / PUT / DELETE | `/infra-model/{id}` | Get / update / delete an infra model |
+| GET | `/infra-model/{id}/convert` | Get an infra model converted to a newer model version (`modelType=onprem\|cloud`, `modelVersion`) |
 | GET / POST | `/software-model` | List / create software models (`modelStage`) |
 | GET / PUT / DELETE | `/software-model/{id}` | Get / update / delete a software model |
 
