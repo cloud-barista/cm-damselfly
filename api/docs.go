@@ -405,7 +405,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.\nThe 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'onpremModelVersion' (or 'cloudModelVersion'), and is stored in that struct's form.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)\n[Lineage] 'parentId' is the ID of the infra model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.\n'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.",
+                "description": "Create a new infra migration user model. Use 'modelType' to select on-premise or cloud, and 'modelStage' to select the stage (source, planning or target) of the model.\nThe 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the 'OnpremInfra' (or 'RecommendedInfra') struct of the cm-beetle/imdl tagged version given by 'modelVersion', and is stored in that struct's form.\nThe former query parameters 'onpremModelVersion' and 'cloudModelVersion' are no longer accepted (400 Bad Request). Use 'modelVersion' instead.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)\n[Lineage] 'parentId' is the ID of the infra model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.\n'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.",
                 "consumes": [
                     "application/json"
                 ],
@@ -443,14 +443,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "On-premise model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=onprem (ignored for modelType=cloud only if it equals 'cloudModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
-                        "name": "onpremModelVersion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Cloud model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). Only for modelType=cloud (ignored for modelType=onprem only if it equals 'onpremModelVersion'). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
-                        "name": "cloudModelVersion",
+                        "description": "Model version (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.15). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "modelVersion",
                         "in": "query"
                     },
                     {
@@ -1964,6 +1958,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "cloudmodel.AvailabilityStatus": {
+            "type": "string",
+            "enum": [
+                "Available",
+                "SoldOut",
+                "QuotaExceeded",
+                "Unsupported",
+                "Unverified"
+            ],
+            "x-enum-varnames": [
+                "AvailabilityAvailable",
+                "AvailabilitySoldOut",
+                "AvailabilityQuotaExceeded",
+                "AvailabilityUnsupported",
+                "AvailabilityUnverified"
+            ]
+        },
         "cloudmodel.CloudProperty": {
             "type": "object",
             "properties": {
@@ -2431,6 +2442,14 @@ const docTemplate = `{
                         "sg-01"
                     ]
                 },
+                "storage": {
+                    "description": "Storage (optional) prepares abstract storage types after the cluster becomes Active.\nA storage preparation failure does not fail the cluster creation.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.K8sClusterStorageReq"
+                        }
+                    ]
+                },
                 "subnetIds": {
                     "type": "array",
                     "items": {
@@ -2453,6 +2472,21 @@ const docTemplate = `{
                 "version": {
                     "type": "string",
                     "example": "1.30.1-aliyun.1"
+                }
+            }
+        },
+        "cloudmodel.K8sClusterStorageReq": {
+            "type": "object",
+            "properties": {
+                "storageTypes": {
+                    "description": "StorageTypes to prepare. Empty means [\"ssd-general\"].",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "ssd-general"
+                    ]
                 }
             }
         },
@@ -2799,6 +2833,30 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "availabilityCheckedAt": {
+                    "type": "string"
+                },
+                "availabilityReason": {
+                    "type": "string"
+                },
+                "availabilityRefreshAfter": {
+                    "type": "string"
+                },
+                "availabilityStatus": {
+                    "description": "Runtime-only availability fields (never persisted to PostgreSQL; populated from cache or live CSP check).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.AvailabilityStatus"
+                        }
+                    ],
+                    "example": "Available"
+                },
+                "availableZones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "connectionName": {
                     "type": "string"
                 },
@@ -2918,6 +2976,12 @@ const docTemplate = `{
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
+                },
+                "unavailableZones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "vCPU": {
                     "type": "integer"
