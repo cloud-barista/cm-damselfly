@@ -29,7 +29,8 @@ Every migration user model belongs to one of the three stages, given by the `mod
 - `GET /damselfly/model/version` returns all tagged versions of the migration models.
   - `onpremModelVersion` / `cloudModelVersion` : the `imdl/vX.Y.Z` tags of cm-beetle
   - `softwareModelVersion` : the `smdl/vX.Y.Z` tags of cm-grasshopper
-- When creating a model, the model version can be selected by the query parameters `onpremModelVersion`, `cloudModelVersion` or `softwareModelVersion`. If omitted, the latest tag is used.
+- When creating a model, the model version can be selected by the query parameter `modelVersion` (infra model) or `softwareModelVersion` (software model). If omitted, the latest tag is used.
+  - `POST /damselfly/infra-model` no longer accepts the former query parameters `onpremModelVersion` and `cloudModelVersion` (`400`). The fields of the same names in the responses are unchanged.
 - The model body is validated against (and stored in the form of) the struct of the selected tagged version. The Go source of that version is downloaded and parsed at runtime ([pkg/modelschema](pkg/modelschema)), so a new model version can be used without rebuilding CM-Damselfly.
 - On update, the stored model version is preserved and the body is validated against that version.
 - `GET /damselfly/infra-model/{id}/convert?modelType=onprem&modelVersion=v0.1.19` returns a stored infra model converted to the struct of a newer version, for backward compatibility. If `modelVersion` is omitted, the latest tag is used. The stored model is not changed.
@@ -92,7 +93,7 @@ curl -u default:default -X POST -H "Content-Type: application/json" \
 
 # 2. Create a planning (cloud) infra model derived from the source model  ->  returns "id": "<PLANNING_ID>"
 curl -u default:default -X POST -H "Content-Type: application/json" \
-  "http://localhost:8088/damselfly/infra-model?modelType=cloud&modelStage=planning&cloudModelVersion=v0.1.18" \
+  "http://localhost:8088/damselfly/infra-model?modelType=cloud&modelStage=planning&modelVersion=v0.1.18" \
   -d '{ "userModelName": "my-plan", "parentId": "<SOURCE_ID>", "cloudInfraModel": { ... } }'
 
 # 3. Create a target (cloud) infra model derived from the planning model
