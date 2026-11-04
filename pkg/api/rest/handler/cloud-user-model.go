@@ -10,6 +10,7 @@ import (
 	echo "github.com/labstack/echo/v4"
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
+	"github.com/cloud-barista/cm-damselfly/pkg/modelschema"
 	"github.com/rs/zerolog/log"
 
 	model 			"github.com/cloud-barista/cm-damselfly/pkg/api/rest/model"
@@ -512,50 +513,45 @@ func CreateInfraModel(c echo.Context) error {
 // @Failure 500 {object} model.Response
 // @Router /infra-model/{id} [get]
 func GetInfraModel(c echo.Context) error {
+	m, _, status, err := getStoredInfraModel(c, "GetInfraModel")
+	if err != nil {
+		return c.JSON(status, model.Response{Success: false, Text: err.Error()})
+	}
+	return c.JSON(http.StatusOK, m)
+}
+
+// getStoredInfraModel validates the 'id' and 'modelType' parameters and returns the stored infra model
+// with 'modelStage' and 'lineage' filled in, and whether it is a cloud model.
+// On failure, it also returns the HTTP status code to respond with.
+func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}, bool, int, error) {
 	if strings.EqualFold(c.Param("id"), "") {
 		newErr := fmt.Errorf("invalid request: model id is required")
 		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		return nil, false, http.StatusBadRequest, newErr
 	}
 
 	modelTypeParam := c.QueryParam("modelType")
 	if !strings.EqualFold(modelTypeParam, "onprem") && !strings.EqualFold(modelTypeParam, "cloud") {
 		newErr := fmt.Errorf("invalid request: 'modelType' must be 'onprem' or 'cloud', got '%s'", modelTypeParam)
 		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		return nil, false, http.StatusBadRequest, newErr
 	}
 
 	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
-	log.Info().Msgf("# GetInfraModel: id=[%s], modelType=[%s]", c.Param("id"), modelTypeParam)
+	log.Info().Msgf("# %s: id=[%s], modelType=[%s]", apiName, c.Param("id"), modelTypeParam)
 
 	userModel, exists := lkvstore.Get(c.Param("id"))
 	if !exists {
 		newErr := fmt.Errorf("failed to find the model from db with id: [%s]", c.Param("id"))
 		log.Error().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusNotFound, res)
+		return nil, false, http.StatusNotFound, newErr
 	}
 
 	m, ok := userModel.(map[string]interface{})
 	if !ok {
 		newErr := fmt.Errorf("internal error: unexpected model data format")
 		log.Error().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
+		return nil, false, http.StatusInternalServerError, newErr
 	}
 
 	// --- Verify modelType matches the stored model ---
@@ -563,21 +559,13 @@ func GetInfraModel(c echo.Context) error {
 	if !cloudModelExists {
 		newErr := fmt.Errorf("'isCloudModel' does not exist. This is neither on-premise nor cloud user model")
 		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		return nil, false, http.StatusBadRequest, newErr
 	}
 	isCloudModelBool, ok := isCloudModelVal.(bool)
 	if !ok {
 		newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
 		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		return nil, false, http.StatusBadRequest, newErr
 	}
 	if isCloudModelBool != isCloudModelFilter {
 		expected := "onprem"
@@ -586,17 +574,111 @@ func GetInfraModel(c echo.Context) error {
 		}
 		newErr := fmt.Errorf("model type mismatch: the model with id [%s] is a '%s' model, not '%s'", c.Param("id"), expected, modelTypeParam)
 		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		return nil, false, http.StatusBadRequest, newErr
 	}
 
 	if stage, ok := storedModelStage(m); ok {
 		m = withLineage(withModelStage(m, stage), stage)
 	}
-	return c.JSON(http.StatusOK, m)
+	return m, isCloudModelFilter, 0, nil
+}
+
+// ConvertInfraModel godoc
+// @ID ConvertInfraModel
+// @Summary Convert a stored infra migration user model to a newer model version
+// @Description Get a stored infra migration user model converted to the struct of the cm-beetle/imdl tagged version given by 'modelVersion'. The stored model is not changed.
+// @Description Only the conversion to the same or a newer version is allowed. A cloud model cannot be converted to a version older than v0.1.2, and a model whose stored version is not a cm-beetle/imdl tag cannot be converted.
+// @Description The response has the fields of 'GET /infra-model/{id}', with the model version and 'onpremiseInfraModel' (or 'cloudInfraModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
+// @Description The values are not changed by the conversion unless a field's structure requires it. e.g. the disk sizes are kept as they are although their unit was changed from GiB to GB in the comments of v0.1.11.
+// @Tags [API] Migration User Models
+// @Accept  json
+// @Produce  json
+// @Param id           path  string true  "Model ID"
+// @Param modelType    query string true  "Type of infra model to convert" Enums(onprem, cloud)
+// @Param modelVersion query string false "Model version to convert to (a cm-beetle 'imdl/vX.Y.Z' tag, e.g. v0.1.19). If empty, the latest tag is used. See 'GET /model/version' for available versions."
+// @Success 200 {object} object "Successfully obtained the converted infra migration user model"
+// @Failure 400 {object} model.Response "Invalid request parameter, or the model cannot be converted to the version"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
+// @Router /infra-model/{id}/convert [get]
+func ConvertInfraModel(c echo.Context) error {
+	m, isCloudModel, status, err := getStoredInfraModel(c, "ConvertInfraModel")
+	if err != nil {
+		return c.JSON(status, model.Response{Success: false, Text: err.Error()})
+	}
+
+	infraVersions, err := getInfraModelVersions()
+	if err != nil {
+		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+	}
+
+	currentVersion, err := selectModelVersion(c.QueryParam("modelVersion"), infraVersions)
+	if err != nil {
+		newErr := fmt.Errorf("invalid infra model version: %w", err)
+		log.Warn().Msg(newErr.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+	}
+
+	schema, versionField := onpremInfraModelSchema, "onpremModelVersion"
+	if isCloudModel {
+		schema, versionField = cloudInfraModelSchema, "cloudModelVersion"
+	}
+
+	originVersion, _ := m[versionField].(string)
+	if err := validateInfraModelConversion(isCloudModel, originVersion, currentVersion, infraVersions); err != nil {
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
+	}
+
+	converted := make(map[string]interface{}, len(m)+1)
+	for k, v := range m {
+		converted[k] = v
+	}
+
+	if originVersion == currentVersion {
+		converted["conversion"] = InfraModelConversion{
+			OriginVersion:  originVersion,
+			CurrentVersion: currentVersion,
+			Converted:      false,
+			DroppedFields:  []string{},
+			Warnings:       []string{},
+		}
+		return c.JSON(http.StatusOK, converted)
+	}
+
+	if m[schema.FieldName] == nil {
+		newErr := fmt.Errorf("the stored model with id [%s] has no '%s' to convert", c.Param("id"), schema.FieldName)
+		log.Warn().Msg(newErr.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+	}
+	rawInfraModel, err := json.Marshal(m[schema.FieldName])
+	if err != nil {
+		newErr := fmt.Errorf("failed to read the stored '%s' : [%v]", schema.FieldName, err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+	}
+
+	pkg, err := modelschema.LoadPackage(c.Request().Context(), infraModelSchemaSource, currentVersion, schema.PkgDir)
+	if err != nil {
+		newErr := fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", currentVersion, schema.PkgDir, err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+	}
+
+	infraModel, conversion, err := convertInfraModel(pkg, isCloudModel, originVersion, currentVersion, rawInfraModel)
+	if err != nil {
+		newErr := fmt.Errorf("failed to convert the model with id [%s] from %s to %s : [%v]", c.Param("id"), originVersion, currentVersion, err)
+		log.Error().Msg(newErr.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+	}
+	log.Info().Msgf("Converted the model [%s] from %s to %s (dropped fields: %d, warnings: %d)", c.Param("id"), originVersion, currentVersion, len(conversion.DroppedFields), len(conversion.Warnings))
+
+	converted[versionField] = currentVersion
+	converted[schema.FieldName] = infraModel
+	converted["conversion"] = conversion
+	return c.JSON(http.StatusOK, converted)
 }
 
 // UpdateInfraModel godoc

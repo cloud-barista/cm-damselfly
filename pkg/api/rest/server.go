@@ -175,6 +175,7 @@ func RunServer(port string) {
 	gModel.GET("/infra-model", handler.GetInfraModels)
 	gModel.POST("/infra-model", handler.CreateInfraModel)
 	gModel.GET("/infra-model/:id", handler.GetInfraModel)
+	gModel.GET("/infra-model/:id/convert", handler.ConvertInfraModel)
 	gModel.PUT("/infra-model/:id", handler.UpdateInfraModel)
 	gModel.DELETE("/infra-model/:id", handler.DeleteInfraModel)
 
