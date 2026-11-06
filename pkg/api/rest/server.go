@@ -182,6 +182,7 @@ func RunServer(port string) {
 	gModel.GET("/software-model", handler.GetSoftwareModels)
 	gModel.POST("/software-model", handler.CreateSoftwareModel)
 	gModel.GET("/software-model/:id", handler.GetSoftwareModel)
+	gModel.GET("/software-model/:id/convert", handler.ConvertSoftwareModel)
 	gModel.PUT("/software-model/:id", handler.UpdateSoftwareModel)
 	gModel.DELETE("/software-model/:id", handler.DeleteSoftwareModel)
 

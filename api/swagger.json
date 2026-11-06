@@ -1507,6 +1507,75 @@
                 }
             }
         },
+        "/software-model/{id}/convert": {
+            "get": {
+                "description": "Get a stored software migration user model converted to the struct of the cm-grasshopper/smdl tagged version given by 'modelVersion'. The stored model is not changed.\nOnly the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-grasshopper/smdl tag cannot be converted.\nThe response has the fields of 'GET /software-model/{id}', with 'softwareModelVersion' and 'sourceSoftwareModel' (or 'targetSoftwareModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).\nIf a field of the stored model has a value which does not match the type of that field in the requested version (e.g. the free-form 'resources' of Kubernetes before v0.1.4), the model is not converted (400).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Convert a stored software migration user model to a newer model version",
+                "operationId": "ConvertSoftwareModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of the software model",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Model version to convert to (a cm-grasshopper 'smdl/vX.Y.Z' tag, e.g. v0.1.4). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "modelVersion",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained the converted software migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter, or the model cannot be converted to the version",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/softwaremodel/source": {
             "get": {
                 "description": "Get a list of source software user models.",

@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/google/uuid"
 	"github.com/cloud-barista/cm-damselfly/pkg/lkvstore"
+	"github.com/cloud-barista/cm-damselfly/pkg/modelschema"
 	"github.com/rs/zerolog/log"
 	// "github.com/davecgh/go-spew/spew"
 
@@ -1037,6 +1038,101 @@ func GetSoftwareModel(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, m)
+}
+
+// ConvertSoftwareModel godoc
+// @ID ConvertSoftwareModel
+// @Summary Convert a stored software migration user model to a newer model version
+// @Description Get a stored software migration user model converted to the struct of the cm-grasshopper/smdl tagged version given by 'modelVersion'. The stored model is not changed.
+// @Description Only the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-grasshopper/smdl tag cannot be converted.
+// @Description The response has the fields of 'GET /software-model/{id}', with 'softwareModelVersion' and 'sourceSoftwareModel' (or 'targetSoftwareModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
+// @Description If a field of the stored model has a value which does not match the type of that field in the requested version (e.g. the free-form 'resources' of Kubernetes before v0.1.4), the model is not converted (400).
+// @Tags [API] Migration User Models
+// @Accept  json
+// @Produce  json
+// @Param id           path  string true  "Model ID"
+// @Param modelStage   query string true  "Stage of the software model" Enums(source, planning, target)
+// @Param modelVersion query string false "Model version to convert to (a cm-grasshopper 'smdl/vX.Y.Z' tag, e.g. v0.1.4). If empty, the latest tag is used. See 'GET /model/version' for available versions."
+// @Success 200 {object} object "Successfully obtained the converted software migration user model"
+// @Failure 400 {object} model.Response "Invalid request parameter, or the model cannot be converted to the version"
+// @Failure 404 {object} model.Response "Model Not Found"
+// @Failure 500 {object} model.Response
+// @Router /software-model/{id}/convert [get]
+func ConvertSoftwareModel(c echo.Context) error {
+	id := c.Param("id")
+	if strings.TrimSpace(id) == "" {
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+	}
+
+	modelStage, err := parseModelStageParam(c)
+	if err != nil {
+		return softwareModelErrResp(c, http.StatusBadRequest, err)
+	}
+	log.Info().Msgf("# ConvertSoftwareModel: id=[%s], modelStage=[%s], modelVersion=[%s]", id, modelStage, c.QueryParam("modelVersion"))
+
+	m, _, status, err := getSoftwareModelFromStore(id, modelStage)
+	if err != nil {
+		return softwareModelErrResp(c, status, err)
+	}
+
+	softwareVersions, err := getSoftwareModelVersions()
+	if err != nil {
+		newErr := fmt.Errorf("failed to get the tagged cm-grasshopper/smdl model versions: %w", err)
+		return softwareModelErrResp(c, http.StatusInternalServerError, newErr)
+	}
+
+	currentVersion, err := selectModelVersion(c.QueryParam("modelVersion"), softwareVersions)
+	if err != nil {
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid software model version: %w", err))
+	}
+
+	originVersion, _ := m["softwareModelVersion"].(string)
+	if err := validateSoftwareModelConversion(originVersion, currentVersion, softwareVersions); err != nil {
+		return softwareModelErrResp(c, http.StatusBadRequest, err)
+	}
+
+	converted := make(map[string]interface{}, len(m)+1)
+	for k, v := range m {
+		converted[k] = v
+	}
+
+	if originVersion == currentVersion {
+		converted["conversion"] = newSoftwareModelConversion(originVersion, currentVersion, false)
+		return c.JSON(http.StatusOK, converted)
+	}
+
+	schema := softwareModelSchemaOf(modelStage)
+	if m[schema.FieldName] == nil {
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("the stored model with id [%s] has no '%s' to convert", id, schema.FieldName))
+	}
+	rawSoftwareModel, err := json.Marshal(m[schema.FieldName])
+	if err != nil {
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to read the stored '%s' : [%v]", schema.FieldName, err))
+	}
+
+	pkg, err := modelschema.LoadPackage(c.Request().Context(), softwareModelSchemaSource, currentVersion, "")
+	if err != nil {
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-grasshopper/smdl %s model : [%v]", currentVersion, err))
+	}
+	if !pkg.HasType(schema.RootType) {
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-grasshopper/smdl %s. Use another version", schema.RootType, currentVersion))
+	}
+
+	softwareModel, conversion, err := convertSoftwareModel(pkg, modelStage, originVersion, currentVersion, rawSoftwareModel)
+	if err != nil {
+		newErr := fmt.Errorf("failed to convert the model with id [%s] from %s to %s : [%v]", id, originVersion, currentVersion, err)
+		var validationErr *modelschema.ValidationError
+		if errors.As(err, &validationErr) {
+			return softwareModelErrResp(c, http.StatusBadRequest, newErr)
+		}
+		return softwareModelErrResp(c, http.StatusInternalServerError, newErr)
+	}
+	log.Info().Msgf("Converted the model [%s] from %s to %s (dropped fields: %d)", id, originVersion, currentVersion, len(conversion.DroppedFields))
+
+	converted["softwareModelVersion"] = currentVersion
+	converted[schema.FieldName] = json.RawMessage(softwareModel)
+	converted["conversion"] = conversion
+	return c.JSON(http.StatusOK, converted)
 }
 
 // CreateSoftwareModel godoc

@@ -37,6 +37,9 @@ Every migration user model belongs to one of the three stages, given by the `mod
   - **Only the conversion to the same or a newer version is allowed.**
   - A cloud model cannot be converted to a version older than `v0.1.2`, and a model whose stored version is not a tag cannot be converted (`400`).
   - The `conversion` field of the response shows `originVersion` (the stored version), `currentVersion` (the version of the returned model), `converted`, `droppedFields` (the fields which the requested version does not have) and `warnings` (what could not be converted as it was).
+- `GET /damselfly/software-model/{id}/convert?modelStage=source&modelVersion=v0.1.4` returns a stored software model converted to the struct of a newer version in the same way. If `modelVersion` is omitted, the latest tag is used. The stored model is not changed.
+  - **Only the conversion to the same or a newer version is allowed**, and a model whose stored version is not a tag cannot be converted (`400`).
+  - The fields which the requested version does not have are removed and listed in `droppedFields` of the `conversion` field. If a value does not match the type of its field in the requested version (e.g. the free-form Kubernetes `resources` before `v0.1.4`), the model is not converted (`400`).
 - Swagger UI lists an API definition per tagged version (`imdl/{version}/doc.json`, `smdl/{version}/doc.json`) in the **Select a definition** drop-down, so that the request body schema of each version can be checked.
 
 > [!NOTE]
@@ -66,6 +69,7 @@ All APIs are served under `http://localhost:8088/damselfly` with basic auth (def
 | GET | `/infra-model/{id}/convert` | Get an infra model converted to a newer model version (`modelType=onprem\|cloud`, `modelVersion`) |
 | GET / POST | `/software-model` | List / create software models (`modelStage`) |
 | GET / PUT / DELETE | `/software-model/{id}` | Get / update / delete a software model |
+| GET | `/software-model/{id}/convert` | Get a software model converted to a newer model version (`modelStage`, `modelVersion`) |
 
 ### Legacy APIs
 The following APIs are kept for compatibility. They distinguish source and target models by `isTargetModel` only, and do not support the `planning` stage, model version selection or lineage. Use the unified APIs above for those features.
