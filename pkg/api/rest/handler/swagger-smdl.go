@@ -73,7 +73,7 @@ func getSmdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, erro
 }
 
 // buildSmdlVersionSwaggerDoc derives the API definition of a cm-grasshopper/smdl version from the default one.
-// Only CreateSoftwareModel / UpdateSoftwareModel are changed; the other APIs keep the built-in struct.
+// Only CreateSoftwareModel / UpdateSoftwareModel (the body) and ConvertSoftwareModel (the default 'modelVersion') are changed; the other APIs keep the built-in struct.
 func buildSmdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, error) {
 	baseDoc, err := swag.ReadDoc()
 	if err != nil {
@@ -143,6 +143,16 @@ func buildSmdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, er
 		}
 		if desc, ok := operation["description"].(string); ok {
 			operation["description"] = desc + fmt.Sprintf("\n\n(This API definition shows the request body of cm-grasshopper/smdl %s.)", version)
+		}
+	}
+
+	convertPathItem, _ := paths["/software-model/{id}/convert"].(map[string]interface{})
+	convertOperation, _ := convertPathItem["get"].(map[string]interface{})
+	convertParams, _ := convertOperation["parameters"].([]interface{})
+	for _, p := range convertParams {
+		param, _ := p.(map[string]interface{})
+		if param["in"] == "query" && param["name"] == "modelVersion" {
+			param["default"] = version
 		}
 	}
 
