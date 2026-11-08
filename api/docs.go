@@ -765,7 +765,7 @@ const docTemplate = `{
         },
         "/model": {
             "get": {
-                "description": "Get a list of migration user models of both categories (infra and software).\nUse 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or both categories) are returned.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).",
+                "description": "Get a list of migration user models of all categories (infra, software and rdbms).\nUse 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).",
                 "consumes": [
                     "application/json"
                 ],
@@ -775,7 +775,7 @@ const docTemplate = `{
                 "tags": [
                     "[API] Migration User Models"
                 ],
-                "summary": "Get a list of migration user models (infra and software)",
+                "summary": "Get a list of migration user models (infra, software and RDBMS)",
                 "operationId": "GetModels",
                 "parameters": [
                     {
@@ -792,10 +792,11 @@ const docTemplate = `{
                     {
                         "enum": [
                             "infra",
-                            "software"
+                            "software",
+                            "rdbms"
                         ],
                         "type": "string",
-                        "description": "Category of models to retrieve. If empty, the models of both categories are returned.",
+                        "description": "Category of models to retrieve. If empty, the models of all categories are returned.",
                         "name": "category",
                         "in": "query"
                     },
@@ -852,7 +853,7 @@ const docTemplate = `{
         },
         "/model/version": {
             "get": {
-                "description": "Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, and 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper.",
+                "description": "Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper, and 'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the RDBMS model (v0.1.13 or later).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1108,6 +1109,434 @@ const docTemplate = `{
                         "description": "Invalid Request",
                         "schema": {
                             "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/rdbms-model": {
+            "get": {
+                "description": "Get a list of RDBMS migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a list of RDBMS migration user models (source, planning or target)",
+                "operationId": "GetRDBMSModels",
+                "parameters": [
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of RDBMS model to retrieve",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceGroupId'",
+                        "name": "sourceGroupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceModelId'",
+                        "name": "sourceModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.planningModelId'",
+                        "name": "planningModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.targetModelId'",
+                        "name": "targetModelId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained RDBMS migration user models",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new RDBMS migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.\nProvide 'sourceRDBMSModel' for a source or planning model (modelStage=source or planning), or 'targetRDBMSModel' for a target model (modelStage=target).\nThe 'sourceRDBMSModel' (or 'targetRDBMSModel') is validated against the 'SourceRDBMS' (or 'RecommendedRDBMS') struct of the cm-beetle/imdl tagged version given by 'rdbmsModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n[Lineage] 'parentId' is the ID of the RDBMS model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.\n'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Create a new RDBMS migration user model (source, planning or target)",
+                "operationId": "CreateRDBMSModel",
+                "parameters": [
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of RDBMS model to create",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "RDBMS model version (a cm-beetle 'imdl/vX.Y.Z' tag of v0.1.13 or later, e.g. v0.1.20). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "rdbmsModelVersion",
+                        "in": "query"
+                    },
+                    {
+                        "description": "RDBMS model information",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateRDBMSModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created the RDBMS migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Parent (or lineage) model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/rdbms-model/{id}": {
+            "get": {
+                "description": "Get a specific RDBMS migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a specific RDBMS migration user model (source, planning or target)",
+                "operationId": "GetRDBMSModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of the RDBMS model",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained the RDBMS migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a specific RDBMS migration user model by ID.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nProvide 'sourceRDBMSModel' if the (resulting) stage is source or planning, or 'targetRDBMSModel' if it is target.\n'createTime' and 'rdbmsModelVersion' of the stored model are preserved, and 'sourceRDBMSModel' (or 'targetRDBMSModel') is validated against the struct of that cm-beetle/imdl tagged version.\n[Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that RDBMS model in the previous stage (source → planning → target).\nThe stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Update a specific RDBMS migration user model (source, planning or target)",
+                "operationId": "UpdateRDBMSModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage to change the RDBMS model to. If empty, the stored stage is preserved.",
+                        "name": "modelStage",
+                        "in": "query"
+                    },
+                    {
+                        "description": "RDBMS model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateRDBMSModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated the RDBMS migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "The stage cannot be changed: the model is referred to by the lineage of other models",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific RDBMS migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nIf the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Delete a specific RDBMS migration user model (source, planning or target)",
+                "operationId": "DeleteRDBMSModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of the RDBMS model",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Delete the model even if it is referred to by the lineage of other models",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted the RDBMS migration user model",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "The model is referred to by the lineage of other models (listed in 'list')",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/rdbms-model/{id}/convert": {
+            "get": {
+                "description": "Get a stored RDBMS migration user model converted to the struct of the cm-beetle/imdl tagged version given by 'rdbmsModelVersion'. The stored model is not changed.\nOnly the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-beetle/imdl tag with the RDBMS model (v0.1.13 or later) cannot be converted.\nThe response has the fields of 'GET /rdbms-model/{id}', with 'rdbmsModelVersion' and 'sourceRDBMSModel' (or 'targetRDBMSModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).\n[Migrations] v0.1.14: the instances of 'sourceRDBMSModel' were restructured into 'dbNode' and 'dbEngine' ('vcpu', 'memoryMb' and 'storageSizeGb' are converted as estimates and reported in 'warnings'). v0.1.18: 'characterSet' of the target databases is converted to 'charset'.\nIf a field of the stored model has a value which does not match the type of that field in the requested version, the model is not converted (400).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Convert a stored RDBMS migration user model to a newer model version",
+                "operationId": "ConvertRDBMSModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of the RDBMS model",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Model version to convert to (a cm-beetle 'imdl/vX.Y.Z' tag of v0.1.13 or later, e.g. v0.1.20). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "rdbmsModelVersion",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained the converted RDBMS migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter, or the model cannot be converted to the version",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "404": {
@@ -3326,7 +3755,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "parentId": {
-                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra or software) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.",
                     "type": "string",
                     "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
                 },
@@ -3420,6 +3849,48 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CreateRDBMSModelReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "lineage": {
+                    "description": "Lineage is given to set the lineage explicitly (e.g. 'sourceGroupId'). The field of the model's own stage is set by the server.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/lineage.MigrationLineage"
+                        }
+                    ]
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "type": "string",
+                    "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
+                },
+                "sourceRDBMSModel": {
+                    "$ref": "#/definitions/rdbmsmodel.SourceRDBMS"
+                },
+                "targetRDBMSModel": {
+                    "$ref": "#/definitions/rdbmsmodel.RecommendedRDBMS"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.CreateSoftwareModelReq": {
             "type": "object",
             "properties": {
@@ -3441,7 +3912,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "parentId": {
-                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra or software) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.",
                     "type": "string",
                     "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
                 },
@@ -3879,6 +4350,12 @@ const docTemplate = `{
                     }
                 },
                 "onpremModelVersion": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "rdbmsModelVersion": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -5027,6 +5504,446 @@ const docTemplate = `{
                 "source": {
                     "description": "Optionally stores the source address (used for policy-based routing)",
                     "type": "string"
+                }
+            }
+        },
+        "rdbmsmodel.CloudProperty": {
+            "type": "object",
+            "properties": {
+                "csp": {
+                    "description": "Cloud service provider (e.g., aws, azure, gcp, ncp, alibaba, etc.)",
+                    "type": "string",
+                    "example": "aws"
+                },
+                "region": {
+                    "description": "Region identifier",
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "zone": {
+                    "description": "Optional Zone identifier",
+                    "type": "string",
+                    "example": "ap-northeast-2a"
+                }
+            }
+        },
+        "rdbmsmodel.CpuProperty": {
+            "type": "object",
+            "required": [
+                "cores",
+                "cpus",
+                "threads"
+            ],
+            "properties": {
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "cores": {
+                    "description": "Number of physical cores per CPU",
+                    "type": "integer",
+                    "example": 2
+                },
+                "cpus": {
+                    "description": "Number of physical CPUs (sockets)",
+                    "type": "integer",
+                    "example": 1
+                },
+                "maxSpeed": {
+                    "description": "Maximum speed in GHz",
+                    "type": "number",
+                    "example": 3.6
+                },
+                "model": {
+                    "type": "string",
+                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+                },
+                "threads": {
+                    "description": "Number of logical CPUs (threads) per CPU",
+                    "type": "integer",
+                    "example": 2
+                },
+                "vendor": {
+                    "type": "string",
+                    "example": "GenuineIntel"
+                }
+            }
+        },
+        "rdbmsmodel.DBEngineProperty": {
+            "type": "object",
+            "required": [
+                "engine",
+                "engineVersion"
+            ],
+            "properties": {
+                "engine": {
+                    "description": "\"mysql\", \"mariadb\", \"postgresql\"",
+                    "type": "string",
+                    "example": "mysql"
+                },
+                "engineVersion": {
+                    "description": "e.g. \"8.0\", \"10.5\"",
+                    "type": "string",
+                    "example": "8.0"
+                },
+                "port": {
+                    "description": "DB port (default: 3306)",
+                    "type": "integer",
+                    "example": 3306
+                },
+                "role": {
+                    "description": "\"primary\" (writer), \"replica\" (reader), \"standalone\"",
+                    "type": "string",
+                    "example": "primary"
+                }
+            }
+        },
+        "rdbmsmodel.DBNodeProperty": {
+            "type": "object",
+            "required": [
+                "cpu",
+                "memory"
+            ],
+            "properties": {
+                "cpu": {
+                    "$ref": "#/definitions/rdbmsmodel.CpuProperty"
+                },
+                "dataDisks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.DiskProperty"
+                    }
+                },
+                "hostname": {
+                    "type": "string",
+                    "example": "db-node-01"
+                },
+                "machineId": {
+                    "type": "string",
+                    "example": "node-550e8400-e29b-41d4-a716-446655440000"
+                },
+                "memory": {
+                    "$ref": "#/definitions/rdbmsmodel.MemoryProperty"
+                },
+                "rootDisk": {
+                    "$ref": "#/definitions/rdbmsmodel.DiskProperty"
+                }
+            }
+        },
+        "rdbmsmodel.DiskProperty": {
+            "type": "object",
+            "required": [
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GB",
+                    "type": "integer"
+                },
+                "label": {
+                    "type": "string",
+                    "example": "/"
+                },
+                "totalSize": {
+                    "description": "Unit GB",
+                    "type": "integer",
+                    "example": 100
+                },
+                "type": {
+                    "description": "SSD, HDD",
+                    "type": "string",
+                    "example": "SSD"
+                },
+                "used": {
+                    "description": "Unit GB",
+                    "type": "integer"
+                }
+            }
+        },
+        "rdbmsmodel.InnerDatabaseProperty": {
+            "type": "object",
+            "required": [
+                "databaseName"
+            ],
+            "properties": {
+                "characterSet": {
+                    "type": "string",
+                    "example": "utf8mb4"
+                },
+                "collation": {
+                    "type": "string",
+                    "example": "utf8mb4_unicode_ci"
+                },
+                "databaseName": {
+                    "type": "string",
+                    "example": "sampledb"
+                },
+                "rowCount": {
+                    "type": "integer",
+                    "example": 150000
+                },
+                "sizeMb": {
+                    "type": "number",
+                    "example": 512.5
+                },
+                "tableCount": {
+                    "type": "integer",
+                    "example": 24
+                }
+            }
+        },
+        "rdbmsmodel.MemoryProperty": {
+            "type": "object",
+            "required": [
+                "totalSize"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 4
+                },
+                "type": {
+                    "type": "string",
+                    "example": "DDR4"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "rdbmsmodel.RecommendedRDBMS": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Human-readable summary",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "\"recommended\", \"partial\", \"failed\"",
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/rdbmsmodel.CloudProperty"
+                },
+                "targetRDBMSInstances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.TargetRDBMSInstance"
+                    }
+                },
+                "warnings": {
+                    "description": "CSP feature-support warnings",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.SourceRDBMS": {
+            "type": "object",
+            "required": [
+                "sourceRDBMSInstances"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "sourceCloud": {
+                    "$ref": "#/definitions/rdbmsmodel.CloudProperty"
+                },
+                "sourceRDBMSInstances": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.SourceRDBMSProperty"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.SourceRDBMSProperty": {
+            "type": "object",
+            "required": [
+                "dbEngine",
+                "dbNode"
+            ],
+            "properties": {
+                "dbEngine": {
+                    "description": "DBEngine represents the database engine software (type, version, port, role, HA).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rdbmsmodel.DBEngineProperty"
+                        }
+                    ]
+                },
+                "dbNode": {
+                    "description": "DBNode represents the underlying host/server infrastructure specs (CPU, Memory, Disks).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rdbmsmodel.DBNodeProperty"
+                        }
+                    ]
+                },
+                "description": {
+                    "description": "Description is an optional free-form note or business purpose.",
+                    "type": "string",
+                    "example": "Production billing service master database"
+                },
+                "displayName": {
+                    "description": "DisplayName is an optional human-friendly alias or cloud DB identifier (e.g. \"billing-db\").",
+                    "type": "string",
+                    "example": "billing-db"
+                },
+                "innerDatabases": {
+                    "description": "InnerDatabases lists the logical tenant databases residing inside this RDBMS instance.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.InnerDatabaseProperty"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.TargetDatabase": {
+            "type": "object",
+            "required": [
+                "databaseName"
+            ],
+            "properties": {
+                "charset": {
+                    "type": "string",
+                    "example": "utf8mb4"
+                },
+                "collation": {
+                    "type": "string",
+                    "example": "utf8mb4_unicode_ci"
+                },
+                "databaseName": {
+                    "type": "string",
+                    "example": "order_db"
+                }
+            }
+        },
+        "rdbmsmodel.TargetRDBMSInstance": {
+            "type": "object",
+            "required": [
+                "adminUserName",
+                "dbEngine",
+                "rdbmsName"
+            ],
+            "properties": {
+                "adminUserName": {
+                    "description": "Admin Credentials",
+                    "type": "string",
+                    "example": "dbadmin"
+                },
+                "adminUserPassword": {
+                    "type": "string",
+                    "example": "Password123!"
+                },
+                "backupRetentionDays": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "databases": {
+                    "description": "Optional Inner Databases to create after instance provisioning",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.TargetDatabase"
+                    }
+                },
+                "dbEngine": {
+                    "description": "Target Engine \u0026 Version",
+                    "type": "string",
+                    "example": "mysql"
+                },
+                "dbEngineVersion": {
+                    "type": "string",
+                    "example": "8.0"
+                },
+                "dbInstanceSpec": {
+                    "description": "Target Spec \u0026 Storage",
+                    "type": "string",
+                    "example": "db.t3.medium"
+                },
+                "deletionProtection": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "highAvailability": {
+                    "description": "Availability \u0026 Protection",
+                    "type": "boolean",
+                    "example": false
+                },
+                "iops": {
+                    "type": "string",
+                    "example": "3000"
+                },
+                "ncpDBACGToAllowAllInbound": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "nhnDBSGToAllowAllInbound": {
+                    "description": "CSP-Specific Options",
+                    "type": "boolean",
+                    "example": true
+                },
+                "publicAccess": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "rdbmsName": {
+                    "description": "Target instance name (supports Late-Binding nameSeed)",
+                    "type": "string",
+                    "example": "mig-rdbms-01"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"sg-01\"]"
+                    ]
+                },
+                "sourceInstanceName": {
+                    "description": "Source traceability",
+                    "type": "string",
+                    "example": "prod-mysql-01"
+                },
+                "sourceMachineId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "storageSize": {
+                    "description": "Disk size in GB",
+                    "type": "integer",
+                    "example": 100
+                },
+                "storageType": {
+                    "type": "string",
+                    "example": "gp3"
+                },
+                "subnetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"subnet-01\"",
+                        "\"subnet-02\"]"
+                    ]
+                },
+                "vNetId": {
+                    "description": "Network \u0026 Access",
+                    "type": "string",
+                    "example": "vnet-01"
                 }
             }
         },
