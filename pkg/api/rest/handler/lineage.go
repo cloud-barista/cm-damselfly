@@ -25,7 +25,7 @@ import (
 // ModelLineageReq holds the lineage fields of the request body for creating or updating a migration user model.
 type ModelLineageReq struct {
 	// ParentId is the ID of the model this model is derived from. It must be a model of the same category
-	// (infra or software) in the previous stage: a source model for a planning model, and a planning model for a target model.
+	// (infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.
 	ParentId string `json:"parentId,omitempty" example:"a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"`
 	// Lineage is given to set the lineage explicitly (e.g. 'sourceGroupId'). The field of the model's own stage is set by the server.
 	Lineage *lineage.MigrationLineage `json:"lineage,omitempty"`
@@ -37,12 +37,16 @@ type modelCategory string
 const (
 	categoryInfra    modelCategory = "infra"
 	categorySoftware modelCategory = "software"
+	categoryRDBMS    modelCategory = "rdbms"
 )
 
 // storedModelCategory returns the category of a stored model.
 func storedModelCategory(m map[string]interface{}) (modelCategory, bool) {
 	if isSoftwareModel, ok := m["isSoftwareModel"].(bool); ok && isSoftwareModel {
 		return categorySoftware, true
+	}
+	if isRDBMSModel, ok := m["isRDBMSModel"].(bool); ok && isRDBMSModel {
+		return categoryRDBMS, true
 	}
 	if _, ok := m["isCloudModel"].(bool); ok {
 		return categoryInfra, true

@@ -23,6 +23,7 @@ type ModelsVersionRespInfo struct {
 	OnPremModelVer   []string `json:"onpremModelVersion"`
 	CloudModelVer    []string `json:"cloudModelVersion"`
 	SoftwareModelVer []string `json:"softwareModelVersion"`
+	RDBMSModelVer    []string `json:"rdbmsModelVersion"`
 }
 
 type GetModelsVersionResp struct {
@@ -33,12 +34,13 @@ const (
 	OnPremModel string = "OnPremiseModel"
 	CloudModel  string = "CloudModel"
 	SWModel     string = "SoftwareModel"
+	RDBMSModel  string = "RDBMSModel"
 )
 
 // GetModelsVersions godoc
 // @ID GetModelsVersions
 // @Summary Get all tagged versions of the migration models
-// @Description Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, and 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper.
+// @Description Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper, and 'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the RDBMS model (v0.1.13 or later).
 // @Tags [API] Migration Models
 // @Accept  json
 // @Produce  json
@@ -73,6 +75,7 @@ func GetModelsVersions(c echo.Context) error {
 		OnPremModelVer:   infraVersions,
 		CloudModelVer:    infraVersions,
 		SoftwareModelVer: softwareVersions,
+		RDBMSModelVer:    filterRDBMSModelVersions(infraVersions),
 	}
 	res := GetModelsVersionResp{
 		ModelsVersion: modelsVersionInfo,
@@ -86,15 +89,15 @@ func GetModelsVersions(c echo.Context) error {
 
 // GetModels godoc
 // @ID GetModels
-// @Summary Get a list of migration user models (infra and software)
-// @Description Get a list of migration user models of both categories (infra and software).
-// @Description Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or both categories) are returned.
+// @Summary Get a list of migration user models (infra, software and RDBMS)
+// @Description Get a list of migration user models of all categories (infra, software and rdbms).
+// @Description Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.
 // @Description The models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param modelStage      query string false "Stage of models to retrieve. If empty, the models of all stages are returned." Enums(source, planning, target)
-// @Param category        query string false "Category of models to retrieve. If empty, the models of both categories are returned." Enums(infra, software)
+// @Param category        query string false "Category of models to retrieve. If empty, the models of all categories are returned." Enums(infra, software, rdbms)
 // @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
 // @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
 // @Param planningModelId query string false "Filter by 'lineage.planningModelId'"
@@ -115,10 +118,10 @@ func GetModels(c echo.Context) error {
 		modelStage = stage
 	}
 
-	// 'category' is optional. If it is empty, the models of both categories are returned.
+	// 'category' is optional. If it is empty, the models of all categories are returned.
 	category := modelCategory(strings.ToLower(strings.TrimSpace(c.QueryParam("category"))))
-	if category != "" && category != categoryInfra && category != categorySoftware {
-		newErr := fmt.Errorf("invalid request: 'category' must be '%s' or '%s', got '%s'", categoryInfra, categorySoftware, c.QueryParam("category"))
+	if category != "" && category != categoryInfra && category != categorySoftware && category != categoryRDBMS {
+		newErr := fmt.Errorf("invalid request: 'category' must be '%s', '%s' or '%s', got '%s'", categoryInfra, categorySoftware, categoryRDBMS, c.QueryParam("category"))
 		log.Warn().Msg(newErr.Error())
 		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
 	}
