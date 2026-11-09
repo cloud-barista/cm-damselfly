@@ -10,6 +10,7 @@ It stores and serves the models through a REST API, and supports:
 
 - **Infra migration models** (on-premise / cloud), defined by [cm-beetle/imdl](https://github.com/cloud-barista/cm-beetle/tree/main/imdl)
 - **Software migration models** (source / target), defined by [cm-grasshopper/smdl](https://github.com/cloud-barista/cm-grasshopper/tree/main/smdl)
+- **RDBMS migration models** (source / planning: `SourceRDBMS`, target: `RecommendedRDBMS`), defined by [cm-beetle/imdl/rdbms-model](https://github.com/cloud-barista/cm-beetle/tree/main/imdl/rdbms-model)
 - **Model stages** : `source` → `planning` → `target`
 - **Model version management** : create and validate models against any tagged version of the model definitions
 - **Migration lineage** : track which models were derived from which (source → planning → target)
@@ -29,7 +30,8 @@ Every migration user model belongs to one of the three stages, given by the `mod
 - `GET /damselfly/model/version` returns all tagged versions of the migration models.
   - `onpremModelVersion` / `cloudModelVersion` : the `imdl/vX.Y.Z` tags of cm-beetle
   - `softwareModelVersion` : the `smdl/vX.Y.Z` tags of cm-grasshopper
-- When creating a model, the model version can be selected by the query parameter `modelVersion` (infra model) or `softwareModelVersion` (software model). If omitted, the latest tag is used.
+  - `rdbmsModelVersion` : the `imdl/vX.Y.Z` tags of cm-beetle which have the RDBMS model (`rdbms-model`, `v0.1.13` or later)
+- When creating a model, the model version can be selected by the query parameter `modelVersion` (infra model), `softwareModelVersion` (software model) or `rdbmsModelVersion` (RDBMS model). If omitted, the latest tag is used.
   - `POST /damselfly/infra-model` no longer accepts the former query parameters `onpremModelVersion` and `cloudModelVersion` (`400`). The fields of the same names in the responses are unchanged.
 - The model body is validated against (and stored in the form of) the struct of the selected tagged version. The Go source of that version is downloaded and parsed at runtime ([pkg/modelschema](pkg/modelschema)), so a new model version can be used without rebuilding CM-Damselfly.
 - On update, the stored model version is preserved and the body is validated against that version.
@@ -40,6 +42,10 @@ Every migration user model belongs to one of the three stages, given by the `mod
 - `GET /damselfly/software-model/{id}/convert?modelStage=source&modelVersion=v0.1.4` returns a stored software model converted to the struct of a newer version in the same way. If `modelVersion` is omitted, the latest tag is used. The stored model is not changed.
   - **Only the conversion to the same or a newer version is allowed**, and a model whose stored version is not a tag cannot be converted (`400`).
   - The fields which the requested version does not have are removed and listed in `droppedFields` of the `conversion` field. If a value does not match the type of its field in the requested version (e.g. the free-form Kubernetes `resources` before `v0.1.4`), the model is not converted (`400`).
+- `GET /damselfly/rdbms-model/{id}/convert?modelStage=source&rdbmsModelVersion=v0.1.20` returns a stored RDBMS model converted to the struct of a newer version in the same way. If `rdbmsModelVersion` is omitted, the latest tag is used. The stored model is not changed.
+  - **Only the conversion to the same or a newer version is allowed**, and a model whose stored version is not a tag with the RDBMS model (`v0.1.13` or later) cannot be converted (`400`).
+  - `v0.1.14`: the instances of a source/planning model (`sourceRDBMSModel`) are restructured into `dbNode` and `dbEngine` (`instanceName` → `displayName`, `databases` → `innerDatabases`). `vcpu`, `memoryMb` and `storageSizeGb` are converted as estimates and reported in `warnings`, and the fields without a counterpart (e.g. `highAvailability`) are dropped.
+  - `v0.1.18`: `characterSet` of the target databases (`targetRDBMSModel`, removed in `v0.1.17`) is converted to `charset`.
 - Swagger UI lists an API definition per tagged version (`imdl/{version}/doc.json`, `smdl/{version}/doc.json`) in the **Select a definition** drop-down, so that the request body schema of each version can be checked.
 
 > [!NOTE]
@@ -70,6 +76,9 @@ All APIs are served under `http://localhost:8088/damselfly` with basic auth (def
 | GET / POST | `/software-model` | List / create software models (`modelStage`) |
 | GET / PUT / DELETE | `/software-model/{id}` | Get / update / delete a software model |
 | GET | `/software-model/{id}/convert` | Get a software model converted to a newer model version (`modelStage`, `modelVersion`) |
+| GET / POST | `/rdbms-model` | List / create RDBMS models (`modelStage`, `rdbmsModelVersion`) |
+| GET / PUT / DELETE | `/rdbms-model/{id}` | Get / update / delete an RDBMS model |
+| GET | `/rdbms-model/{id}/convert` | Get an RDBMS model converted to a newer model version (`modelStage`, `rdbmsModelVersion`) |
 
 ### Legacy APIs
 The following APIs are kept for compatibility. They distinguish source and target models by `isTargetModel` only, and do not support the `planning` stage, model version selection or lineage. Use the unified APIs above for those features.

@@ -21,6 +21,7 @@ import (
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremisemodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
+	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
 	"github.com/cloud-barista/cm-damselfly/pkg/modelschema"
 	softwaremodel "github.com/cloud-barista/cm-grasshopper/smdl"
 	echo "github.com/labstack/echo/v4"
@@ -177,6 +178,33 @@ func getInfraModelVersions() ([]string, error) {
 // getSoftwareModelVersions returns the tagged versions of cm-grasshopper/smdl (software models) in ascending order.
 func getSoftwareModelVersions() ([]string, error) {
 	return getModelTagVersions(softwareModelTagSource)
+}
+
+// minRDBMSModelVersion is the oldest cm-beetle/imdl tagged version which has the 'rdbms-model' package.
+const minRDBMSModelVersion = "v0.1.13"
+
+// getRDBMSModelVersions returns the tagged versions of cm-beetle/imdl which have the RDBMS model, in ascending order.
+func getRDBMSModelVersions() ([]string, error) {
+	infraVersions, err := getInfraModelVersions()
+	if err != nil {
+		return nil, err
+	}
+	versions := filterRDBMSModelVersions(infraVersions)
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no cm-beetle/imdl tagged versions with the RDBMS model (%s or later) found", minRDBMSModelVersion)
+	}
+	return versions, nil
+}
+
+// filterRDBMSModelVersions returns the cm-beetle/imdl versions which have the RDBMS model (minRDBMSModelVersion or later).
+func filterRDBMSModelVersions(infraVersions []string) []string {
+	versions := []string{}
+	for _, version := range infraVersions {
+		if compareModuleVersions(version, minRDBMSModelVersion) >= 0 {
+			versions = append(versions, version)
+		}
+	}
+	return versions
 }
 
 // getLatestInfraModelVersion returns the latest tagged version of cm-beetle/imdl.
@@ -503,7 +531,82 @@ func normalizeSoftwareModelWithCompiledStruct(stage ModelStage, raw json.RawMess
 	return normalized, 0, nil
 }
 
-// ModelStage is the stage of a migration user model (infra or software) in the migration process.
+// The RDBMS model structs are declared in the 'rdbms-model' package of the cm-beetle/imdl module, which is
+// downloaded from the same source as the infra models.
+const rdbmsModelPkgDir = "rdbms-model"
+
+type rdbmsModelSchemaInfo struct {
+	RootType  string
+	FieldName string
+}
+
+var (
+	sourceRDBMSModelSchema = rdbmsModelSchemaInfo{RootType: "SourceRDBMS", FieldName: "sourceRDBMSModel"}
+	targetRDBMSModelSchema = rdbmsModelSchemaInfo{RootType: "RecommendedRDBMS", FieldName: "targetRDBMSModel"}
+)
+
+// rdbmsModelSchemaOf returns the RDBMS model struct used for the given model stage.
+// A source or planning model follows 'SourceRDBMS', and a target model follows 'RecommendedRDBMS'.
+func rdbmsModelSchemaOf(stage ModelStage) rdbmsModelSchemaInfo {
+	if stage == StageTarget {
+		return targetRDBMSModelSchema
+	}
+	return sourceRDBMSModelSchema
+}
+
+// normalizeRDBMSModel validates the raw RDBMS model against the Go struct (SourceRDBMS or RecommendedRDBMS)
+// of the given cm-beetle/imdl tagged version and returns it as that struct would be serialized.
+// On failure, it also returns the HTTP status code to respond with.
+func normalizeRDBMSModel(ctx context.Context, version string, stage ModelStage, raw json.RawMessage) (json.RawMessage, int, error) {
+	schema := rdbmsModelSchemaOf(stage)
+
+	if trimmed := bytes.TrimSpace(raw); len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+	}
+
+	pkg, err := modelschema.LoadPackage(ctx, infraModelSchemaSource, version, rdbmsModelPkgDir)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", version, rdbmsModelPkgDir, err)
+	}
+	if !pkg.HasType(schema.RootType) {
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-beetle/imdl %s '%s'. Use another version", schema.RootType, version, rdbmsModelPkgDir)
+	}
+
+	normalized, err := pkg.Normalize(raw, schema.RootType, schema.FieldName)
+	if err != nil {
+		var validationErr *modelschema.ValidationError
+		if errors.As(err, &validationErr) {
+			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match the '%s' struct of cm-beetle/imdl %s : [%v]", schema.FieldName, schema.RootType, version, err)
+		}
+		return nil, http.StatusInternalServerError, err
+	}
+	log.Info().Msgf("Validated '%s' against the '%s' struct of cm-beetle/imdl %s", schema.FieldName, schema.RootType, version)
+	return normalized, 0, nil
+}
+
+// normalizeRDBMSModelWithCompiledStruct decodes the raw RDBMS model with the cm-beetle/imdl version compiled into
+// cm-damselfly. It is used only for existing models whose version is not a cm-beetle/imdl tag with the RDBMS model.
+func normalizeRDBMSModelWithCompiledStruct(stage ModelStage, raw json.RawMessage) (json.RawMessage, int, error) {
+	schema := rdbmsModelSchemaOf(stage)
+	var target interface{} = new(rdbmsmodel.SourceRDBMS)
+	if stage == StageTarget {
+		target = new(rdbmsmodel.RecommendedRDBMS)
+	}
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+	}
+	if err := json.Unmarshal(trimmed, target); err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid RDBMS model : [%v]", err)
+	}
+	normalized, err := json.Marshal(target)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return normalized, 0, nil
+}
+
+// ModelStage is the stage of a migration user model (infra, software or RDBMS) in the migration process.
 type ModelStage string
 
 const (

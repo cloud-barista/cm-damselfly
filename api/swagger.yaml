@@ -980,7 +980,7 @@ definitions:
       parentId:
         description: |-
           ParentId is the ID of the model this model is derived from. It must be a model of the same category
-          (infra or software) in the previous stage: a source model for a planning model, and a planning model for a target model.
+          (infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.
         example: a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b
         type: string
       region:
@@ -1042,6 +1042,36 @@ definitions:
     required:
     - onpremiseInfraModel
     type: object
+  handler.CreateRDBMSModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      lineage:
+        allOf:
+        - $ref: '#/definitions/lineage.MigrationLineage'
+        description: Lineage is given to set the lineage explicitly (e.g. 'sourceGroupId').
+          The field of the model's own stage is set by the server.
+      nodeId:
+        type: string
+      parentId:
+        description: |-
+          ParentId is the ID of the model this model is derived from. It must be a model of the same category
+          (infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.
+        example: a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b
+        type: string
+      sourceRDBMSModel:
+        $ref: '#/definitions/rdbmsmodel.SourceRDBMS'
+      targetRDBMSModel:
+        $ref: '#/definitions/rdbmsmodel.RecommendedRDBMS'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    type: object
   handler.CreateSoftwareModelReq:
     properties:
       description:
@@ -1058,7 +1088,7 @@ definitions:
       parentId:
         description: |-
           ParentId is the ID of the model this model is derived from. It must be a model of the same category
-          (infra or software) in the previous stage: a source model for a planning model, and a planning model for a target model.
+          (infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.
         example: a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b
         type: string
       sourceSoftwareModel:
@@ -1346,6 +1376,10 @@ definitions:
           type: string
         type: array
       onpremModelVersion:
+        items:
+          type: string
+        type: array
+      rdbmsModelVersion:
         items:
           type: string
         type: array
@@ -2146,6 +2180,329 @@ definitions:
       source:
         description: Optionally stores the source address (used for policy-based routing)
         type: string
+    type: object
+  rdbmsmodel.CloudProperty:
+    properties:
+      csp:
+        description: Cloud service provider (e.g., aws, azure, gcp, ncp, alibaba,
+          etc.)
+        example: aws
+        type: string
+      region:
+        description: Region identifier
+        example: ap-northeast-2
+        type: string
+      zone:
+        description: Optional Zone identifier
+        example: ap-northeast-2a
+        type: string
+    type: object
+  rdbmsmodel.CpuProperty:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      cores:
+        description: Number of physical cores per CPU
+        example: 2
+        type: integer
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 1
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+        type: string
+      threads:
+        description: Number of logical CPUs (threads) per CPU
+        example: 2
+        type: integer
+      vendor:
+        example: GenuineIntel
+        type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  rdbmsmodel.DBEngineProperty:
+    properties:
+      engine:
+        description: '"mysql", "mariadb", "postgresql"'
+        example: mysql
+        type: string
+      engineVersion:
+        description: e.g. "8.0", "10.5"
+        example: "8.0"
+        type: string
+      port:
+        description: 'DB port (default: 3306)'
+        example: 3306
+        type: integer
+      role:
+        description: '"primary" (writer), "replica" (reader), "standalone"'
+        example: primary
+        type: string
+    required:
+    - engine
+    - engineVersion
+    type: object
+  rdbmsmodel.DBNodeProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/rdbmsmodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/rdbmsmodel.DiskProperty'
+        type: array
+      hostname:
+        example: db-node-01
+        type: string
+      machineId:
+        example: node-550e8400-e29b-41d4-a716-446655440000
+        type: string
+      memory:
+        $ref: '#/definitions/rdbmsmodel.MemoryProperty'
+      rootDisk:
+        $ref: '#/definitions/rdbmsmodel.DiskProperty'
+    required:
+    - cpu
+    - memory
+    type: object
+  rdbmsmodel.DiskProperty:
+    properties:
+      available:
+        description: Unit GB
+        type: integer
+      label:
+        example: /
+        type: string
+      totalSize:
+        description: Unit GB
+        example: 100
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  rdbmsmodel.InnerDatabaseProperty:
+    properties:
+      characterSet:
+        example: utf8mb4
+        type: string
+      collation:
+        example: utf8mb4_unicode_ci
+        type: string
+      databaseName:
+        example: sampledb
+        type: string
+      rowCount:
+        example: 150000
+        type: integer
+      sizeMb:
+        example: 512.5
+        type: number
+      tableCount:
+        example: 24
+        type: integer
+    required:
+    - databaseName
+    type: object
+  rdbmsmodel.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 4
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    type: object
+  rdbmsmodel.RecommendedRDBMS:
+    properties:
+      description:
+        description: Human-readable summary
+        type: string
+      status:
+        description: '"recommended", "partial", "failed"'
+        type: string
+      targetCloud:
+        $ref: '#/definitions/rdbmsmodel.CloudProperty'
+      targetRDBMSInstances:
+        items:
+          $ref: '#/definitions/rdbmsmodel.TargetRDBMSInstance'
+        type: array
+      warnings:
+        description: CSP feature-support warnings
+        items:
+          type: string
+        type: array
+    type: object
+  rdbmsmodel.SourceRDBMS:
+    properties:
+      description:
+        type: string
+      sourceCloud:
+        $ref: '#/definitions/rdbmsmodel.CloudProperty'
+      sourceRDBMSInstances:
+        items:
+          $ref: '#/definitions/rdbmsmodel.SourceRDBMSProperty'
+        minItems: 1
+        type: array
+    required:
+    - sourceRDBMSInstances
+    type: object
+  rdbmsmodel.SourceRDBMSProperty:
+    properties:
+      dbEngine:
+        allOf:
+        - $ref: '#/definitions/rdbmsmodel.DBEngineProperty'
+        description: DBEngine represents the database engine software (type, version,
+          port, role, HA).
+      dbNode:
+        allOf:
+        - $ref: '#/definitions/rdbmsmodel.DBNodeProperty'
+        description: DBNode represents the underlying host/server infrastructure specs
+          (CPU, Memory, Disks).
+      description:
+        description: Description is an optional free-form note or business purpose.
+        example: Production billing service master database
+        type: string
+      displayName:
+        description: DisplayName is an optional human-friendly alias or cloud DB identifier
+          (e.g. "billing-db").
+        example: billing-db
+        type: string
+      innerDatabases:
+        description: InnerDatabases lists the logical tenant databases residing inside
+          this RDBMS instance.
+        items:
+          $ref: '#/definitions/rdbmsmodel.InnerDatabaseProperty'
+        type: array
+    required:
+    - dbEngine
+    - dbNode
+    type: object
+  rdbmsmodel.TargetDatabase:
+    properties:
+      charset:
+        example: utf8mb4
+        type: string
+      collation:
+        example: utf8mb4_unicode_ci
+        type: string
+      databaseName:
+        example: order_db
+        type: string
+    required:
+    - databaseName
+    type: object
+  rdbmsmodel.TargetRDBMSInstance:
+    properties:
+      adminUserName:
+        description: Admin Credentials
+        example: dbadmin
+        type: string
+      adminUserPassword:
+        example: Password123!
+        type: string
+      backupRetentionDays:
+        example: 7
+        type: integer
+      databases:
+        description: Optional Inner Databases to create after instance provisioning
+        items:
+          $ref: '#/definitions/rdbmsmodel.TargetDatabase'
+        type: array
+      dbEngine:
+        description: Target Engine & Version
+        example: mysql
+        type: string
+      dbEngineVersion:
+        example: "8.0"
+        type: string
+      dbInstanceSpec:
+        description: Target Spec & Storage
+        example: db.t3.medium
+        type: string
+      deletionProtection:
+        example: false
+        type: boolean
+      highAvailability:
+        description: Availability & Protection
+        example: false
+        type: boolean
+      iops:
+        example: "3000"
+        type: string
+      ncpDBACGToAllowAllInbound:
+        example: false
+        type: boolean
+      nhnDBSGToAllowAllInbound:
+        description: CSP-Specific Options
+        example: true
+        type: boolean
+      publicAccess:
+        example: true
+        type: boolean
+      rdbmsName:
+        description: Target instance name (supports Late-Binding nameSeed)
+        example: mig-rdbms-01
+        type: string
+      securityGroupIds:
+        example:
+        - '["sg-01"]'
+        items:
+          type: string
+        type: array
+      sourceInstanceName:
+        description: Source traceability
+        example: prod-mysql-01
+        type: string
+      sourceMachineId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      storageSize:
+        description: Disk size in GB
+        example: 100
+        type: integer
+      storageType:
+        example: gp3
+        type: string
+      subnetIds:
+        example:
+        - '["subnet-01"'
+        - '"subnet-02"]'
+        items:
+          type: string
+        type: array
+      vNetId:
+        description: Network & Access
+        example: vnet-01
+        type: string
+    required:
+    - adminUserName
+    - dbEngine
+    - rdbmsName
     type: object
   softwaremodel.Binary:
     properties:
@@ -3397,8 +3754,8 @@ paths:
       consumes:
       - application/json
       description: |-
-        Get a list of migration user models of both categories (infra and software).
-        Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or both categories) are returned.
+        Get a list of migration user models of all categories (infra, software and rdbms).
+        Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.
         The models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).
       operationId: GetModels
       parameters:
@@ -3411,11 +3768,12 @@ paths:
         in: query
         name: modelStage
         type: string
-      - description: Category of models to retrieve. If empty, the models of both
-          categories are returned.
+      - description: Category of models to retrieve. If empty, the models of all categories
+          are returned.
         enum:
         - infra
         - software
+        - rdbms
         in: query
         name: category
         type: string
@@ -3453,7 +3811,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Get a list of migration user models (infra and software)
+      summary: Get a list of migration user models (infra, software and RDBMS)
       tags:
       - '[API] Migration User Models'
   /model/version:
@@ -3462,7 +3820,9 @@ paths:
       - application/json
       description: Get all tagged versions (in ascending order) of the migration models.
         'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of
-        cm-beetle, and 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper.
+        cm-beetle, 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper,
+        and 'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have
+        the RDBMS model (v0.1.13 or later).
       operationId: GetModelsVersions
       produces:
       - application/json
@@ -3642,6 +4002,331 @@ paths:
       summary: Update a on-premise model
       tags:
       - '[API] On-Premise Migration User Models'
+  /rdbms-model:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get a list of RDBMS migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.
+        The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
+      operationId: GetRDBMSModels
+      parameters:
+      - description: Stage of RDBMS model to retrieve
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      - description: Filter by 'lineage.sourceGroupId'
+        in: query
+        name: sourceGroupId
+        type: string
+      - description: Filter by 'lineage.sourceModelId'
+        in: query
+        name: sourceModelId
+        type: string
+      - description: Filter by 'lineage.planningModelId'
+        in: query
+        name: planningModelId
+        type: string
+      - description: Filter by 'lineage.targetModelId'
+        in: query
+        name: targetModelId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained RDBMS migration user models
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of RDBMS migration user models (source, planning or target)
+      tags:
+      - '[API] Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Create a new RDBMS migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.
+        Provide 'sourceRDBMSModel' for a source or planning model (modelStage=source or planning), or 'targetRDBMSModel' for a target model (modelStage=target).
+        The 'sourceRDBMSModel' (or 'targetRDBMSModel') is validated against the 'SourceRDBMS' (or 'RecommendedRDBMS') struct of the cm-beetle/imdl tagged version given by 'rdbmsModelVersion', and is stored in that struct's form.
+        'nodeId' is an optional identifier of the node the model is associated with.
+        [Lineage] 'parentId' is the ID of the RDBMS model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
+        'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
+        (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
+      operationId: CreateRDBMSModel
+      parameters:
+      - description: Stage of RDBMS model to create
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      - description: RDBMS model version (a cm-beetle 'imdl/vX.Y.Z' tag of v0.1.13
+          or later, e.g. v0.1.20). If empty, the latest tag is used. See 'GET /model/version'
+          for available versions.
+        in: query
+        name: rdbmsModelVersion
+        type: string
+      - description: RDBMS model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateRDBMSModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created the RDBMS migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Parent (or lineage) model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Create a new RDBMS migration user model (source, planning or target)
+      tags:
+      - '[API] Migration User Models'
+  /rdbms-model/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: |-
+        Delete a specific RDBMS migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
+        If the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.
+      operationId: DeleteRDBMSModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stage of the RDBMS model
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      - default: false
+        description: Delete the model even if it is referred to by the lineage of
+          other models
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted the RDBMS migration user model
+          schema:
+            type: string
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "409":
+          description: The model is referred to by the lineage of other models (listed
+            in 'list')
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a specific RDBMS migration user model (source, planning or target)
+      tags:
+      - '[API] Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get a specific RDBMS migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
+        The 'lineage' of the model refers to its upstream models and itself.
+      operationId: GetRDBMSModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stage of the RDBMS model
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained the RDBMS migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a specific RDBMS migration user model (source, planning or target)
+      tags:
+      - '[API] Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Update a specific RDBMS migration user model by ID.
+        The model stage is changed to 'modelStage' if it is given, and is preserved otherwise.
+        Provide 'sourceRDBMSModel' if the (resulting) stage is source or planning, or 'targetRDBMSModel' if it is target.
+        'createTime' and 'rdbmsModelVersion' of the stored model are preserved, and 'sourceRDBMSModel' (or 'targetRDBMSModel') is validated against the struct of that cm-beetle/imdl tagged version.
+        [Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that RDBMS model in the previous stage (source → planning → target).
+        The stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').
+      operationId: UpdateRDBMSModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stage to change the RDBMS model to. If empty, the stored stage
+          is preserved.
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        type: string
+      - description: RDBMS model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateRDBMSModelReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated the RDBMS migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "409":
+          description: 'The stage cannot be changed: the model is referred to by the
+            lineage of other models'
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a specific RDBMS migration user model (source, planning or target)
+      tags:
+      - '[API] Migration User Models'
+  /rdbms-model/{id}/convert:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get a stored RDBMS migration user model converted to the struct of the cm-beetle/imdl tagged version given by 'rdbmsModelVersion'. The stored model is not changed.
+        Only the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-beetle/imdl tag with the RDBMS model (v0.1.13 or later) cannot be converted.
+        The response has the fields of 'GET /rdbms-model/{id}', with 'rdbmsModelVersion' and 'sourceRDBMSModel' (or 'targetRDBMSModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
+        [Migrations] v0.1.14: the instances of 'sourceRDBMSModel' were restructured into 'dbNode' and 'dbEngine' ('vcpu', 'memoryMb' and 'storageSizeGb' are converted as estimates and reported in 'warnings'). v0.1.18: 'characterSet' of the target databases is converted to 'charset'.
+        If a field of the stored model has a value which does not match the type of that field in the requested version, the model is not converted (400).
+      operationId: ConvertRDBMSModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stage of the RDBMS model
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      - description: Model version to convert to (a cm-beetle 'imdl/vX.Y.Z' tag of
+          v0.1.13 or later, e.g. v0.1.20). If empty, the latest tag is used. See 'GET
+          /model/version' for available versions.
+        in: query
+        name: rdbmsModelVersion
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained the converted RDBMS migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter, or the model cannot be converted
+            to the version
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Convert a stored RDBMS migration user model to a newer model version
+      tags:
+      - '[API] Migration User Models'
   /readyz:
     get:
       consumes:
