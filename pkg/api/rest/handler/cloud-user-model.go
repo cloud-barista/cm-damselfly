@@ -20,10 +20,11 @@ import (
 )
 
 type ModelsVersionRespInfo struct {
-	OnPremModelVer   []string `json:"onpremModelVersion"`
-	CloudModelVer    []string `json:"cloudModelVersion"`
-	SoftwareModelVer []string `json:"softwareModelVersion"`
-	RDBMSModelVer    []string `json:"rdbmsModelVersion"`
+	OnPremModelVer        []string `json:"onpremModelVersion"`
+	CloudModelVer         []string `json:"cloudModelVersion"`
+	SoftwareModelVer      []string `json:"softwareModelVersion"`
+	RDBMSModelVer         []string `json:"rdbmsModelVersion"`
+	ObjectStorageModelVer []string `json:"objectStorageModelVersion"`
 }
 
 type GetModelsVersionResp struct {
@@ -31,16 +32,17 @@ type GetModelsVersionResp struct {
 }
 
 const (
-	OnPremModel string = "OnPremiseModel"
-	CloudModel  string = "CloudModel"
-	SWModel     string = "SoftwareModel"
-	RDBMSModel  string = "RDBMSModel"
+	OnPremModel        string = "OnPremiseModel"
+	CloudModel         string = "CloudModel"
+	SWModel            string = "SoftwareModel"
+	RDBMSModel         string = "RDBMSModel"
+	ObjectStorageModel string = "objectStorageModel"
 )
 
 // GetModelsVersions godoc
 // @ID GetModelsVersions
 // @Summary Get all tagged versions of the migration models
-// @Description Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper, and 'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the RDBMS model (v0.1.13 or later).
+// @Description Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper, 'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the RDBMS model (v0.1.13 or later), and 'objectStorageModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the object storage model (v0.1.3 or later).
 // @Tags [API] Migration Models
 // @Accept  json
 // @Produce  json
@@ -72,10 +74,11 @@ func GetModelsVersions(c echo.Context) error {
 	}
 
 	modelsVersionInfo := ModelsVersionRespInfo{
-		OnPremModelVer:   infraVersions,
-		CloudModelVer:    infraVersions,
-		SoftwareModelVer: softwareVersions,
-		RDBMSModelVer:    filterRDBMSModelVersions(infraVersions),
+		OnPremModelVer:        infraVersions,
+		CloudModelVer:         infraVersions,
+		SoftwareModelVer:      softwareVersions,
+		RDBMSModelVer:         filterRDBMSModelVersions(infraVersions),
+		ObjectStorageModelVer: filterObjectStorageModelVersions(infraVersions),
 	}
 	res := GetModelsVersionResp{
 		ModelsVersion: modelsVersionInfo,
@@ -89,15 +92,15 @@ func GetModelsVersions(c echo.Context) error {
 
 // GetModels godoc
 // @ID GetModels
-// @Summary Get a list of migration user models (infra, software and RDBMS)
-// @Description Get a list of migration user models of all categories (infra, software and rdbms).
+// @Summary Get a list of migration user models (infra, software, RDBMS and object storage)
+// @Description Get a list of migration user models of all categories (infra, software, rdbms and objectStorage).
 // @Description Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.
 // @Description The models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
 // @Param modelStage      query string false "Stage of models to retrieve. If empty, the models of all stages are returned." Enums(source, planning, target)
-// @Param category        query string false "Category of models to retrieve. If empty, the models of all categories are returned." Enums(infra, software, rdbms)
+// @Param category        query string false "Category of models to retrieve. If empty, the models of all categories are returned." Enums(infra, software, rdbms, objectStorage)
 // @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
 // @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
 // @Param planningModelId query string false "Filter by 'lineage.planningModelId'"
@@ -119,11 +122,16 @@ func GetModels(c echo.Context) error {
 	}
 
 	// 'category' is optional. If it is empty, the models of all categories are returned.
-	category := modelCategory(strings.ToLower(strings.TrimSpace(c.QueryParam("category"))))
-	if category != "" && category != categoryInfra && category != categorySoftware && category != categoryRDBMS {
-		newErr := fmt.Errorf("invalid request: 'category' must be '%s', '%s' or '%s', got '%s'", categoryInfra, categorySoftware, categoryRDBMS, c.QueryParam("category"))
-		log.Warn().Msg(newErr.Error())
-		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+	var category modelCategory
+	if name := strings.TrimSpace(c.QueryParam("category")); name != "" {
+		parsed, ok := parseModelCategory(name)
+		if !ok {
+			newErr := fmt.Errorf("invalid request: 'category' must be '%s', '%s', '%s' or '%s', got '%s'",
+				categoryInfra, categorySoftware, categoryRDBMS, categoryObjectStorage, c.QueryParam("category"))
+			log.Warn().Msg(newErr.Error())
+			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+		}
+		category = parsed
 	}
 
 	lineageFilter := parseLineageFilter(c)
