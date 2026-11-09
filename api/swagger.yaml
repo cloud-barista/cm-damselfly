@@ -980,7 +980,7 @@ definitions:
       parentId:
         description: |-
           ParentId is the ID of the model this model is derived from. It must be a model of the same category
-          (infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.
+          (infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.
         example: a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b
         type: string
       region:
@@ -992,6 +992,36 @@ definitions:
       userModelVersion:
         type: string
       zone:
+        type: string
+    type: object
+  handler.CreateObjectStorageModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      lineage:
+        allOf:
+        - $ref: '#/definitions/lineage.MigrationLineage'
+        description: Lineage is given to set the lineage explicitly (e.g. 'sourceGroupId').
+          The field of the model's own stage is set by the server.
+      nodeId:
+        type: string
+      parentId:
+        description: |-
+          ParentId is the ID of the model this model is derived from. It must be a model of the same category
+          (infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.
+        example: a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b
+        type: string
+      sourceObjectStorageModel:
+        $ref: '#/definitions/storagemodel.SourceObjectStorage'
+      targetObjectStorageModel:
+        $ref: '#/definitions/storagemodel.RecommendedObjectStorage'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
         type: string
     type: object
   handler.CreateOnPremModelReq:
@@ -1058,7 +1088,7 @@ definitions:
       parentId:
         description: |-
           ParentId is the ID of the model this model is derived from. It must be a model of the same category
-          (infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.
+          (infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.
         example: a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b
         type: string
       sourceRDBMSModel:
@@ -1088,7 +1118,7 @@ definitions:
       parentId:
         description: |-
           ParentId is the ID of the model this model is derived from. It must be a model of the same category
-          (infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.
+          (infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.
         example: a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b
         type: string
       sourceSoftwareModel:
@@ -1372,6 +1402,10 @@ definitions:
   handler.ModelsVersionRespInfo:
     properties:
       cloudModelVersion:
+        items:
+          type: string
+        type: array
+      objectStorageModelVersion:
         items:
           type: string
         type: array
@@ -3205,6 +3239,145 @@ definitions:
           $ref: '#/definitions/softwaremodel.MigrationServer'
         type: array
     type: object
+  storagemodel.CORSRule:
+    properties:
+      allowedHeader:
+        description: Allowed headers (e.g., ["*"], ["Content-Type"])
+        items:
+          type: string
+        type: array
+      allowedMethod:
+        description: Allowed HTTP methods (e.g., ["GET", "PUT", "POST"])
+        items:
+          type: string
+        type: array
+      allowedOrigin:
+        description: Allowed origins (e.g., ["*"], ["https://example.com"])
+        items:
+          type: string
+        type: array
+      exposeHeader:
+        description: Headers exposed to the browser (e.g., ["ETag"])
+        items:
+          type: string
+        type: array
+      maxAgeSeconds:
+        description: Preflight response cache duration in seconds
+        type: integer
+    required:
+    - allowedMethod
+    - allowedOrigin
+    type: object
+  storagemodel.CloudProperty:
+    properties:
+      csp:
+        description: Cloud service provider (e.g., aws, azure, gcp, ncp, alibaba)
+        example: aws
+        type: string
+      region:
+        description: Region identifier
+        example: ap-northeast-2
+        type: string
+    type: object
+  storagemodel.RecommendedObjectStorage:
+    properties:
+      description:
+        description: Human-readable summary
+        type: string
+      status:
+        description: e.g., "recommended", "partial", "failed"
+        type: string
+      targetCloud:
+        $ref: '#/definitions/storagemodel.CloudProperty'
+      targetObjectStorages:
+        items:
+          $ref: '#/definitions/storagemodel.TargetObjectStorage'
+        type: array
+      warnings:
+        description: CSP feature-support warnings
+        items:
+          type: string
+        type: array
+    type: object
+  storagemodel.SourceObjectStorage:
+    properties:
+      description:
+        description: Human-readable description
+        type: string
+      sourceCloud:
+        allOf:
+        - $ref: '#/definitions/storagemodel.CloudProperty'
+        description: Source cloud provider and region (optional)
+      sourceObjectStorages:
+        items:
+          $ref: '#/definitions/storagemodel.SourceObjectStorageProperty'
+        minItems: 1
+        type: array
+    required:
+    - sourceObjectStorages
+    type: object
+  storagemodel.SourceObjectStorageProperty:
+    properties:
+      accessFrequency:
+        description: 'Access pattern: "frequent" | "infrequent" | "archive"'
+        type: string
+      bucketName:
+        description: Source bucket name
+        type: string
+      corsEnabled:
+        description: Whether CORS is configured
+        type: boolean
+      corsRule:
+        description: Active CORS rules
+        items:
+          $ref: '#/definitions/storagemodel.CORSRule'
+        type: array
+      creationDate:
+        description: Bucket creation date (RFC 3339)
+        type: string
+      encryptionEnabled:
+        description: Whether server-side encryption is enabled
+        type: boolean
+      isPublic:
+        description: Whether the bucket allows public access
+        type: boolean
+      objectCount:
+        description: Total number of objects
+        type: integer
+      tags:
+        additionalProperties:
+          type: string
+        description: Key-value tags
+        type: object
+      totalSizeBytes:
+        description: Total stored data in bytes
+        type: integer
+      versioningEnabled:
+        description: Whether versioning is enabled
+        type: boolean
+    required:
+    - bucketName
+    type: object
+  storagemodel.TargetObjectStorage:
+    properties:
+      bucketName:
+        description: Globally unique target bucket name
+        type: string
+      corsEnabled:
+        description: Whether to configure CORS
+        type: boolean
+      corsRule:
+        description: CORS rules to apply
+        items:
+          $ref: '#/definitions/storagemodel.CORSRule'
+        type: array
+      sourceBucketName:
+        description: Originating source bucket name
+        type: string
+      versioningEnabled:
+        description: Whether to enable versioning
+        type: boolean
+    type: object
 info:
   contact:
     email: contact-to-cloud-barista@googlegroups.com
@@ -3754,7 +3927,7 @@ paths:
       consumes:
       - application/json
       description: |-
-        Get a list of migration user models of all categories (infra, software and rdbms).
+        Get a list of migration user models of all categories (infra, software, rdbms and objectStorage).
         Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.
         The models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).
       operationId: GetModels
@@ -3774,6 +3947,7 @@ paths:
         - infra
         - software
         - rdbms
+        - objectStorage
         in: query
         name: category
         type: string
@@ -3811,7 +3985,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Get a list of migration user models (infra, software and RDBMS)
+      summary: Get a list of migration user models (infra, software, RDBMS and object
+        storage)
       tags:
       - '[API] Migration User Models'
   /model/version:
@@ -3821,8 +3996,9 @@ paths:
       description: Get all tagged versions (in ascending order) of the migration models.
         'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of
         cm-beetle, 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper,
-        and 'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have
-        the RDBMS model (v0.1.13 or later).
+        'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the
+        RDBMS model (v0.1.13 or later), and 'objectStorageModelVersion' is the 'imdl/vX.Y.Z'
+        tags of cm-beetle which have the object storage model (v0.1.3 or later).
       operationId: GetModelsVersions
       produces:
       - application/json
@@ -3842,6 +4018,338 @@ paths:
       summary: Get all tagged versions of the migration models
       tags:
       - '[API] Migration Models'
+  /object-storage-model:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get a list of object storage migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.
+        The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
+      operationId: GetObjectStorageModels
+      parameters:
+      - description: Stage of object storage model to retrieve
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      - description: Filter by 'lineage.sourceGroupId'
+        in: query
+        name: sourceGroupId
+        type: string
+      - description: Filter by 'lineage.sourceModelId'
+        in: query
+        name: sourceModelId
+        type: string
+      - description: Filter by 'lineage.planningModelId'
+        in: query
+        name: planningModelId
+        type: string
+      - description: Filter by 'lineage.targetModelId'
+        in: query
+        name: targetModelId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained object storage migration user models
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of object storage migration user models (source, planning
+        or target)
+      tags:
+      - '[API] Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Create a new object storage migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.
+        Provide 'sourceObjectStorageModel' for a source or planning model (modelStage=source or planning), or 'targetObjectStorageModel' for a target model (modelStage=target).
+        The 'sourceObjectStorageModel' (or 'targetObjectStorageModel') is validated against the 'SourceObjectStorage' (or 'RecommendedObjectStorage') struct of the cm-beetle/imdl tagged version given by 'objectStorageModelVersion', and is stored in that struct's form.
+        'nodeId' is an optional identifier of the node the model is associated with.
+        [Lineage] 'parentId' is the ID of the object storage model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
+        'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
+        (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
+      operationId: CreateObjectStorageModel
+      parameters:
+      - description: Stage of object storage model to create
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      - description: Object storage model version (a cm-beetle 'imdl/vX.Y.Z' tag of
+          v0.1.3 or later, e.g. v0.1.20). If empty, the latest tag is used. See 'GET
+          /model/version' for available versions.
+        in: query
+        name: objectStorageModelVersion
+        type: string
+      - description: Object storage model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateObjectStorageModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created the object storage migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Parent (or lineage) model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Create a new object storage migration user model (source, planning
+        or target)
+      tags:
+      - '[API] Migration User Models'
+  /object-storage-model/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: |-
+        Delete a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
+        If the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.
+      operationId: DeleteObjectStorageModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stage of the object storage model
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      - default: false
+        description: Delete the model even if it is referred to by the lineage of
+          other models
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted the object storage migration user model
+          schema:
+            type: string
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "409":
+          description: The model is referred to by the lineage of other models (listed
+            in 'list')
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a specific object storage migration user model (source, planning
+        or target)
+      tags:
+      - '[API] Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
+        The 'lineage' of the model refers to its upstream models and itself.
+      operationId: GetObjectStorageModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stage of the object storage model
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained the object storage migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a specific object storage migration user model (source, planning
+        or target)
+      tags:
+      - '[API] Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Update a specific object storage migration user model by ID.
+        The model stage is changed to 'modelStage' if it is given, and is preserved otherwise.
+        Provide 'sourceObjectStorageModel' if the (resulting) stage is source or planning, or 'targetObjectStorageModel' if it is target.
+        'createTime' and 'objectStorageModelVersion' of the stored model are preserved, and 'sourceObjectStorageModel' (or 'targetObjectStorageModel') is validated against the struct of that cm-beetle/imdl tagged version.
+        [Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that object storage model in the previous stage (source → planning → target).
+        The stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').
+      operationId: UpdateObjectStorageModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stage to change the object storage model to. If empty, the stored
+          stage is preserved.
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        type: string
+      - description: Object storage model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateObjectStorageModelReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated the object storage migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "409":
+          description: 'The stage cannot be changed: the model is referred to by the
+            lineage of other models'
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a specific object storage migration user model (source, planning
+        or target)
+      tags:
+      - '[API] Migration User Models'
+  /object-storage-model/{id}/convert:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get a stored object storage migration user model converted to the struct of the cm-beetle/imdl tagged version given by 'objectStorageModelVersion'. The stored model is not changed.
+        Only the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-beetle/imdl tag with the object storage model (v0.1.3 or later) cannot be converted.
+        The response has the fields of 'GET /object-storage-model/{id}', with 'objectStorageModelVersion' and 'sourceObjectStorageModel' (or 'targetObjectStorageModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
+        [Migrations] v0.1.6: 'nameSeed' of 'targetObjectStorageModel' was removed (reported in 'droppedFields', and in 'warnings' if it has a value). v0.1.11: 'sourceObjectStorageModel', which described a single bucket, is converted to a group of buckets: the bucket fields are moved into 'sourceObjectStorages[0]'.
+        If a field of the stored model has a value which does not match the type of that field in the requested version, the model is not converted (400).
+      operationId: ConvertObjectStorageModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stage of the object storage model
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: modelStage
+        required: true
+        type: string
+      - description: Model version to convert to (a cm-beetle 'imdl/vX.Y.Z' tag of
+          v0.1.3 or later, e.g. v0.1.20). If empty, the latest tag is used. See 'GET
+          /model/version' for available versions.
+        in: query
+        name: objectStorageModelVersion
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained the converted object storage migration
+            user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter, or the model cannot be converted
+            to the version
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Convert a stored object storage migration user model to a newer model
+        version
+      tags:
+      - '[API] Migration User Models'
   /onpremmodel:
     get:
       consumes:

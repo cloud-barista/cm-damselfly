@@ -25,7 +25,7 @@ import (
 // ModelLineageReq holds the lineage fields of the request body for creating or updating a migration user model.
 type ModelLineageReq struct {
 	// ParentId is the ID of the model this model is derived from. It must be a model of the same category
-	// (infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.
+	// (infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.
 	ParentId string `json:"parentId,omitempty" example:"a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"`
 	// Lineage is given to set the lineage explicitly (e.g. 'sourceGroupId'). The field of the model's own stage is set by the server.
 	Lineage *lineage.MigrationLineage `json:"lineage,omitempty"`
@@ -38,7 +38,22 @@ const (
 	categoryInfra    modelCategory = "infra"
 	categorySoftware modelCategory = "software"
 	categoryRDBMS    modelCategory = "rdbms"
+	// categoryObjectStorage is the category of the object storage models. (A block storage category may be added later.)
+	categoryObjectStorage modelCategory = "objectStorage"
 )
+
+// modelCategories lists all the model categories.
+var modelCategories = []modelCategory{categoryInfra, categorySoftware, categoryRDBMS, categoryObjectStorage}
+
+// parseModelCategory returns the model category matching the given name, ignoring case (e.g. 'objectstorage').
+func parseModelCategory(name string) (modelCategory, bool) {
+	for _, category := range modelCategories {
+		if strings.EqualFold(name, string(category)) {
+			return category, true
+		}
+	}
+	return "", false
+}
 
 // storedModelCategory returns the category of a stored model.
 func storedModelCategory(m map[string]interface{}) (modelCategory, bool) {
@@ -47,6 +62,9 @@ func storedModelCategory(m map[string]interface{}) (modelCategory, bool) {
 	}
 	if isRDBMSModel, ok := m["isRDBMSModel"].(bool); ok && isRDBMSModel {
 		return categoryRDBMS, true
+	}
+	if isObjectStorageModel, ok := m["isObjectStorageModel"].(bool); ok && isObjectStorageModel {
+		return categoryObjectStorage, true
 	}
 	if _, ok := m["isCloudModel"].(bool); ok {
 		return categoryInfra, true

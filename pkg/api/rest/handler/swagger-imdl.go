@@ -24,6 +24,8 @@ import (
 // CreateInfraModel / UpdateInfraModel follows the 'OnpremInfra' / 'RecommendedInfra' struct of that version,
 // and the 'modelVersion' query parameter defaults to that version. Likewise, the body of CreateRDBMSModel / UpdateRDBMSModel
 // follows the 'SourceRDBMS' / 'RecommendedRDBMS' struct of that version (v0.1.13 or later), and 'rdbmsModelVersion' defaults to it.
+// The body of CreateObjectStorageModel / UpdateObjectStorageModel follows the 'SourceObjectStorage' / 'RecommendedObjectStorage' struct
+// of that version (v0.1.3 or later), and 'objectStorageModelVersion' defaults to it.
 
 const (
 	defaultSwaggerDocURL      = "doc.json"
@@ -111,8 +113,9 @@ func getImdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, erro
 }
 
 // buildImdlVersionSwaggerDoc derives the API definition of a cm-beetle/imdl version from the default one.
-// Only CreateInfraModel / UpdateInfraModel / CreateRDBMSModel / UpdateRDBMSModel (the body) and the version parameters of
-// CreateInfraModel / ConvertInfraModel / CreateRDBMSModel / ConvertRDBMSModel (the default) are changed; the other APIs keep the built-in struct.
+// Only CreateInfraModel / UpdateInfraModel / CreateRDBMSModel / UpdateRDBMSModel / CreateObjectStorageModel / UpdateObjectStorageModel (the body)
+// and the version parameters of CreateInfraModel / ConvertInfraModel / CreateRDBMSModel / ConvertRDBMSModel / CreateObjectStorageModel /
+// ConvertObjectStorageModel (the default) are changed; the other APIs keep the built-in struct.
 func buildImdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, error) {
 	baseDoc, err := swag.ReadDoc()
 	if err != nil {
@@ -197,6 +200,9 @@ func buildImdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, er
 	if err := addRDBMSModelToImdlSwaggerDoc(ctx, defs, paths, version); err != nil {
 		return nil, err
 	}
+	if err := addObjectStorageModelToImdlSwaggerDoc(ctx, defs, paths, version); err != nil {
+		return nil, err
+	}
 
 	if info, ok := spec["info"].(map[string]interface{}); ok {
 		info["title"] = fmt.Sprintf("%v (cm-beetle/imdl %s)", info["title"], version)
@@ -204,56 +210,108 @@ func buildImdlVersionSwaggerDoc(ctx context.Context, version string) ([]byte, er
 		if compareModuleVersions(version, minRDBMSModelVersion) >= 0 {
 			info["description"] = fmt.Sprintf("%v\n\nThe request body of 'POST /rdbms-model' and 'PUT /rdbms-model/{id}' follows the 'SourceRDBMS' / 'RecommendedRDBMS' struct of cm-beetle/imdl %s.", info["description"], version)
 		}
+		if compareModuleVersions(version, minObjectStorageModelVersion) >= 0 {
+			info["description"] = fmt.Sprintf("%v\n\nThe request body of 'POST /object-storage-model' and 'PUT /object-storage-model/{id}' follows the 'SourceObjectStorage' / 'RecommendedObjectStorage' struct of cm-beetle/imdl %s.", info["description"], version)
+		}
 	}
 
 	return marshalInTopLevelKeyOrder(spec, baseDoc)
 }
+
+// imdlPkgModelSwaggerInfo describes the APIs of a model in a package of cm-beetle/imdl other than the infra models
+// (e.g. the RDBMS model in 'rdbms-model', and the object storage model in 'storage-model').
+type imdlPkgModelSwaggerInfo struct {
+	modelName    string               // the model name used in the notes (e.g. "RDBMS")
+	minVersion   string               // the oldest cm-beetle/imdl version which has the package
+	pkgDir       string               // the package directory in cm-beetle/imdl
+	basePath     string               // the base path of the APIs (e.g. "/rdbms-model")
+	reqDefName   string               // the definition of the request body (e.g. "handler.CreateRDBMSModelReq")
+	versionParam string               // the query parameter of the model version (e.g. "rdbmsModelVersion")
+	schemas      []pkgModelSchemaInfo // the structs of the body fields
+}
+
+var (
+	rdbmsModelSwaggerInfo = imdlPkgModelSwaggerInfo{
+		modelName:    "RDBMS",
+		minVersion:   minRDBMSModelVersion,
+		pkgDir:       rdbmsModelPkgDir,
+		basePath:     "/rdbms-model",
+		reqDefName:   "handler.CreateRDBMSModelReq",
+		versionParam: "rdbmsModelVersion",
+		schemas:      []pkgModelSchemaInfo{sourceRDBMSModelSchema, targetRDBMSModelSchema},
+	}
+	objectStorageModelSwaggerInfo = imdlPkgModelSwaggerInfo{
+		modelName:    "object storage",
+		minVersion:   minObjectStorageModelVersion,
+		pkgDir:       objectStorageModelPkgDir,
+		basePath:     "/object-storage-model",
+		reqDefName:   "handler.CreateObjectStorageModelReq",
+		versionParam: "objectStorageModelVersion",
+		schemas:      []pkgModelSchemaInfo{sourceObjectStorageModelSchema, targetObjectStorageModelSchema},
+	}
+)
 
 // addRDBMSModelToImdlSwaggerDoc changes the API definition of a cm-beetle/imdl version for the RDBMS model APIs:
 // the body of CreateRDBMSModel / UpdateRDBMSModel follows the 'SourceRDBMS' / 'RecommendedRDBMS' struct of that version,
 // and 'rdbmsModelVersion' of CreateRDBMSModel / ConvertRDBMSModel defaults to that version.
 // A version older than minRDBMSModelVersion has no RDBMS model, so its definition notes that instead.
 func addRDBMSModelToImdlSwaggerDoc(ctx context.Context, defs, paths map[string]interface{}, version string) error {
+	return addPkgModelToImdlSwaggerDoc(ctx, defs, paths, version, rdbmsModelSwaggerInfo)
+}
+
+// addObjectStorageModelToImdlSwaggerDoc changes the API definition of a cm-beetle/imdl version for the object storage
+// model APIs: the body of CreateObjectStorageModel / UpdateObjectStorageModel follows the 'SourceObjectStorage' / 'RecommendedObjectStorage'
+// struct of that version, and 'objectStorageModelVersion' of CreateObjectStorageModel / ConvertObjectStorageModel defaults to that version.
+// A version older than minObjectStorageModelVersion has no object storage model, so its definition notes that instead.
+func addObjectStorageModelToImdlSwaggerDoc(ctx context.Context, defs, paths map[string]interface{}, version string) error {
+	return addPkgModelToImdlSwaggerDoc(ctx, defs, paths, version, objectStorageModelSwaggerInfo)
+}
+
+// addPkgModelToImdlSwaggerDoc changes the API definition of a cm-beetle/imdl version for the APIs of the given model:
+// the body of the create (POST) / update (PUT) APIs follows the structs of that version, and the model version parameter
+// of the create / convert APIs defaults to that version.
+func addPkgModelToImdlSwaggerDoc(ctx context.Context, defs, paths map[string]interface{}, version string, info imdlPkgModelSwaggerInfo) error {
 	type operationRef struct{ path, method string }
-	bodyOps := []operationRef{{"/rdbms-model", "post"}, {"/rdbms-model/{id}", "put"}}
-	versionParamOps := []operationRef{{"/rdbms-model", "post"}, {"/rdbms-model/{id}/convert", "get"}}
+	bodyOps := []operationRef{{info.basePath, "post"}, {info.basePath + "/{id}", "put"}}
+	versionParamOps := []operationRef{{info.basePath, "post"}, {info.basePath + "/{id}/convert", "get"}}
 	operationOf := func(op operationRef) map[string]interface{} {
 		pathItem, _ := paths[op.path].(map[string]interface{})
 		operation, _ := pathItem[op.method].(map[string]interface{})
 		return operation
 	}
 
-	if compareModuleVersions(version, minRDBMSModelVersion) < 0 {
+	if compareModuleVersions(version, info.minVersion) < 0 {
+		noModel := fmt.Sprintf("has no %s model", info.modelName)
 		for _, op := range append(bodyOps, versionParamOps...) {
 			operation := operationOf(op)
-			if desc, ok := operation["description"].(string); ok && !strings.Contains(desc, "has no RDBMS model") {
-				operation["description"] = desc + fmt.Sprintf("\n\n(cm-beetle/imdl %s has no RDBMS model. Use %s or later.)", version, minRDBMSModelVersion)
+			if desc, ok := operation["description"].(string); ok && !strings.Contains(desc, noModel) {
+				operation["description"] = desc + fmt.Sprintf("\n\n(cm-beetle/imdl %s %s. Use %s or later.)", version, noModel, info.minVersion)
 			}
 		}
 		return nil
 	}
 
-	baseReqDef, ok := defs["handler.CreateRDBMSModelReq"].(map[string]interface{})
+	baseReqDef, ok := defs[info.reqDefName].(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("the API definition has no 'handler.CreateRDBMSModelReq'")
+		return fmt.Errorf("the API definition has no '%s'", info.reqDefName)
 	}
 
-	pkg, err := modelschema.LoadPackage(ctx, infraModelSchemaSource, version, rdbmsModelPkgDir)
+	pkg, err := modelschema.LoadPackage(ctx, infraModelSchemaSource, version, info.pkgDir)
 	if err != nil {
 		return err
 	}
-	defPrefix := "imdl-" + version + "." + strings.ReplaceAll(rdbmsModelPkgDir, "-", "") + "."
+	defPrefix := "imdl-" + version + "." + strings.ReplaceAll(info.pkgDir, "-", "") + "."
 	reqDef := deepCopyJSON(baseReqDef).(map[string]interface{})
 	props, _ := reqDef["properties"].(map[string]interface{})
 	if props == nil {
 		props = map[string]interface{}{}
 		reqDef["properties"] = props
 	}
-	for _, schema := range []rdbmsModelSchemaInfo{sourceRDBMSModelSchema, targetRDBMSModelSchema} {
+	for _, schema := range info.schemas {
 		if !pkg.HasType(schema.RootType) {
 			props[schema.FieldName] = map[string]interface{}{
 				"type":        "object",
-				"description": fmt.Sprintf("'%s' struct does not exist in cm-beetle/imdl %s '%s'", schema.RootType, version, rdbmsModelPkgDir),
+				"description": fmt.Sprintf("'%s' struct does not exist in cm-beetle/imdl %s '%s'", schema.RootType, version, info.pkgDir),
 			}
 			continue
 		}
@@ -263,7 +321,7 @@ func addRDBMSModelToImdlSwaggerDoc(ctx context.Context, defs, paths map[string]i
 		}
 		props[schema.FieldName] = ref
 	}
-	reqDefName := "imdl-" + version + ".handler.CreateRDBMSModelReq"
+	reqDefName := "imdl-" + version + "." + info.reqDefName
 	defs[reqDefName] = reqDef
 
 	for _, op := range bodyOps {
@@ -281,7 +339,7 @@ func addRDBMSModelToImdlSwaggerDoc(ctx context.Context, defs, paths map[string]i
 	for _, op := range versionParamOps {
 		params, _ := operationOf(op)["parameters"].([]interface{})
 		for _, p := range params {
-			if param, _ := p.(map[string]interface{}); param["in"] == "query" && param["name"] == "rdbmsModelVersion" {
+			if param, _ := p.(map[string]interface{}); param["in"] == "query" && param["name"] == info.versionParam {
 				param["default"] = version
 			}
 		}

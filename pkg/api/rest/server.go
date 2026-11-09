@@ -193,6 +193,13 @@ func RunServer(port string) {
 	gModel.PUT("/rdbms-model/:id", handler.UpdateRDBMSModel)
 	gModel.DELETE("/rdbms-model/:id", handler.DeleteRDBMSModel)
 
+	gModel.GET("/object-storage-model", handler.GetObjectStorageModels)
+	gModel.POST("/object-storage-model", handler.CreateObjectStorageModel)
+	gModel.GET("/object-storage-model/:id", handler.GetObjectStorageModel)
+	gModel.GET("/object-storage-model/:id/convert", handler.ConvertObjectStorageModel)
+	gModel.PUT("/object-storage-model/:id", handler.UpdateObjectStorageModel)
+	gModel.DELETE("/object-storage-model/:id", handler.DeleteObjectStorageModel)
+
 	gModel.POST("/onpremmodel", handler.CreateOnPremModel)
 	gModel.GET("/onpremmodel", handler.GetOnPremModels)
 	gModel.GET("/onpremmodel/:id", handler.GetOnPremModel)

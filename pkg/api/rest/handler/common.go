@@ -22,6 +22,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremisemodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
+	storagemodel "github.com/cloud-barista/cm-beetle/imdl/storage-model"
 	"github.com/cloud-barista/cm-damselfly/pkg/modelschema"
 	softwaremodel "github.com/cloud-barista/cm-grasshopper/smdl"
 	echo "github.com/labstack/echo/v4"
@@ -201,6 +202,34 @@ func filterRDBMSModelVersions(infraVersions []string) []string {
 	versions := []string{}
 	for _, version := range infraVersions {
 		if compareModuleVersions(version, minRDBMSModelVersion) >= 0 {
+			versions = append(versions, version)
+		}
+	}
+	return versions
+}
+
+// minObjectStorageModelVersion is the oldest cm-beetle/imdl tagged version which has the 'storage-model' package.
+const minObjectStorageModelVersion = "v0.1.3"
+
+// getObjectStorageModelVersions returns the tagged versions of cm-beetle/imdl which have the object storage model, in ascending order.
+func getObjectStorageModelVersions() ([]string, error) {
+	infraVersions, err := getInfraModelVersions()
+	if err != nil {
+		return nil, err
+	}
+	versions := filterObjectStorageModelVersions(infraVersions)
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no cm-beetle/imdl tagged versions with the object storage model (%s or later) found", minObjectStorageModelVersion)
+	}
+	return versions, nil
+}
+
+// filterObjectStorageModelVersions returns the cm-beetle/imdl versions which have the object storage model
+// (minObjectStorageModelVersion or later).
+func filterObjectStorageModelVersions(infraVersions []string) []string {
+	versions := []string{}
+	for _, version := range infraVersions {
+		if compareModuleVersions(version, minObjectStorageModelVersion) >= 0 {
 			versions = append(versions, version)
 		}
 	}
@@ -535,19 +564,19 @@ func normalizeSoftwareModelWithCompiledStruct(stage ModelStage, raw json.RawMess
 // downloaded from the same source as the infra models.
 const rdbmsModelPkgDir = "rdbms-model"
 
-type rdbmsModelSchemaInfo struct {
+type pkgModelSchemaInfo struct {
 	RootType  string
 	FieldName string
 }
 
 var (
-	sourceRDBMSModelSchema = rdbmsModelSchemaInfo{RootType: "SourceRDBMS", FieldName: "sourceRDBMSModel"}
-	targetRDBMSModelSchema = rdbmsModelSchemaInfo{RootType: "RecommendedRDBMS", FieldName: "targetRDBMSModel"}
+	sourceRDBMSModelSchema = pkgModelSchemaInfo{RootType: "SourceRDBMS", FieldName: "sourceRDBMSModel"}
+	targetRDBMSModelSchema = pkgModelSchemaInfo{RootType: "RecommendedRDBMS", FieldName: "targetRDBMSModel"}
 )
 
 // rdbmsModelSchemaOf returns the RDBMS model struct used for the given model stage.
 // A source or planning model follows 'SourceRDBMS', and a target model follows 'RecommendedRDBMS'.
-func rdbmsModelSchemaOf(stage ModelStage) rdbmsModelSchemaInfo {
+func rdbmsModelSchemaOf(stage ModelStage) pkgModelSchemaInfo {
 	if stage == StageTarget {
 		return targetRDBMSModelSchema
 	}
@@ -606,7 +635,78 @@ func normalizeRDBMSModelWithCompiledStruct(stage ModelStage, raw json.RawMessage
 	return normalized, 0, nil
 }
 
-// ModelStage is the stage of a migration user model (infra, software or RDBMS) in the migration process.
+// The object storage model structs are declared in the 'storage-model' package of the cm-beetle/imdl module, which is
+// downloaded from the same source as the infra models.
+const objectStorageModelPkgDir = "storage-model"
+
+var (
+	sourceObjectStorageModelSchema = pkgModelSchemaInfo{RootType: "SourceObjectStorage", FieldName: "sourceObjectStorageModel"}
+	targetObjectStorageModelSchema = pkgModelSchemaInfo{RootType: "RecommendedObjectStorage", FieldName: "targetObjectStorageModel"}
+)
+
+// objectStorageModelSchemaOf returns the object storage model struct used for the given model stage.
+// A source or planning model follows 'SourceObjectStorage', and a target model follows 'RecommendedObjectStorage'.
+func objectStorageModelSchemaOf(stage ModelStage) pkgModelSchemaInfo {
+	if stage == StageTarget {
+		return targetObjectStorageModelSchema
+	}
+	return sourceObjectStorageModelSchema
+}
+
+// normalizeObjectStorageModel validates the raw object storage model against the Go struct (SourceObjectStorage or
+// RecommendedObjectStorage) of the given cm-beetle/imdl tagged version and returns it as that struct would be serialized.
+// On failure, it also returns the HTTP status code to respond with.
+func normalizeObjectStorageModel(ctx context.Context, version string, stage ModelStage, raw json.RawMessage) (json.RawMessage, int, error) {
+	schema := objectStorageModelSchemaOf(stage)
+
+	if trimmed := bytes.TrimSpace(raw); len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+	}
+
+	pkg, err := modelschema.LoadPackage(ctx, infraModelSchemaSource, version, objectStorageModelPkgDir)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", version, objectStorageModelPkgDir, err)
+	}
+	if !pkg.HasType(schema.RootType) {
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-beetle/imdl %s '%s'. Use another version", schema.RootType, version, objectStorageModelPkgDir)
+	}
+
+	normalized, err := pkg.Normalize(raw, schema.RootType, schema.FieldName)
+	if err != nil {
+		var validationErr *modelschema.ValidationError
+		if errors.As(err, &validationErr) {
+			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match the '%s' struct of cm-beetle/imdl %s : [%v]", schema.FieldName, schema.RootType, version, err)
+		}
+		return nil, http.StatusInternalServerError, err
+	}
+	log.Info().Msgf("Validated '%s' against the '%s' struct of cm-beetle/imdl %s", schema.FieldName, schema.RootType, version)
+	return normalized, 0, nil
+}
+
+// normalizeObjectStorageModelWithCompiledStruct decodes the raw object storage model with the cm-beetle/imdl version
+// compiled into cm-damselfly. It is used only for existing models whose version is not a cm-beetle/imdl tag with the
+// object storage model.
+func normalizeObjectStorageModelWithCompiledStruct(stage ModelStage, raw json.RawMessage) (json.RawMessage, int, error) {
+	schema := objectStorageModelSchemaOf(stage)
+	var target interface{} = new(storagemodel.SourceObjectStorage)
+	if stage == StageTarget {
+		target = new(storagemodel.RecommendedObjectStorage)
+	}
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+	}
+	if err := json.Unmarshal(trimmed, target); err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid object storage model : [%v]", err)
+	}
+	normalized, err := json.Marshal(target)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return normalized, 0, nil
+}
+
+// ModelStage is the stage of a migration user model (infra, software, RDBMS or object storage) in the migration process.
 type ModelStage string
 
 const (
