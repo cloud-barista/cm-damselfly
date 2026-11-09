@@ -11,6 +11,7 @@ It stores and serves the models through a REST API, and supports:
 - **Infra migration models** (on-premise / cloud), defined by [cm-beetle/imdl](https://github.com/cloud-barista/cm-beetle/tree/main/imdl)
 - **Software migration models** (source / target), defined by [cm-grasshopper/smdl](https://github.com/cloud-barista/cm-grasshopper/tree/main/smdl)
 - **RDBMS migration models** (source / planning: `SourceRDBMS`, target: `RecommendedRDBMS`), defined by [cm-beetle/imdl/rdbms-model](https://github.com/cloud-barista/cm-beetle/tree/main/imdl/rdbms-model)
+- **Object storage migration models** (source / planning: `SourceObjectStorage`, target: `RecommendedObjectStorage`), defined by [cm-beetle/imdl/storage-model](https://github.com/cloud-barista/cm-beetle/tree/main/imdl/storage-model)
 - **Model stages** : `source` → `planning` → `target`
 - **Model version management** : create and validate models against any tagged version of the model definitions
 - **Migration lineage** : track which models were derived from which (source → planning → target)
@@ -31,7 +32,8 @@ Every migration user model belongs to one of the three stages, given by the `mod
   - `onpremModelVersion` / `cloudModelVersion` : the `imdl/vX.Y.Z` tags of cm-beetle
   - `softwareModelVersion` : the `smdl/vX.Y.Z` tags of cm-grasshopper
   - `rdbmsModelVersion` : the `imdl/vX.Y.Z` tags of cm-beetle which have the RDBMS model (`rdbms-model`, `v0.1.13` or later)
-- When creating a model, the model version can be selected by the query parameter `modelVersion` (infra model), `softwareModelVersion` (software model) or `rdbmsModelVersion` (RDBMS model). If omitted, the latest tag is used.
+  - `objectStorageModelVersion` : the `imdl/vX.Y.Z` tags of cm-beetle which have the object storage model (`storage-model`, `v0.1.3` or later)
+- When creating a model, the model version can be selected by the query parameter `modelVersion` (infra model), `softwareModelVersion` (software model), `rdbmsModelVersion` (RDBMS model) or `objectStorageModelVersion` (object storage model). If omitted, the latest tag is used.
   - `POST /damselfly/infra-model` no longer accepts the former query parameters `onpremModelVersion` and `cloudModelVersion` (`400`). The fields of the same names in the responses are unchanged.
 - The model body is validated against (and stored in the form of) the struct of the selected tagged version. The Go source of that version is downloaded and parsed at runtime ([pkg/modelschema](pkg/modelschema)), so a new model version can be used without rebuilding CM-Damselfly.
 - On update, the stored model version is preserved and the body is validated against that version.
@@ -46,7 +48,11 @@ Every migration user model belongs to one of the three stages, given by the `mod
   - **Only the conversion to the same or a newer version is allowed**, and a model whose stored version is not a tag with the RDBMS model (`v0.1.13` or later) cannot be converted (`400`).
   - `v0.1.14`: the instances of a source/planning model (`sourceRDBMSModel`) are restructured into `dbNode` and `dbEngine` (`instanceName` → `displayName`, `databases` → `innerDatabases`). `vcpu`, `memoryMb` and `storageSizeGb` are converted as estimates and reported in `warnings`, and the fields without a counterpart (e.g. `highAvailability`) are dropped.
   - `v0.1.18`: `characterSet` of the target databases (`targetRDBMSModel`, removed in `v0.1.17`) is converted to `charset`.
-- Swagger UI lists an API definition per tagged version (`imdl/{version}/doc.json`, `smdl/{version}/doc.json`) in the **Select a definition** drop-down, so that the request body schema of each version can be checked.
+- `GET /damselfly/object-storage-model/{id}/convert?modelStage=source&objectStorageModelVersion=v0.1.20` returns a stored object storage model converted to the struct of a newer version in the same way. If `objectStorageModelVersion` is omitted, the latest tag is used. The stored model is not changed.
+  - **Only the conversion to the same or a newer version is allowed**, and a model whose stored version is not a tag with the object storage model (`v0.1.3` or later) cannot be converted (`400`).
+  - `v0.1.6`: `nameSeed` of a target model (`targetObjectStorageModel`) was removed. It is reported in `droppedFields` (and in `warnings` if it has a value); give it as the `nameSeed` query parameter of the cm-beetle object storage migration API instead.
+  - `v0.1.11`: a source/planning model (`sourceObjectStorageModel`), which described a single bucket (`bucketName`, `versioningEnabled`, ...), is converted to a group of buckets: the bucket fields are moved into `sourceObjectStorages[0]`.
+- Swagger UI lists an API definition per tagged version (`imdl/{version}/doc.json`, `smdl/{version}/doc.json`) in the **Select a definition** drop-down, so that the request body schema of each version can be checked. The `imdl/{version}/doc.json` definitions also show the RDBMS model (`v0.1.13` or later) and the object storage model (`v0.1.3` or later) of that version.
 
 > [!NOTE]
 > The tagged versions and their source code are fetched from GitHub (`api.github.com`) and the Go module proxy (`proxy.golang.org`, or the proxies in `GOPROXY`). CM-Damselfly needs outbound internet access to use the model version features. Fetched results are cached in memory.
@@ -55,7 +61,7 @@ Every migration user model belongs to one of the three stages, given by the `mod
 The models derived from one another are linked by the `lineage` field (`sourceGroupId`, `sourceModelId`, `planningModelId`, `targetModelId`).
 (Refer to [Damselfly model metadata - lineage](https://github.com/cloud-barista/cm-beetle/blob/main/docs/announcements/damselfly-model-metadata-lineage.md))
 
-- On create/update, give `parentId` (the ID of a model of the same category in the previous stage) to derive the upstream lineage fields from the parent. `lineage` can also be given explicitly.
+- On create/update, give `parentId` (the ID of a model of the same category — infra, software, RDBMS or object storage — in the previous stage) to derive the upstream lineage fields from the parent. `lineage` can also be given explicitly.
 - The lineage field of the model's own stage (e.g. `planningModelId` of a planning model) is set by the server.
 - The list APIs can be filtered by `sourceGroupId`, `sourceModelId`, `planningModelId` and `targetModelId` to find all the models derived from a model.
 - A model referred to by the lineage of other models cannot be deleted (409 Conflict) unless `force=true`, and its stage cannot be changed.
@@ -69,7 +75,7 @@ All APIs are served under `http://localhost:8088/damselfly` with basic auth (def
 | Method | Path | Description |
 | :----- | :--- | :---------- |
 | GET | `/model/version` | Get all tagged versions of the migration models |
-| GET | `/model` | Get migration user models of all categories (filters: `modelStage`, `category`, lineage) |
+| GET | `/model` | Get migration user models of all categories (filters: `modelStage`, `category=infra\|software\|rdbms\|objectStorage`, lineage) |
 | GET / POST | `/infra-model` | List / create infra models (`modelType=onprem\|cloud`, `modelStage`) |
 | GET / PUT / DELETE | `/infra-model/{id}` | Get / update / delete an infra model |
 | GET | `/infra-model/{id}/convert` | Get an infra model converted to a newer model version (`modelType=onprem\|cloud`, `modelVersion`) |
@@ -79,6 +85,9 @@ All APIs are served under `http://localhost:8088/damselfly` with basic auth (def
 | GET / POST | `/rdbms-model` | List / create RDBMS models (`modelStage`, `rdbmsModelVersion`) |
 | GET / PUT / DELETE | `/rdbms-model/{id}` | Get / update / delete an RDBMS model |
 | GET | `/rdbms-model/{id}/convert` | Get an RDBMS model converted to a newer model version (`modelStage`, `rdbmsModelVersion`) |
+| GET / POST | `/object-storage-model` | List / create object storage models (`modelStage`, `objectStorageModelVersion`) |
+| GET / PUT / DELETE | `/object-storage-model/{id}` | Get / update / delete an object storage model |
+| GET | `/object-storage-model/{id}/convert` | Get an object storage model converted to a newer model version (`modelStage`, `objectStorageModelVersion`) |
 
 ### Legacy APIs
 The following APIs are kept for compatibility. They distinguish source and target models by `isTargetModel` only, and do not support the `planning` stage, model version selection or lineage. Use the unified APIs above for those features.
@@ -265,29 +274,30 @@ The configuration is set in [conf/config.yaml](conf/config.yaml) and can be over
   - When running with docker compose : ./cm-damselfly/container-volume/cb-damselfly-container/log/damselfly.log
 
 ### Versions of migration models applied to the released Damselfly
-| **cm-damselfly version** | **OnpremInfraModel<BR>/CloudInfraModel** |**SoftwareModel** |
-| :----: | :-----: |:-----: |
-| v0.2.0 | v0.0.3 | - |
-| v0.2.1 | v0.0.3 | - |
-| v0.2.2 | v0.0.3 | - |
-| v0.3.0 | v0.0.3 | - |
-| v0.3.1 | v0.0.10 | - |
-| v0.3.2 | v0.0.10 | - |
-| v0.3.3 | v0.0.11 | - |
-| v0.3.4 | v0.0.12 | - |
-| v0.3.5 | v0.0.13 | - |
-| v0.3.6 | v0.0.14 | - |
-| v0.4.0 | v0.0.14 | - |
-| v0.4.1 | v0.0.15 | - |
-| v0.5.0 | v0.0.21 | v0.0.21 |
-| v0.5.1 | v0.1.6 | v0.1.0 |
-| v0.5.2 | v0.1.9 | v0.1.1 |
-| v0.5.3 | v0.1.10 | v0.1.1 |
-| v0.6.0 | v0.1.10 | v0.1.1 |
-| v0.6.1 | v0.1.11 | v0.1.1 |
-| v0.6.2 | v0.1.12 | v0.1.3 |
-| v0.6.3 | v0.1.15 | v0.1.3 |
-| main : v0.6.4 | v0.1.18 | v0.1.4 |
+| **cm-damselfly version** | **OnpremInfraModel<BR>/CloudInfraModel** |**SoftwareModel** |**RDBMSModel<BR>/ObjectStorageModel** |
+| :----: | :-----: |:-----: |:-----: |
+| v0.2.0 | v0.0.3 | - | - |
+| v0.2.1 | v0.0.3 | - | - |
+| v0.2.2 | v0.0.3 | - | - |
+| v0.3.0 | v0.0.3 | - | - |
+| v0.3.1 | v0.0.10 | - | - |
+| v0.3.2 | v0.0.10 | - | - |
+| v0.3.3 | v0.0.11 | - | - |
+| v0.3.4 | v0.0.12 | - | - |
+| v0.3.5 | v0.0.13 | - | - |
+| v0.3.6 | v0.0.14 | - | - |
+| v0.4.0 | v0.0.14 | - | - |
+| v0.4.1 | v0.0.15 | - | - |
+| v0.5.0 | v0.0.21 | v0.0.21 | - |
+| v0.5.1 | v0.1.6 | v0.1.0 | - |
+| v0.5.2 | v0.1.9 | v0.1.1 | - |
+| v0.5.3 | v0.1.10 | v0.1.1 | - |
+| v0.6.0 | v0.1.10 | v0.1.1 | - |
+| v0.6.1 | v0.1.11 | v0.1.1 | - |
+| v0.6.2 | v0.1.12 | v0.1.3 | - |
+| v0.6.3 | v0.1.15 | v0.1.3 | - |
+| v0.6.4 | v0.1.18 | v0.1.4 | -|
+| main : v0.6.5 | v0.1.20 | v0.1.4 | v0.1.20 |
 
 **_NOTE :_** Since the model version management features (after v0.6.3), the versions above are the ones built into CM-Damselfly (used for the default Swagger API definition). Models of any other tagged version can be created by specifying the model version (see [Model version management](#model-version-management)).
 
