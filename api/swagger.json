@@ -758,7 +758,7 @@
         },
         "/model": {
             "get": {
-                "description": "Get a list of migration user models of all categories (infra, software and rdbms).\nUse 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).",
+                "description": "Get a list of migration user models of all categories (infra, software, rdbms and objectStorage).\nUse 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).",
                 "consumes": [
                     "application/json"
                 ],
@@ -768,7 +768,7 @@
                 "tags": [
                     "[API] Migration User Models"
                 ],
-                "summary": "Get a list of migration user models (infra, software and RDBMS)",
+                "summary": "Get a list of migration user models (infra, software, RDBMS and object storage)",
                 "operationId": "GetModels",
                 "parameters": [
                     {
@@ -786,7 +786,8 @@
                         "enum": [
                             "infra",
                             "software",
-                            "rdbms"
+                            "rdbms",
+                            "objectStorage"
                         ],
                         "type": "string",
                         "description": "Category of models to retrieve. If empty, the models of all categories are returned.",
@@ -846,7 +847,7 @@
         },
         "/model/version": {
             "get": {
-                "description": "Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper, and 'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the RDBMS model (v0.1.13 or later).",
+                "description": "Get all tagged versions (in ascending order) of the migration models. 'onpremModelVersion' and 'cloudModelVersion' are the 'imdl/vX.Y.Z' tags of cm-beetle, 'softwareModelVersion' is the 'smdl/vX.Y.Z' tags of cm-grasshopper, 'rdbmsModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the RDBMS model (v0.1.13 or later), and 'objectStorageModelVersion' is the 'imdl/vX.Y.Z' tags of cm-beetle which have the object storage model (v0.1.3 or later).",
                 "consumes": [
                     "application/json"
                 ],
@@ -863,6 +864,434 @@
                         "description": "Tagged migration model versions",
                         "schema": {
                             "$ref": "#/definitions/handler.GetModelsVersionResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/object-storage-model": {
+            "get": {
+                "description": "Get a list of object storage migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a list of object storage migration user models (source, planning or target)",
+                "operationId": "GetObjectStorageModels",
+                "parameters": [
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of object storage model to retrieve",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceGroupId'",
+                        "name": "sourceGroupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.sourceModelId'",
+                        "name": "sourceModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.planningModelId'",
+                        "name": "planningModelId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by 'lineage.targetModelId'",
+                        "name": "targetModelId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained object storage migration user models",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new object storage migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.\nProvide 'sourceObjectStorageModel' for a source or planning model (modelStage=source or planning), or 'targetObjectStorageModel' for a target model (modelStage=target).\nThe 'sourceObjectStorageModel' (or 'targetObjectStorageModel') is validated against the 'SourceObjectStorage' (or 'RecommendedObjectStorage') struct of the cm-beetle/imdl tagged version given by 'objectStorageModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n[Lineage] 'parentId' is the ID of the object storage model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.\n'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.\n(The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Create a new object storage migration user model (source, planning or target)",
+                "operationId": "CreateObjectStorageModel",
+                "parameters": [
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of object storage model to create",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object storage model version (a cm-beetle 'imdl/vX.Y.Z' tag of v0.1.3 or later, e.g. v0.1.20). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "objectStorageModelVersion",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Object storage model information",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateObjectStorageModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created the object storage migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Parent (or lineage) model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/object-storage-model/{id}": {
+            "get": {
+                "description": "Get a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Get a specific object storage migration user model (source, planning or target)",
+                "operationId": "GetObjectStorageModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of the object storage model",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained the object storage migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a specific object storage migration user model by ID.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nProvide 'sourceObjectStorageModel' if the (resulting) stage is source or planning, or 'targetObjectStorageModel' if it is target.\n'createTime' and 'objectStorageModelVersion' of the stored model are preserved, and 'sourceObjectStorageModel' (or 'targetObjectStorageModel') is validated against the struct of that cm-beetle/imdl tagged version.\n[Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that object storage model in the previous stage (source → planning → target).\nThe stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Update a specific object storage migration user model (source, planning or target)",
+                "operationId": "UpdateObjectStorageModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage to change the object storage model to. If empty, the stored stage is preserved.",
+                        "name": "modelStage",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Object storage model information to update",
+                        "name": "Model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateObjectStorageModelReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated the object storage migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "The stage cannot be changed: the model is referred to by the lineage of other models",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nIf the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Delete a specific object storage migration user model (source, planning or target)",
+                "operationId": "DeleteObjectStorageModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of the object storage model",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Delete the model even if it is referred to by the lineage of other models",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted the object storage migration user model",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Model Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "The model is referred to by the lineage of other models (listed in 'list')",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/object-storage-model/{id}/convert": {
+            "get": {
+                "description": "Get a stored object storage migration user model converted to the struct of the cm-beetle/imdl tagged version given by 'objectStorageModelVersion'. The stored model is not changed.\nOnly the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-beetle/imdl tag with the object storage model (v0.1.3 or later) cannot be converted.\nThe response has the fields of 'GET /object-storage-model/{id}', with 'objectStorageModelVersion' and 'sourceObjectStorageModel' (or 'targetObjectStorageModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).\n[Migrations] v0.1.6: 'nameSeed' of 'targetObjectStorageModel' was removed (reported in 'droppedFields', and in 'warnings' if it has a value). v0.1.11: 'sourceObjectStorageModel', which described a single bucket, is converted to a group of buckets: the bucket fields are moved into 'sourceObjectStorages[0]'.\nIf a field of the stored model has a value which does not match the type of that field in the requested version, the model is not converted (400).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[API] Migration User Models"
+                ],
+                "summary": "Convert a stored object storage migration user model to a newer model version",
+                "operationId": "ConvertObjectStorageModel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Model ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Stage of the object storage model",
+                        "name": "modelStage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Model version to convert to (a cm-beetle 'imdl/vX.Y.Z' tag of v0.1.3 or later, e.g. v0.1.20). If empty, the latest tag is used. See 'GET /model/version' for available versions.",
+                        "name": "objectStorageModelVersion",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained the converted object storage migration user model",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameter, or the model cannot be converted to the version",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "404": {
@@ -3748,7 +4177,7 @@
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 },
                 "parentId": {
-                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.",
                     "type": "string",
                     "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
                 },
@@ -3765,6 +4194,48 @@
                     "type": "string"
                 },
                 "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateObjectStorageModelReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "isInitUserModel": {
+                    "type": "boolean"
+                },
+                "lineage": {
+                    "description": "Lineage is given to set the lineage explicitly (e.g. 'sourceGroupId'). The field of the model's own stage is set by the server.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/lineage.MigrationLineage"
+                        }
+                    ]
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "type": "string",
+                    "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
+                },
+                "sourceObjectStorageModel": {
+                    "$ref": "#/definitions/storagemodel.SourceObjectStorage"
+                },
+                "targetObjectStorageModel": {
+                    "$ref": "#/definitions/storagemodel.RecommendedObjectStorage"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userModelName": {
+                    "type": "string"
+                },
+                "userModelVersion": {
                     "type": "string"
                 }
             }
@@ -3863,7 +4334,7 @@
                     "type": "string"
                 },
                 "parentId": {
-                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.",
                     "type": "string",
                     "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
                 },
@@ -3905,7 +4376,7 @@
                     "type": "string"
                 },
                 "parentId": {
-                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software or rdbms) in the previous stage: a source model for a planning model, and a planning model for a target model.",
+                    "description": "ParentId is the ID of the model this model is derived from. It must be a model of the same category\n(infra, software, rdbms or objectStorage) in the previous stage: a source model for a planning model, and a planning model for a target model.",
                     "type": "string",
                     "example": "a4e3c3a6-7d2f-4a3e-9c1b-0f6f7a1d2e3b"
                 },
@@ -4337,6 +4808,12 @@
             "type": "object",
             "properties": {
                 "cloudModelVersion": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "objectStorageModelVersion": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -6931,6 +7408,204 @@
                     "items": {
                         "$ref": "#/definitions/softwaremodel.MigrationServer"
                     }
+                }
+            }
+        },
+        "storagemodel.CORSRule": {
+            "type": "object",
+            "required": [
+                "allowedMethod",
+                "allowedOrigin"
+            ],
+            "properties": {
+                "allowedHeader": {
+                    "description": "Allowed headers (e.g., [\"*\"], [\"Content-Type\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allowedMethod": {
+                    "description": "Allowed HTTP methods (e.g., [\"GET\", \"PUT\", \"POST\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allowedOrigin": {
+                    "description": "Allowed origins (e.g., [\"*\"], [\"https://example.com\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "exposeHeader": {
+                    "description": "Headers exposed to the browser (e.g., [\"ETag\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "maxAgeSeconds": {
+                    "description": "Preflight response cache duration in seconds",
+                    "type": "integer"
+                }
+            }
+        },
+        "storagemodel.CloudProperty": {
+            "type": "object",
+            "properties": {
+                "csp": {
+                    "description": "Cloud service provider (e.g., aws, azure, gcp, ncp, alibaba)",
+                    "type": "string",
+                    "example": "aws"
+                },
+                "region": {
+                    "description": "Region identifier",
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                }
+            }
+        },
+        "storagemodel.RecommendedObjectStorage": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Human-readable summary",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "e.g., \"recommended\", \"partial\", \"failed\"",
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/storagemodel.CloudProperty"
+                },
+                "targetObjectStorages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.TargetObjectStorage"
+                    }
+                },
+                "warnings": {
+                    "description": "CSP feature-support warnings",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "storagemodel.SourceObjectStorage": {
+            "type": "object",
+            "required": [
+                "sourceObjectStorages"
+            ],
+            "properties": {
+                "description": {
+                    "description": "Human-readable description",
+                    "type": "string"
+                },
+                "sourceCloud": {
+                    "description": "Source cloud provider and region (optional)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storagemodel.CloudProperty"
+                        }
+                    ]
+                },
+                "sourceObjectStorages": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.SourceObjectStorageProperty"
+                    }
+                }
+            }
+        },
+        "storagemodel.SourceObjectStorageProperty": {
+            "type": "object",
+            "required": [
+                "bucketName"
+            ],
+            "properties": {
+                "accessFrequency": {
+                    "description": "Access pattern: \"frequent\" | \"infrequent\" | \"archive\"",
+                    "type": "string"
+                },
+                "bucketName": {
+                    "description": "Source bucket name",
+                    "type": "string"
+                },
+                "corsEnabled": {
+                    "description": "Whether CORS is configured",
+                    "type": "boolean"
+                },
+                "corsRule": {
+                    "description": "Active CORS rules",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.CORSRule"
+                    }
+                },
+                "creationDate": {
+                    "description": "Bucket creation date (RFC 3339)",
+                    "type": "string"
+                },
+                "encryptionEnabled": {
+                    "description": "Whether server-side encryption is enabled",
+                    "type": "boolean"
+                },
+                "isPublic": {
+                    "description": "Whether the bucket allows public access",
+                    "type": "boolean"
+                },
+                "objectCount": {
+                    "description": "Total number of objects",
+                    "type": "integer"
+                },
+                "tags": {
+                    "description": "Key-value tags",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "totalSizeBytes": {
+                    "description": "Total stored data in bytes",
+                    "type": "integer"
+                },
+                "versioningEnabled": {
+                    "description": "Whether versioning is enabled",
+                    "type": "boolean"
+                }
+            }
+        },
+        "storagemodel.TargetObjectStorage": {
+            "type": "object",
+            "properties": {
+                "bucketName": {
+                    "description": "Globally unique target bucket name",
+                    "type": "string"
+                },
+                "corsEnabled": {
+                    "description": "Whether to configure CORS",
+                    "type": "boolean"
+                },
+                "corsRule": {
+                    "description": "CORS rules to apply",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.CORSRule"
+                    }
+                },
+                "sourceBucketName": {
+                    "description": "Originating source bucket name",
+                    "type": "string"
+                },
+                "versioningEnabled": {
+                    "description": "Whether to enable versioning",
+                    "type": "boolean"
                 }
             }
         }
