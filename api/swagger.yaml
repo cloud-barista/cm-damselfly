@@ -861,105 +861,6 @@ definitions:
     - connectionName
     - name
     type: object
-  handler.CloudModelRespInfo:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedInfra'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  handler.CreateCloudModelReq:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedInfra'
-      csp:
-        type: string
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      region:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  handler.CreateCloudModelResp:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedInfra'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
   handler.CreateInfraModelReq:
     properties:
       cloudInfraModel:
@@ -1024,54 +925,6 @@ definitions:
       userModelVersion:
         type: string
     type: object
-  handler.CreateOnPremModelReq:
-    properties:
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      onpremiseInfraModel:
-        $ref: '#/definitions/onpremisemodel.OnpremInfra'
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  handler.CreateOnPremModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onpremisemodel.OnpremInfra'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
   handler.CreateRDBMSModelReq:
     properties:
       description:
@@ -1132,272 +985,10 @@ definitions:
       userModelVersion:
         type: string
     type: object
-  handler.CreateSourceSoftwareModelReq:
-    properties:
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      sourceSoftwareModel:
-        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - sourceSoftwareModel
-    type: object
-  handler.CreateSourceSoftwareModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isSoftwareModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      nodeId:
-        type: string
-      softwareModelVersion:
-        type: string
-      sourceSoftwareModel:
-        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - sourceSoftwareModel
-    type: object
-  handler.CreateTargetSoftwareModelReq:
-    properties:
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      targetSoftwareModel:
-        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - targetSoftwareModel
-    type: object
-  handler.CreateTargetSoftwareModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isSoftwareModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      nodeId:
-        type: string
-      softwareModelVersion:
-        type: string
-      targetSoftwareModel:
-        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - targetSoftwareModel
-    type: object
-  handler.GetCloudModelResp:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedInfra'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  handler.GetCloudModelsResp:
-    properties:
-      models:
-        items:
-          $ref: '#/definitions/handler.CloudModelRespInfo'
-        type: array
-    type: object
   handler.GetModelsVersionResp:
     properties:
       modelsVersion:
         $ref: '#/definitions/handler.ModelsVersionRespInfo'
-    type: object
-  handler.GetOnPremModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onpremisemodel.OnpremInfra'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  handler.GetOnPremModelsResp:
-    properties:
-      models:
-        items:
-          $ref: '#/definitions/handler.OnPremModelRespInfo'
-        type: array
-    type: object
-  handler.GetSourceSoftwareModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isSoftwareModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      nodeId:
-        type: string
-      softwareModelVersion:
-        type: string
-      sourceSoftwareModel:
-        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - sourceSoftwareModel
-    type: object
-  handler.GetSourceSoftwareModelsResp:
-    properties:
-      models:
-        items:
-          $ref: '#/definitions/handler.SourceSoftwareModelRespInfo'
-        type: array
-    type: object
-  handler.GetTargetSoftwareModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isSoftwareModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      nodeId:
-        type: string
-      softwareModelVersion:
-        type: string
-      targetSoftwareModel:
-        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - targetSoftwareModel
-    type: object
-  handler.GetTargetSoftwareModelsResp:
-    properties:
-      models:
-        items:
-          $ref: '#/definitions/handler.TargetSoftwareModelRespInfo'
-        type: array
     type: object
   handler.ModelsVersionRespInfo:
     properties:
@@ -1422,37 +1013,6 @@ definitions:
           type: string
         type: array
     type: object
-  handler.OnPremModelRespInfo:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onpremisemodel.OnpremInfra'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
   handler.ResHTTPVersion:
     properties:
       message:
@@ -1462,282 +1022,6 @@ definitions:
     properties:
       message:
         type: string
-    type: object
-  handler.SourceSoftwareModelRespInfo:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isSoftwareModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      nodeId:
-        type: string
-      softwareModelVersion:
-        type: string
-      sourceSoftwareModel:
-        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - sourceSoftwareModel
-    type: object
-  handler.TargetSoftwareModelRespInfo:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isSoftwareModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      nodeId:
-        type: string
-      softwareModelVersion:
-        type: string
-      targetSoftwareModel:
-        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - targetSoftwareModel
-    type: object
-  handler.UpdateCloudModelReq:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedInfra'
-      csp:
-        type: string
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      region:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  handler.UpdateCloudModelResp:
-    properties:
-      cloudInfraModel:
-        $ref: '#/definitions/cloudmodel.RecommendedInfra'
-      cloudModelVersion:
-        type: string
-      createTime:
-        type: string
-      csp:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      region:
-        type: string
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-      zone:
-        type: string
-    required:
-    - cloudInfraModel
-    type: object
-  handler.UpdateOnPremModelReq:
-    properties:
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      onpremiseInfraModel:
-        $ref: '#/definitions/onpremisemodel.OnpremInfra'
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  handler.UpdateOnPremModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isCloudModel:
-        type: boolean
-      isInitUserModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      onpremModelVersion:
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onpremisemodel.OnpremInfra'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - onpremiseInfraModel
-    type: object
-  handler.UpdateSourceSoftwareModelReq:
-    properties:
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      sourceSoftwareModel:
-        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - sourceSoftwareModel
-    type: object
-  handler.UpdateSourceSoftwareModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isSoftwareModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      nodeId:
-        type: string
-      softwareModelVersion:
-        type: string
-      sourceSoftwareModel:
-        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - sourceSoftwareModel
-    type: object
-  handler.UpdateTargetSoftwareModelReq:
-    properties:
-      description:
-        type: string
-      isInitUserModel:
-        type: boolean
-      targetSoftwareModel:
-        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - targetSoftwareModel
-    type: object
-  handler.UpdateTargetSoftwareModelResp:
-    properties:
-      createTime:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      isInitUserModel:
-        type: boolean
-      isSoftwareModel:
-        type: boolean
-      isTargetModel:
-        type: boolean
-      modelType:
-        type: string
-      nodeId:
-        type: string
-      softwareModelVersion:
-        type: string
-      targetSoftwareModel:
-        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
-      updateTime:
-        type: string
-      userId:
-        type: string
-      userModelName:
-        type: string
-      userModelVersion:
-        type: string
-    required:
-    - targetSoftwareModel
     type: object
   lineage.MigrationLineage:
     properties:
@@ -1951,6 +1235,25 @@ definitions:
     - name
     - version
     type: object
+  onpremisemodel.ListeningPortProperty:
+    properties:
+      bindAddress:
+        description: Local bind address (e.g., "0.0.0.0", "::", "127.0.0.1")
+        example: 0.0.0.0
+        type: string
+      port:
+        description: Listening port number
+        example: 8080
+        type: integer
+      processName:
+        description: Owning process name if available
+        example: nginx
+        type: string
+      protocol:
+        description: Transport protocol (e.g., "tcp", "udp")
+        example: tcp
+        type: string
+    type: object
   onpremisemodel.MemoryProperty:
     properties:
       available:
@@ -2117,6 +1420,11 @@ definitions:
       interfaces:
         items:
           $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      listeningPorts:
+        description: Listening TCP/UDP sockets on the node
+        items:
+          $ref: '#/definitions/onpremisemodel.ListeningPortProperty'
         type: array
       machineId:
         description: Unique identifier for the node (e.g., UUID)
@@ -3390,174 +2698,6 @@ info:
   title: CM-Damselfly REST API
   version: latest
 paths:
-  /cloudmodel:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of cloud user models.
-      operationId: GetCloudModels
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Obtained Cloud Migration User Models
-          schema:
-            $ref: '#/definitions/handler.GetCloudModelsResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Get a list of cloud user models
-      tags:
-      - '[API] Cloud Migration User Models'
-    post:
-      consumes:
-      - application/json
-      description: Create a new cloud user model with the given information.
-      operationId: CreateCloudModel
-      parameters:
-      - description: model information
-        in: body
-        name: Model
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateCloudModelReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully Created the Cloud Migration User Model
-          schema:
-            $ref: '#/definitions/handler.CreateCloudModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Create a new cloud user model
-      tags:
-      - '[API] Cloud Migration User Models'
-  /cloudmodel/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a cloud user model with the given information.
-      operationId: DeleteCloudModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Deleted the Cloud Migration User Model
-          schema:
-            type: string
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Delete a cloud user model
-      tags:
-      - '[API] Cloud Migration User Models'
-    get:
-      consumes:
-      - application/json
-      description: Get a specific cloud user model.
-      operationId: GetCloudModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Obtained the Cloud Migration User Model
-          schema:
-            $ref: '#/definitions/handler.GetCloudModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Get a specific cloud user model
-      tags:
-      - '[API] Cloud Migration User Models'
-    put:
-      consumes:
-      - application/json
-      description: Update a cloud user model with the given information.
-      operationId: UpdateCloudModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Model information to update
-        in: body
-        name: Model
-        required: true
-        schema:
-          $ref: '#/definitions/handler.UpdateCloudModelReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully Updated the Cloud Migration User Model
-          schema:
-            $ref: '#/definitions/handler.UpdateCloudModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Update a cloud user model
-      tags:
-      - '[API] Cloud Migration User Models'
   /httpVersion:
     get:
       consumes:
@@ -3588,8 +2728,9 @@ paths:
       consumes:
       - application/json
       description: |-
-        Get a list of infra migration user models filtered by model type and model stage.
+        Get a list of infra migration user models filtered by model type and model stage. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
         The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
+        'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetInfraModels
       parameters:
       - description: Type of infra model to retrieve
@@ -3600,15 +2741,19 @@ paths:
         name: modelType
         required: true
         type: string
-      - description: Stage of infra model to retrieve
-        enum:
-        - source
-        - planning
-        - target
+      - collectionFormat: csv
+        description: Stages of the models to retrieve. Multiple stages are separated
+          by commas (e.g. source,planning).
         in: query
+        items:
+          enum:
+          - source
+          - planning
+          - target
+          type: string
         name: modelStage
         required: true
-        type: string
+        type: array
       - description: Filter by 'lineage.sourceGroupId'
         in: query
         name: sourceGroupId
@@ -3649,7 +2794,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Get a list of infra migration user models (on-premise or cloud)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Infra'
     post:
       consumes:
       - application/json
@@ -3712,7 +2857,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Create a new infra migration user model (on-premise or cloud)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Infra'
   /infra-model/{id}:
     delete:
       consumes:
@@ -3759,13 +2904,14 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Delete a specific infra migration user model (on-premise or cloud)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Infra'
     get:
       consumes:
       - application/json
       description: |-
         Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
         The 'lineage' of the model refers to its upstream models and itself.
+        'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetInfraModel
       parameters:
       - description: Model ID
@@ -3802,7 +2948,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Get a specific infra migration user model (on-premise or cloud)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Infra'
     put:
       consumes:
       - application/json
@@ -3868,7 +3014,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Update a specific infra migration user model (on-premise or cloud)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Infra'
   /infra-model/{id}/convert:
     get:
       consumes:
@@ -3921,7 +3067,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Convert a stored infra migration user model to a newer model version
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Infra'
   /model:
     get:
       consumes:
@@ -3929,18 +3075,24 @@ paths:
       description: |-
         Get a list of migration user models of all categories (infra, software, rdbms and objectStorage).
         Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.
+        Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
         The models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).
+        'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetModels
       parameters:
-      - description: Stage of models to retrieve. If empty, the models of all stages
-          are returned.
-        enum:
-        - source
-        - planning
-        - target
+      - collectionFormat: csv
+        description: Stages of the models to retrieve. Multiple stages are separated
+          by commas (e.g. source,planning). If empty, the models of all stages are
+          returned.
         in: query
+        items:
+          enum:
+          - source
+          - planning
+          - target
+          type: string
         name: modelStage
-        type: string
+        type: array
       - description: Category of models to retrieve. If empty, the models of all categories
           are returned.
         enum:
@@ -4023,19 +3175,24 @@ paths:
       consumes:
       - application/json
       description: |-
-        Get a list of object storage migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.
+        Get a list of object storage migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
         The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
+        'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetObjectStorageModels
       parameters:
-      - description: Stage of object storage model to retrieve
-        enum:
-        - source
-        - planning
-        - target
+      - collectionFormat: csv
+        description: Stages of the models to retrieve. Multiple stages are separated
+          by commas (e.g. source,planning).
         in: query
+        items:
+          enum:
+          - source
+          - planning
+          - target
+          type: string
         name: modelStage
         required: true
-        type: string
+        type: array
       - description: Filter by 'lineage.sourceGroupId'
         in: query
         name: sourceGroupId
@@ -4073,7 +3230,7 @@ paths:
       summary: Get a list of object storage migration user models (source, planning
         or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Object Storage'
     post:
       consumes:
       - application/json
@@ -4130,7 +3287,7 @@ paths:
       summary: Create a new object storage migration user model (source, planning
         or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Object Storage'
   /object-storage-model/{id}:
     delete:
       consumes:
@@ -4187,13 +3344,14 @@ paths:
       summary: Delete a specific object storage migration user model (source, planning
         or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Object Storage'
     get:
       consumes:
       - application/json
       description: |-
         Get a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
         The 'lineage' of the model refers to its upstream models and itself.
+        'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetObjectStorageModel
       parameters:
       - description: Model ID
@@ -4232,7 +3390,7 @@ paths:
       summary: Get a specific object storage migration user model (source, planning
         or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Object Storage'
     put:
       consumes:
       - application/json
@@ -4292,7 +3450,7 @@ paths:
       summary: Update a specific object storage migration user model (source, planning
         or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Object Storage'
   /object-storage-model/{id}/convert:
     get:
       consumes:
@@ -4349,185 +3507,30 @@ paths:
       summary: Convert a stored object storage migration user model to a newer model
         version
       tags:
-      - '[API] Migration User Models'
-  /onpremmodel:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of on-premise models.
-      operationId: GetOnPremModels
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Obtained On-Premise Migration User Models
-          schema:
-            $ref: '#/definitions/handler.GetOnPremModelsResp'
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Get a list of on-premise models
-      tags:
-      - '[API] On-Premise Migration User Models'
-    post:
-      consumes:
-      - application/json
-      description: Create a new on-premise model with the given information.
-      operationId: CreateOnPremModel
-      parameters:
-      - description: model information
-        in: body
-        name: Model
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateOnPremModelReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully Created the On-Premise Migration User Model
-          schema:
-            $ref: '#/definitions/handler.CreateOnPremModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Create a new on-premise model
-      tags:
-      - '[API] On-Premise Migration User Models'
-  /onpremmodel/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a on-premise model with the given information.
-      operationId: DeleteOnPremModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Deleted the On-Premise Migration User Model
-          schema:
-            type: string
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Delete a on-premise model
-      tags:
-      - '[API] On-Premise Migration User Models'
-    get:
-      consumes:
-      - application/json
-      description: Get a specific on-premise model.
-      operationId: GetOnPremModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Obtained the On-Premise Migration User Model
-          schema:
-            $ref: '#/definitions/handler.GetOnPremModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Get a specific on-premise model
-      tags:
-      - '[API] On-Premise Migration User Models'
-    put:
-      consumes:
-      - application/json
-      description: Update a on-premise model with the given information.
-      operationId: UpdateOnPremModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Model information to update
-        in: body
-        name: Model
-        required: true
-        schema:
-          $ref: '#/definitions/handler.UpdateOnPremModelReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully Updated the On-Premise Migration User Model
-          schema:
-            $ref: '#/definitions/handler.UpdateOnPremModelResp'
-        "404":
-          description: Model Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Update a on-premise model
-      tags:
-      - '[API] On-Premise Migration User Models'
+      - '[API] Migration User Models - Object Storage'
   /rdbms-model:
     get:
       consumes:
       - application/json
       description: |-
-        Get a list of RDBMS migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.
+        Get a list of RDBMS migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
         The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
+        'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetRDBMSModels
       parameters:
-      - description: Stage of RDBMS model to retrieve
-        enum:
-        - source
-        - planning
-        - target
+      - collectionFormat: csv
+        description: Stages of the models to retrieve. Multiple stages are separated
+          by commas (e.g. source,planning).
         in: query
+        items:
+          enum:
+          - source
+          - planning
+          - target
+          type: string
         name: modelStage
         required: true
-        type: string
+        type: array
       - description: Filter by 'lineage.sourceGroupId'
         in: query
         name: sourceGroupId
@@ -4564,7 +3567,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Get a list of RDBMS migration user models (source, planning or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - RDBMS'
     post:
       consumes:
       - application/json
@@ -4620,7 +3623,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Create a new RDBMS migration user model (source, planning or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - RDBMS'
   /rdbms-model/{id}:
     delete:
       consumes:
@@ -4676,13 +3679,14 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Delete a specific RDBMS migration user model (source, planning or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - RDBMS'
     get:
       consumes:
       - application/json
       description: |-
         Get a specific RDBMS migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
         The 'lineage' of the model refers to its upstream models and itself.
+        'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetRDBMSModel
       parameters:
       - description: Model ID
@@ -4720,7 +3724,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Get a specific RDBMS migration user model (source, planning or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - RDBMS'
     put:
       consumes:
       - application/json
@@ -4779,7 +3783,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Update a specific RDBMS migration user model (source, planning or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - RDBMS'
   /rdbms-model/{id}/convert:
     get:
       consumes:
@@ -4834,7 +3838,7 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Convert a stored RDBMS migration user model to a newer model version
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - RDBMS'
   /readyz:
     get:
       consumes:
@@ -4860,19 +3864,24 @@ paths:
       consumes:
       - application/json
       description: |-
-        Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.
+        Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
         The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
+        'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetSoftwareModels
       parameters:
-      - description: Stage of software model to retrieve
-        enum:
-        - source
-        - planning
-        - target
+      - collectionFormat: csv
+        description: Stages of the models to retrieve. Multiple stages are separated
+          by commas (e.g. source,planning).
         in: query
+        items:
+          enum:
+          - source
+          - planning
+          - target
+          type: string
         name: modelStage
         required: true
-        type: string
+        type: array
       - description: Filter by 'lineage.sourceGroupId'
         in: query
         name: sourceGroupId
@@ -4907,15 +3916,15 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Get a list of software migration user models (source or target)
+      summary: Get a list of software migration user models (source, planning or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Software'
     post:
       consumes:
       - application/json
       description: |-
         Create a new software migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.
-        Provide 'sourceSoftwareModel' for a source model (modelStage=source), or 'targetSoftwareModel' for a planning or target model (modelStage=planning or target).
+        Provide 'sourceSoftwareModel' for a source or planning model (modelStage=source or planning), or 'targetSoftwareModel' for a target model (modelStage=target).
         The 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.
         'nodeId' is an optional identifier of the node the model is associated with.
         [Lineage] 'parentId' is the ID of the software model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
@@ -4963,9 +3972,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Create a new software migration user model (source or target)
+      summary: Create a new software migration user model (source, planning or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Software'
   /software-model/{id}:
     delete:
       consumes:
@@ -5019,15 +4028,17 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Delete a specific software migration user model (source or target)
+      summary: Delete a specific software migration user model (source, planning or
+        target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Software'
     get:
       consumes:
       - application/json
       description: |-
         Get a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
         The 'lineage' of the model refers to its upstream models and itself.
+        'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
       operationId: GetSoftwareModel
       parameters:
       - description: Model ID
@@ -5063,16 +4074,16 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Get a specific software migration user model (source or target)
+      summary: Get a specific software migration user model (source, planning or target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Software'
     put:
       consumes:
       - application/json
       description: |-
         Update a specific software migration user model by ID.
         The model stage is changed to 'modelStage' if it is given, and is preserved otherwise.
-        Provide 'sourceSoftwareModel' if the (resulting) stage is source, or 'targetSoftwareModel' if it is planning or target.
+        Provide 'sourceSoftwareModel' if the (resulting) stage is source or planning, or 'targetSoftwareModel' if it is target.
         'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.
         [Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).
         The stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').
@@ -5122,9 +4133,10 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Update a specific software migration user model (source or target)
+      summary: Update a specific software migration user model (source, planning or
+        target)
       tags:
-      - '[API] Migration User Models'
+      - '[API] Migration User Models - Software'
   /software-model/{id}/convert:
     get:
       consumes:
@@ -5134,6 +4146,7 @@ paths:
         Only the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-grasshopper/smdl tag cannot be converted.
         The response has the fields of 'GET /software-model/{id}', with 'softwareModelVersion' and 'sourceSoftwareModel' (or 'targetSoftwareModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
         If a field of the stored model has a value which does not match the type of that field in the requested version (e.g. the free-form 'resources' of Kubernetes before v0.1.4), the model is not converted (400).
+        A planning model stored in the former target structure ('targetSoftwareModel', before v0.6.6) cannot be converted (400). Update it with 'sourceSoftwareModel' first.
       operationId: ConvertSoftwareModel
       parameters:
       - description: Model ID
@@ -5179,304 +4192,23 @@ paths:
             $ref: '#/definitions/model.Response'
       summary: Convert a stored software migration user model to a newer model version
       tags:
-      - '[API] Migration User Models'
-  /softwaremodel/source:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of source software user models.
-      operationId: GetSourceSoftwareModels
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Obtained Source Software Migration User Models
-          schema:
-            $ref: '#/definitions/handler.GetSourceSoftwareModelsResp'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Get a list of source software user models
-      tags:
-      - '[API] Source Software Migration User Models'
-    post:
-      consumes:
-      - application/json
-      description: Create a new source software user model with the given information.
-      operationId: CreateSourceSoftwareModel
-      parameters:
-      - description: model information
-        in: body
-        name: Model
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateSourceSoftwareModelReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully Created the Source Software Migration User Model
-          schema:
-            $ref: '#/definitions/handler.CreateSourceSoftwareModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-      summary: Create a new source software user model
-      tags:
-      - '[API] Source Software Migration User Models'
-  /softwaremodel/source/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a source software user model with the given information.
-      operationId: DeleteSourceSoftwareModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Deleted the Source Software Migration User Model
-          schema:
-            type: string
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Delete a source software user model
-      tags:
-      - '[API] Source Software Migration User Models'
-    get:
-      consumes:
-      - application/json
-      description: Get a specific source software user model.
-      operationId: GetSourceSoftwareModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Obtained the Source Software Migration User Model
-          schema:
-            $ref: '#/definitions/handler.GetSourceSoftwareModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            type: object
-      summary: Get a specific source software user model
-      tags:
-      - '[API] Source Software Migration User Models'
-    put:
-      consumes:
-      - application/json
-      description: Update a source software user model with the given information.
-      operationId: UpdateSourceSoftwareModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Model information to update
-        in: body
-        name: Model
-        required: true
-        schema:
-          $ref: '#/definitions/handler.UpdateSourceSoftwareModelReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully Updated the Source Software Migration User Model
-          schema:
-            $ref: '#/definitions/handler.UpdateSourceSoftwareModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Update a source software user model
-      tags:
-      - '[API] Source Software Migration User Models'
-  /softwaremodel/target:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of target software user models.
-      operationId: GetTargetSoftwareModels
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Obtained Target Software Migration User Models
-          schema:
-            $ref: '#/definitions/handler.GetTargetSoftwareModelsResp'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Get a list of target software user models
-      tags:
-      - '[API] Target Software Migration User Models'
-    post:
-      consumes:
-      - application/json
-      description: Create a new target software user model with the given information.
-      operationId: CreateTargetSoftwareModel
-      parameters:
-      - description: model information
-        in: body
-        name: Model
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateTargetSoftwareModelReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully Created the Target Software Migration User Model
-          schema:
-            $ref: '#/definitions/handler.CreateTargetSoftwareModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-      summary: Create a new target software user model
-      tags:
-      - '[API] Target Software Migration User Models'
-  /softwaremodel/target/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a target software user model with the given information.
-      operationId: DeleteTargetSoftwareModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Deleted the Target Software Migration User Model
-          schema:
-            type: string
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Delete a target software user model
-      tags:
-      - '[API] Target Software Migration User Models'
-    get:
-      consumes:
-      - application/json
-      description: Get a specific target software user model.
-      operationId: GetTargetSoftwareModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Obtained the Target Software Migration User Model
-          schema:
-            $ref: '#/definitions/handler.GetTargetSoftwareModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            type: object
-      summary: Get a specific target software user model
-      tags:
-      - '[API] Target Software Migration User Models'
-    put:
-      consumes:
-      - application/json
-      description: Update a target software user model with the given information.
-      operationId: UpdateTargetSoftwareModel
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Model information to update
-        in: body
-        name: Model
-        required: true
-        schema:
-          $ref: '#/definitions/handler.UpdateTargetSoftwareModelReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully Updated the Target Software Migration User Model
-          schema:
-            $ref: '#/definitions/handler.UpdateTargetSoftwareModelResp'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-        "404":
-          description: Model Not Found
-          schema:
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.Response'
-      summary: Update a target software user model
-      tags:
-      - '[API] Target Software Migration User Models'
+      - '[API] Migration User Models - Software'
 securityDefinitions:
   BasicAuth:
     type: basic
 swagger: "2.0"
+tags:
+- description: Versions of the migration models
+  name: '[API] Migration Models'
+- description: Migration user models of all categories
+  name: '[API] Migration User Models'
+- description: Infra (on-premise / cloud) migration user models
+  name: '[API] Migration User Models - Infra'
+- description: Software migration user models
+  name: '[API] Migration User Models - Software'
+- description: RDBMS migration user models
+  name: '[API] Migration User Models - RDBMS'
+- description: Object storage migration user models
+  name: '[API] Migration User Models - Object Storage'
+- description: Readiness and HTTP version of CM-Damselfly
+  name: '[Admin] System management'
