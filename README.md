@@ -9,7 +9,7 @@ The Cloud Computing Infrastructure Migration Model Framework (codename: cm-damse
 It stores and serves the models through a REST API, and supports:
 
 - **Infra migration models** (on-premise / cloud), defined by [cm-beetle/imdl](https://github.com/cloud-barista/cm-beetle/tree/main/imdl)
-- **Software migration models** (source / target), defined by [cm-grasshopper/smdl](https://github.com/cloud-barista/cm-grasshopper/tree/main/smdl)
+- **Software migration models** (source / planning: `SourceGroupSoftwareProperty`, target: `TargetGroupSoftwareProperty`), defined by [cm-grasshopper/smdl](https://github.com/cloud-barista/cm-grasshopper/tree/main/smdl)
 - **RDBMS migration models** (source / planning: `SourceRDBMS`, target: `RecommendedRDBMS`), defined by [cm-beetle/imdl/rdbms-model](https://github.com/cloud-barista/cm-beetle/tree/main/imdl/rdbms-model)
 - **Object storage migration models** (source / planning: `SourceObjectStorage`, target: `RecommendedObjectStorage`), defined by [cm-beetle/imdl/storage-model](https://github.com/cloud-barista/cm-beetle/tree/main/imdl/storage-model)
 - **Model stages** : `source` → `planning` → `target`
@@ -26,6 +26,16 @@ Every migration user model belongs to one of the three stages, given by the `mod
 | `source` | Model of the source (e.g. on-premise) computing environment |
 | `planning` | Intermediate model being designed/recommended for migration |
 | `target` | Final model of the target cloud environment |
+
+### Terms
+| Term | Values | Description |
+| :--- | :----- | :---------- |
+| `modelStage` | `source`, `planning`, `target` | Stage of the model (see above) |
+| `category` | `infra`, `software`, `rdbms`, `objectStorage` | Category of the model. It is included in the responses, and is the filter of `GET /model` |
+| `modelType` (response) | `OnPremiseModel`, `CloudModel`, `SoftwareModel`, `RDBMSModel`, `ObjectStorageModel` | Type of the model body. The `infra` category has `OnPremiseModel` and `CloudModel` |
+| `modelType` (query of `/infra-model`) | `onprem`, `cloud` | Selects `OnPremiseModel` or `CloudModel` of the `infra` category |
+
+**_NOTE :_** The lineage documents of cm-beetle call `modelStage` and `userModelName` of CM-Damselfly `modelType` and `name`, respectively.
 
 ### Model version management
 - `GET /damselfly/model/version` returns all tagged versions of the migration models.
@@ -44,6 +54,7 @@ Every migration user model belongs to one of the three stages, given by the `mod
 - `GET /damselfly/software-model/{id}/convert?modelStage=source&modelVersion=v0.1.4` returns a stored software model converted to the struct of a newer version in the same way. If `modelVersion` is omitted, the latest tag is used. The stored model is not changed.
   - **Only the conversion to the same or a newer version is allowed**, and a model whose stored version is not a tag cannot be converted (`400`).
   - The fields which the requested version does not have are removed and listed in `droppedFields` of the `conversion` field. If a value does not match the type of its field in the requested version (e.g. the free-form Kubernetes `resources` before `v0.1.4`), the model is not converted (`400`).
+  - A planning model stored in the former target structure (`targetSoftwareModel`, before `v0.6.6`) cannot be converted (`400`). Update it with `sourceSoftwareModel` first.
 - `GET /damselfly/rdbms-model/{id}/convert?modelStage=source&rdbmsModelVersion=v0.1.20` returns a stored RDBMS model converted to the struct of a newer version in the same way. If `rdbmsModelVersion` is omitted, the latest tag is used. The stored model is not changed.
   - **Only the conversion to the same or a newer version is allowed**, and a model whose stored version is not a tag with the RDBMS model (`v0.1.13` or later) cannot be converted (`400`).
   - `v0.1.14`: the instances of a source/planning model (`sourceRDBMSModel`) are restructured into `dbNode` and `dbEngine` (`instanceName` → `displayName`, `databases` → `innerDatabases`). `vcpu`, `memoryMb` and `storageSizeGb` are converted as estimates and reported in `warnings`, and the fields without a counterpart (e.g. `highAvailability`) are dropped.
@@ -63,6 +74,7 @@ The models derived from one another are linked by the `lineage` field (`sourceGr
 
 - On create/update, give `parentId` (the ID of a model of the same category — infra, software, RDBMS or object storage — in the previous stage) to derive the upstream lineage fields from the parent. `lineage` can also be given explicitly.
 - The lineage field of the model's own stage (e.g. `planningModelId` of a planning model) is set by the server.
+- The list APIs can get the models of multiple stages at once by commas (e.g. `modelStage=source,planning`).
 - The list APIs can be filtered by `sourceGroupId`, `sourceModelId`, `planningModelId` and `targetModelId` to find all the models derived from a model.
 - A model referred to by the lineage of other models cannot be deleted (409 Conflict) unless `force=true`, and its stage cannot be changed.
 
@@ -70,7 +82,7 @@ The models derived from one another are linked by the `lineage` field (`sourceGr
 
 All APIs are served under `http://localhost:8088/damselfly` with basic auth (default: `default` / `default`).
 
-### Migration user models (unified APIs, recommended)
+### Migration user models (unified APIs)
 
 | Method | Path | Description |
 | :----- | :--- | :---------- |
@@ -89,15 +101,25 @@ All APIs are served under `http://localhost:8088/damselfly` with basic auth (def
 | GET / PUT / DELETE | `/object-storage-model/{id}` | Get / update / delete an object storage model |
 | GET | `/object-storage-model/{id}/convert` | Get an object storage model converted to a newer model version (`modelStage`, `objectStorageModelVersion`) |
 
-### Legacy APIs
-The following APIs are kept for compatibility. They distinguish source and target models by `isTargetModel` only, and do not support the `planning` stage, model version selection or lineage. Use the unified APIs above for those features.
+### Breaking changes
+#### v0.6.6
+- The legacy APIs were removed (`404`). Use the unified APIs above instead.
 
-| Path | Description |
-| :--- | :---------- |
-| `/onpremmodel`, `/onpremmodel/{id}` | On-premise migration user models |
-| `/cloudmodel`, `/cloudmodel/{id}` | Cloud migration user models |
-| `/softwaremodel/source`, `/softwaremodel/source/{id}` | Source software migration user models |
-| `/softwaremodel/target`, `/softwaremodel/target/{id}` | Target software migration user models |
+| Removed path | Use instead |
+| :----------- | :---------- |
+| `/onpremmodel` | `/infra-model?modelType=onprem&modelStage=...` |
+| `/onpremmodel/{id}` | `/infra-model/{id}` (`modelType=onprem` is required for GET and PUT) |
+| `/cloudmodel` | `/infra-model?modelType=cloud&modelStage=...` |
+| `/cloudmodel/{id}` | `/infra-model/{id}` (`modelType=cloud` is required for GET and PUT) |
+| `/softwaremodel/source` | `/software-model?modelStage=source` |
+| `/softwaremodel/source/{id}` | `/software-model/{id}` (`modelStage=source` is required for GET and DELETE) |
+| `/softwaremodel/target` | `/software-model?modelStage=target` |
+| `/softwaremodel/target/{id}` | `/software-model/{id}` (`modelStage=target` is required for GET and DELETE) |
+
+- `isTargetModel` is no longer stored in the models created or updated. Use `modelStage` instead. The models stored before are still read, and their stage is derived from `isTargetModel` if they have no `modelStage`.
+- A planning software model now has `sourceSoftwareModel` (`SourceGroupSoftwareProperty`) instead of `targetSoftwareModel`, like the planning models of the other categories. It can be used as the input of the cm-grasshopper migration list API.
+  - The planning software models stored with `targetSoftwareModel` can still be read and deleted, but their update requires `sourceSoftwareModel`, and they cannot be converted (`400`).
+- `modelType` of the object storage models in the responses was changed from `objectStorageModel` to `ObjectStorageModel`, including the models stored before.
 
 ### System
 
@@ -127,6 +149,25 @@ curl -u default:default -X POST -H "Content-Type: application/json" \
 curl -u default:default "http://localhost:8088/damselfly/model?sourceModelId=<SOURCE_ID>"
 ```
 
+For software models, the source and planning models have `sourceSoftwareModel`, and the target model has `targetSoftwareModel`.
+```bash
+# 1. Create a source software model  ->  returns "id": "<SW_SOURCE_ID>"
+curl -u default:default -X POST -H "Content-Type: application/json" \
+  "http://localhost:8088/damselfly/software-model?modelStage=source" \
+  -d '{ "userModelName": "my-sw-source", "lineage": { "sourceGroupId": "sg-01" }, "sourceSoftwareModel": { ... } }'
+
+# 2. Create a planning software model derived from the source model  ->  returns "id": "<SW_PLANNING_ID>"
+curl -u default:default -X POST -H "Content-Type: application/json" \
+  "http://localhost:8088/damselfly/software-model?modelStage=planning" \
+  -d '{ "userModelName": "my-sw-plan", "parentId": "<SW_SOURCE_ID>", "sourceSoftwareModel": { ... } }'
+
+# 3. Get the migration list from cm-grasshopper ('POST /software/migration_list') with 'sourceSoftwareModel' of the planning model,
+#    and create a target software model derived from the planning model
+curl -u default:default -X POST -H "Content-Type: application/json" \
+  "http://localhost:8088/damselfly/software-model?modelStage=target" \
+  -d '{ "userModelName": "my-sw-target", "parentId": "<SW_PLANNING_ID>", "targetSoftwareModel": { ... } }'
+```
+
 ## Recommended execution and development environment
 
 - Operating system (OS):
@@ -136,7 +177,7 @@ curl -u default:default "http://localhost:8088/damselfly/model?sourceModelId=<SO
 - Docker Container & Docker Compose:
     - Latest stable version
 - API doc:
-    - Swag v1.16.3
+    - Swag v1.16.4
 
 ## How to run CM-Damselfly
 
@@ -297,7 +338,8 @@ The configuration is set in [conf/config.yaml](conf/config.yaml) and can be over
 | v0.6.2 | v0.1.12 | v0.1.3 | - |
 | v0.6.3 | v0.1.15 | v0.1.3 | - |
 | v0.6.4 | v0.1.18 | v0.1.4 | -|
-| main : v0.6.5 | v0.1.20 | v0.1.4 | v0.1.20 |
+| v0.6.5 | v0.1.20 | v0.1.4 | v0.1.20 |
+| main : v0.6.6 | v0.1.21 | v0.1.4 | v0.1.21 |
 
 **_NOTE :_** Since the model version management features (after v0.6.3), the versions above are the ones built into CM-Damselfly (used for the default Swagger API definition). Models of any other tagged version can be created by specifying the model version (see [Model version management](#model-version-management)).
 
