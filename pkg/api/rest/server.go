@@ -200,31 +200,6 @@ func RunServer(port string) {
 	gModel.PUT("/object-storage-model/:id", handler.UpdateObjectStorageModel)
 	gModel.DELETE("/object-storage-model/:id", handler.DeleteObjectStorageModel)
 
-	gModel.POST("/onpremmodel", handler.CreateOnPremModel)
-	gModel.GET("/onpremmodel", handler.GetOnPremModels)
-	gModel.GET("/onpremmodel/:id", handler.GetOnPremModel)
-	gModel.PUT("/onpremmodel/:id", handler.UpdateOnPremModel)
-	gModel.DELETE("/onpremmodel/:id", handler.DeleteOnPremModel)
-
-	gModel.POST("/cloudmodel", handler.CreateCloudModel)
-	gModel.GET("/cloudmodel", handler.GetCloudModels)
-	gModel.GET("/cloudmodel/:id", handler.GetCloudModel)
-	gModel.PUT("/cloudmodel/:id", handler.UpdateCloudModel)
-	gModel.DELETE("/cloudmodel/:id", handler.DeleteCloudModel)
-
-	gModel.POST("/softwaremodel/source", handler.CreateSourceSoftwareModel)
-	gModel.GET("/softwaremodel/source", handler.GetSourceSoftwareModels)
-	gModel.GET("/softwaremodel/source/:id", handler.GetSourceSoftwareModel)
-	gModel.PUT("/softwaremodel/source/:id", handler.UpdateSourceSoftwareModel)
-	gModel.PUT("/softwaremodel/source/:id", handler.UpdateSourceSoftwareModel)
-	gModel.DELETE("/softwaremodel/source/:id", handler.DeleteSourceSoftwareModel)
-
-	gModel.POST("/softwaremodel/target", handler.CreateTargetSoftwareModel)
-	gModel.GET("/softwaremodel/target", handler.GetTargetSoftwareModels)
-	gModel.GET("/softwaremodel/target/:id", handler.GetTargetSoftwareModel)
-	gModel.PUT("/softwaremodel/target/:id", handler.UpdateTargetSoftwareModel)
-	gModel.DELETE("/softwaremodel/target/:id", handler.DeleteTargetSoftwareModel)
-
 	// Run Damselfly API server
 	selfEndpoint := config.Damselfly.Self.Endpoint
 	apidashboard := " http://" + selfEndpoint + "/damselfly/api"
