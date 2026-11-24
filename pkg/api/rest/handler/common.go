@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -234,24 +235,6 @@ func filterObjectStorageModelVersions(infraVersions []string) []string {
 		}
 	}
 	return versions
-}
-
-// getLatestInfraModelVersion returns the latest tagged version of cm-beetle/imdl.
-func getLatestInfraModelVersion() (string, error) {
-	versions, err := getInfraModelVersions()
-	if err != nil {
-		return "", err
-	}
-	return selectModelVersion("", versions)
-}
-
-// getLatestSoftwareModelVersion returns the latest tagged version of cm-grasshopper/smdl.
-func getLatestSoftwareModelVersion() (string, error) {
-	versions, err := getSoftwareModelVersions()
-	if err != nil {
-		return "", err
-	}
-	return selectModelVersion("", versions)
 }
 
 // getModelTagVersions gets the tagged versions from the GitHub repository and falls back to the Go module proxy
@@ -500,12 +483,12 @@ var (
 )
 
 // softwareModelSchemaOf returns the software model struct used for the given model stage.
-// A source model follows 'SourceGroupSoftwareProperty', and a planning or target model follows 'TargetGroupSoftwareProperty'.
+// A source or planning model follows 'SourceGroupSoftwareProperty', and a target model follows 'TargetGroupSoftwareProperty'.
 func softwareModelSchemaOf(stage ModelStage) softwareModelSchemaInfo {
-	if stage == StageSource {
-		return sourceSoftwareModelSchema
+	if stage == StageTarget {
+		return targetSoftwareModelSchema
 	}
-	return targetSoftwareModelSchema
+	return sourceSoftwareModelSchema
 }
 
 // normalizeSoftwareModel validates the raw software model against the Go struct (SourceGroupSoftwareProperty or
@@ -542,9 +525,9 @@ func normalizeSoftwareModel(ctx context.Context, version string, stage ModelStag
 // cm-damselfly. It is used only for existing models whose version is not a cm-grasshopper/smdl tag.
 func normalizeSoftwareModelWithCompiledStruct(stage ModelStage, raw json.RawMessage) (json.RawMessage, int, error) {
 	schema := softwareModelSchemaOf(stage)
-	var target interface{} = new(softwaremodel.TargetGroupSoftwareProperty)
-	if stage == StageSource {
-		target = new(softwaremodel.SourceGroupSoftwareProperty)
+	var target interface{} = new(softwaremodel.SourceGroupSoftwareProperty)
+	if stage == StageTarget {
+		target = new(softwaremodel.TargetGroupSoftwareProperty)
 	}
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
@@ -719,16 +702,6 @@ func (s ModelStage) isValid() bool {
 	return s == StageSource || s == StagePlanning || s == StageTarget
 }
 
-// legacyIsTargetModel returns the 'isTargetModel' value kept in the stored model for the legacy APIs
-// (e.g., 'GET /onpremmodel', 'GET /softwaremodel/source'). It is nil for the planning stage, which has no legacy equivalent.
-func (s ModelStage) legacyIsTargetModel() *bool {
-	if s == StagePlanning {
-		return nil
-	}
-	isTargetModel := s == StageTarget
-	return &isTargetModel
-}
-
 // parseModelStageParam parses the required 'modelStage' query parameter ('source', 'planning' or 'target').
 func parseModelStageParam(c echo.Context) (ModelStage, error) {
 	stage := ModelStage(strings.ToLower(strings.TrimSpace(c.QueryParam("modelStage"))))
@@ -737,6 +710,28 @@ func parseModelStageParam(c echo.Context) (ModelStage, error) {
 			StageSource, StagePlanning, StageTarget, c.QueryParam("modelStage"))
 	}
 	return stage, nil
+}
+
+// parseModelStagesParam parses the 'modelStage' query parameter of the list APIs, which can have multiple stages given
+// by commas ('modelStage=source,planning') or by repeating the parameter. If it is not given, all the stages are meant
+// (an empty list is returned), or it is an error if it is required.
+func parseModelStagesParam(c echo.Context, required bool) ([]ModelStage, error) {
+	param := strings.Join(c.QueryParams()["modelStage"], ",")
+	if strings.TrimSpace(param) == "" && !required {
+		return nil, nil
+	}
+	stages := []ModelStage{}
+	for _, value := range strings.Split(param, ",") {
+		stage := ModelStage(strings.ToLower(strings.TrimSpace(value)))
+		if !stage.isValid() {
+			return nil, fmt.Errorf("invalid request: 'modelStage' must be '%s', '%s' or '%s' (multiple stages are separated by commas), got '%s'",
+				StageSource, StagePlanning, StageTarget, param)
+		}
+		if !slices.Contains(stages, stage) {
+			stages = append(stages, stage)
+		}
+	}
+	return stages, nil
 }
 
 // storedModelStage returns the stage of a stored model. For a model stored before 'modelStage' was
@@ -756,16 +751,40 @@ func storedModelStage(m map[string]interface{}) (ModelStage, bool) {
 	return "", false
 }
 
-// withModelStage returns the stored model with 'modelStage' filled in (for a model stored before
-// 'modelStage' was introduced). The stored map is copied rather than modified.
-func withModelStage(m map[string]interface{}, stage ModelStage) map[string]interface{} {
-	if _, exists := m["modelStage"]; exists {
-		return m
-	}
-	copied := make(map[string]interface{}, len(m)+1)
+// decorateModel returns a copy of the stored model with the fields of the response filled in: 'category', and 'modelStage'
+// and 'lineage' for a model stored before they were introduced. 'modelType' is normalized as well.
+// The stored map is not modified, and 'category' is never stored.
+func decorateModel(m map[string]interface{}) map[string]interface{} {
+	decorated := make(map[string]interface{}, len(m)+3)
 	for k, v := range m {
-		copied[k] = v
+		decorated[k] = v
 	}
-	copied["modelStage"] = string(stage)
-	return copied
+	if category, ok := storedModelCategory(m); ok {
+		decorated["category"] = string(category)
+	}
+	if stage, ok := storedModelStage(m); ok {
+		decorated["modelStage"] = string(stage)
+		if _, exists := m["lineage"]; !exists {
+			decorated["lineage"] = storedLineage(m, stage)
+		}
+	}
+	if m["modelType"] == formerObjectStorageModel {
+		decorated["modelType"] = ObjectStorageModel
+	}
+	return decorated
+}
+
+// decorateRecord returns the record of a model just stored (e.g. onPremModelRecord) in the form of decorateModel.
+func decorateRecord(record interface{}) (map[string]interface{}, error) {
+	b, err := json.Marshal(record)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal the model : [%v]", err)
+	}
+	var m map[string]interface{}
+	decoder := json.NewDecoder(bytes.NewReader(b))
+	decoder.UseNumber() // so that the large integers of the model body are kept as they are
+	if err := decoder.Decode(&m); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal the model : [%v]", err)
+	}
+	return decorateModel(m), nil
 }
