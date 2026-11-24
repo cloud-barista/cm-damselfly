@@ -230,14 +230,14 @@ func TestResolveLineage(t *testing.T) {
 	}
 }
 
-func TestStoredLineageAndWithLineage(t *testing.T) {
+func TestStoredLineageAndDecorateModel(t *testing.T) {
 	legacy := storedModel(t, "m-1", categoryInfra, StagePlanning, nil)
 	if got := storedLineage(legacy, StagePlanning); got != (lineage.MigrationLineage{PlanningModelId: "m-1"}) {
 		t.Fatalf("unexpected lineage of a legacy model: %+v", got)
 	}
-	filled := withLineage(legacy, StagePlanning)
+	filled := decorateModel(legacy)
 	if _, exists := legacy["lineage"]; exists {
-		t.Fatal("withLineage must not modify the stored map")
+		t.Fatal("decorateModel must not modify the stored map")
 	}
 	if filled["lineage"] != (lineage.MigrationLineage{PlanningModelId: "m-1"}) {
 		t.Fatalf("unexpected filled lineage: %+v", filled["lineage"])
@@ -322,10 +322,15 @@ func TestFilterModels(t *testing.T) {
 	tests := []struct {
 		name     string
 		stage    ModelStage
+		stages   []ModelStage
 		category modelCategory
 		filter   lineage.MigrationLineage
 		want     string
 	}{
+		{name: "source and planning", stages: []ModelStage{StageSource, StagePlanning}, want: "plan-1,src-1,sw-plan-1,sw-src-2"},
+		{name: "source and planning of infra", stages: []ModelStage{StageSource, StagePlanning}, category: categoryInfra, want: "plan-1,src-1"},
+		{name: "source and planning in a source group", stages: []ModelStage{StageSource, StagePlanning}, filter: lineage.MigrationLineage{SourceGroupId: "sg-2"}, want: "sw-src-2"},
+		{name: "source and target (legacy record with isTargetModel only)", stages: []ModelStage{StageTarget, StageSource}, category: categoryInfra, want: "legacy-tgt,src-1"},
 		{name: "all stages and categories", want: "legacy-tgt,plan-1,src-1,sw-plan-1,sw-src-2"},
 		{name: "planning of both categories", stage: StagePlanning, want: "plan-1,sw-plan-1"},
 		{name: "software of all stages", category: categorySoftware, want: "sw-plan-1,sw-src-2"},
@@ -337,7 +342,11 @@ func TestFilterModels(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := filterModels(models, tt.stage, tt.category, tt.filter)
+			stages := tt.stages
+			if tt.stage != "" {
+				stages = []ModelStage{tt.stage}
+			}
+			result := filterModels(models, stages, tt.category, tt.filter)
 			if result == nil {
 				t.Fatal("the result must be an empty list rather than nil")
 			}
@@ -348,7 +357,7 @@ func TestFilterModels(t *testing.T) {
 	}
 
 	// 'modelStage' and 'lineage' are filled in for the legacy record, without modifying the stored map.
-	result := filterModels([]interface{}{legacyTarget}, "", "", lineage.MigrationLineage{})
+	result := filterModels([]interface{}{legacyTarget}, nil, "", lineage.MigrationLineage{})
 	if result[0]["modelStage"] != "target" || result[0]["lineage"] != (lineage.MigrationLineage{TargetModelId: "legacy-tgt"}) {
 		t.Fatalf("unexpected filled fields: modelStage=%v, lineage=%v", result[0]["modelStage"], result[0]["lineage"])
 	}

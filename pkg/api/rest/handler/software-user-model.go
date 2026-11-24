@@ -19,839 +19,13 @@ import (
 )
 
 // ##############################################################################################
-// ### Source Software Migration User Model
-// ##############################################################################################
-
-type SourceSoftwareModelReqInfo struct {
-	UserId          	string                  		`json:"userId"`
-	IsInitUserModel 	bool                    		`json:"isInitUserModel"`
-	UserModelName   	string                  		`json:"userModelName"`
-	UserModelVer    	string                  		`json:"userModelVersion"`
-	Description     	string                  		`json:"description"`
-	SourceSoftwareModel softwaremodel.SourceGroupSoftwareProperty	`json:"sourceSoftwareModel" validate:"required"`	
-}
-
-type SourceSoftwareModelRespInfo struct {
-	Id              	string                  		`json:"id"`
-	UserId          	string                  		`json:"userId"`
-	NodeId          	string                  		`json:"nodeId,omitempty"`
-	IsInitUserModel 	bool                   			`json:"isInitUserModel"`
-	UserModelName   	string                  		`json:"userModelName"`
-	UserModelVer    	string                  		`json:"userModelVersion"`
-	Description     	string                  		`json:"description"`
-	SoftwareModelVer 	string                  		`json:"softwareModelVersion"`	
-	CreateTime      	string                  		`json:"createTime"`
-	UpdateTime      	string                  		`json:"updateTime"`
-	IsSoftwareModel     bool                    		`json:"isSoftwareModel"`
-	IsTargetModel   	bool                    		`json:"isTargetModel"`
-	ModelType 		 	string                  	   	`json:"modelType"`
-	SourceSoftwareModel softwaremodel.SourceGroupSoftwareProperty	`json:"sourceSoftwareModel" validate:"required"`	
-}
-
-// Caution!!)
-// Init Swagger : ]# swag init --parseDependency --parseInternal
-// Need to add '--parseDependency --parseInternal' in order to apply imported structures
-
-type GetSourceSoftwareModelsResp struct {
-	Models []SourceSoftwareModelRespInfo `json:"models"`
-}
-
-// GetSourceSoftwareModels godoc
-// @ID GetSourceSoftwareModels
-// @Summary Get a list of source software user models
-// @Description Get a list of source software user models.
-// @Tags [API] Source Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} GetSourceSoftwareModelsResp "Successfully Obtained Source Software Migration User Models"
-// @Failure 404 {object} model.Response
-// @Router /softwaremodel/source [get]
-func GetSourceSoftwareModels(c echo.Context) error {
-	modelList, exists := lkvstore.GetWithPrefix("")
-	if exists {
-		//  Returns Only Software Models
-		var softwareModels []map[string]interface{}
-		for _, model := range modelList {
-			// fmt.Printf("# Model value : %v", model)
-			if model, ok := model.(map[string]interface{}); ok {
-				if isSoftwareModel, exists := model["isSoftwareModel"]; exists && isSoftwareModel == true {
-					if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == false {
-						softwareModels = append(softwareModels, model)
-					}
-				}
-			}
-		}
-
-		if len(softwareModels) < 1 {
-			return c.JSON(http.StatusOK, nil)
-		}
-
-		return c.JSON(http.StatusOK, softwareModels)
-	} else {
-		return c.JSON(http.StatusOK, nil)
-	}
-}
-
-type GetSourceSoftwareModelResp struct {
-	SourceSoftwareModelRespInfo
-}
-
-// GetSourceSoftwareModel godoc
-// @ID GetSourceSoftwareModel
-// @Summary Get a specific source software user model
-// @Description Get a specific source software user model.
-// @Tags [API] Source Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Success 200 {object} GetSourceSoftwareModelResp "Successfully Obtained the Source Software Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
-// @Router /softwaremodel/source/{id} [get]
-func GetSourceSoftwareModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		msg := "Invalid ID!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	log.Info().Msgf("# Model ID to Get : [%s]", c.Param("id"))
-
-	model, exists := lkvstore.Get(c.Param("id"))
-	if exists {
-		// log.Info().Msgf("# Loaded value for [%s]: %v", c.Param("id"), model)
-
-		if model, ok := model.(map[string]interface{}); ok {
-			// Check if the model is a on-premise model
-			if isSoftwareModel, exists := model["isSoftwareModel"]; exists {
-				if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok {
-					if isSoftwareModelBool {
-						log.Info().Msg("This model is a Software Model!!")
-					} else {
-						msg := "The Given ID is Not a Software Model ID"
-						log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-						newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-						return c.JSON(http.StatusNotFound, newErr)
-					}
-				} else {
-					msg := ("'isSoftwareModel' is not a boolean type")
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isSoftwareModel' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		return c.JSON(http.StatusOK, model)
-	} else {
-		msg := "Failed to Find the Model from DB with the ID"
-		log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-		newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of SoftwareModel
-type CreateSourceSoftwareModelReq struct {
-	SourceSoftwareModelReqInfo
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of SoftwareModel
-type CreateSourceSoftwareModelResp struct {
-	SourceSoftwareModelRespInfo
-}
-
-// CreateSourceSoftwareModel godoc
-// @ID CreateSourceSoftwareModel
-// @Summary Create a new source software user model
-// @Description Create a new source software user model with the given information.
-// @Tags [API] Source Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param Model body CreateSourceSoftwareModelReq true "model information"
-// @Success 201 {object} CreateSourceSoftwareModelResp "Successfully Created the Source Software Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Router /softwaremodel/source [post]
-func CreateSourceSoftwareModel(c echo.Context) error {
-	model := new(CreateSourceSoftwareModelResp)
-
-	if err := c.Bind(model); err != nil {
-		msg := "Invalid Request!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	// fmt.Println("### CreateSourceSoftwareModelResp",)
-	// spew.Dump(model)
-
-	randomStr := uuid.New().String()
-	log.Info().Msgf("Generated UUID : [%s]", randomStr)
-	model.Id = randomStr
-
-	time, err := getSeoulCurrentTime()
-	if err != nil {
-		msg := "Failed to Get the Current time!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	}
-	model.CreateTime 		= time
-	model.IsSoftwareModel 	= true
-	model.IsTargetModel 	= false
-	model.ModelType 		= SWModel
-
-	resultVer, err := getLatestSoftwareModelVersion()
-	if err != nil {
-		newErr := fmt.Errorf("failed to get the latest tagged cm-grasshopper/smdl model version: %w", err)
-		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"success": false, "text": newErr.Error()})
-	}
-	model.SoftwareModelVer = resultVer
-
-	// Convert Int to String type
-	// strNum := strconv.Itoa(randomNum)
-
-	// Save the model to the key-value store
-	lkvstore.Put(randomStr, model)
-
-	// # Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-	}
-
-	return c.JSON(http.StatusCreated, model)
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of SourceSoftwareModel
-type UpdateSourceSoftwareModelReq struct {
-	SourceSoftwareModelReqInfo
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of SourceSoftwareModel
-type UpdateSourceSoftwareModelResp struct {
-	SourceSoftwareModelRespInfo
-}
-
-// UpdateSourceSoftwareModel godoc
-// @ID UpdateSourceSoftwareModel
-// @Summary Update a source software user model
-// @Description Update a source software user model with the given information.
-// @Tags [API] Source Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Param Model body UpdateSourceSoftwareModelReq true "Model information to update"
-// @Success 201 {object} UpdateSourceSoftwareModelResp "Successfully Updated the Source Software Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /softwaremodel/source/{id} [put]
-func UpdateSourceSoftwareModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		err := fmt.Errorf("invalid id")
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-	reqId := c.Param("id")
-	log.Info().Msgf("# Model ID to Update : [%s]", reqId)
-
-	// Bind the request to get the updated fields
-	reqModel := new(UpdateSourceSoftwareModelReq)
-	if err := c.Bind(reqModel); err != nil {
-		msg := "Invalid Request!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-
-	// Get the existing model from the store
-	existingData, exists := lkvstore.Get(reqId)
-	if !exists {
-		msg := "Model not found"
-		log.Error().Msgf("%s : [%s]", msg, reqId)
-		newErr := fmt.Errorf("%s : [%s]", msg, reqId)
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-
-	// Verify it's a software model
-	if softwareModel, ok := existingData.(map[string]interface{}); ok {
-		if isSoftwareModel, exists := softwareModel["isSoftwareModel"]; exists {
-			if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok {
-				if !isSoftwareModelBool {
-					msg := "The Given ID is Not a Software Model ID"
-					log.Error().Msgf("%s : [%s]", msg, reqId)
-					newErr := fmt.Errorf("%s : [%s]", msg, reqId)
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isSoftwareModel' is not a boolean type"
-				log.Debug().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusInternalServerError, newErr)
-			}
-		} else {
-			msg := "'isSoftwareModel' does not exist"
-			log.Error().Msg(msg)
-			newErr := errors.New(msg)
-			return c.JSON(http.StatusInternalServerError, newErr)
-		}
-	}
-
-	// Unmarshal existing data into the full response model struct
-	fullModel := new(CreateSourceSoftwareModelResp)
-	jsonBytes, err := json.Marshal(existingData)
-	if err != nil {
-		msg := "Failed to marshal existing data"
-		log.Error().Err(err).Msg(msg)
-		return c.JSON(http.StatusInternalServerError, errors.New(msg))
-	}
-	if err := json.Unmarshal(jsonBytes, fullModel); err != nil {
-		msg := "Failed to unmarshal existing data into model"
-		log.Error().Err(err).Msg(msg)
-		return c.JSON(http.StatusInternalServerError, errors.New(msg))
-	}
-
-	// Update only the fields provided in the request
-	fullModel.UserId = reqModel.UserId
-	fullModel.IsInitUserModel = reqModel.IsInitUserModel
-	fullModel.UserModelName = reqModel.UserModelName
-	fullModel.UserModelVer = reqModel.UserModelVer
-	fullModel.Description = reqModel.Description
-	fullModel.SourceSoftwareModel = reqModel.SourceSoftwareModel
-
-	updateTime, err := getSeoulCurrentTime()
-	if err != nil {
-		log.Debug().Msg("Failed to Get the Current time!!")
-	}
-	fullModel.UpdateTime = updateTime
-
-	// Save the updated full model back to the store
-	lkvstore.Put(reqId, fullModel)
-
-	// Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusInternalServerError, newErr)
-	}
-	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-
-	log.Info().Msgf("Successfully updated the model: [%s]", reqId)
-	return c.JSON(http.StatusOK, fullModel)
-}
-
-// [Note]
-// No RequestBody required for "DELETE /softwaremodel/source/{id}"
-
-// [Note]
-// No ResponseBody required for "DELETE /softwaremodel/source/{id}"
-
-// DeleteSourceSoftwareModel godoc
-// @ID DeleteSourceSoftwareModel
-// @Summary Delete a source software user model
-// @Description Delete a source software user model with the given information.
-// @Tags [API] Source Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Success 200 {string} string "Successfully Deleted the Source Software Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /softwaremodel/source/{id} [delete]
-func DeleteSourceSoftwareModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		msg := "Invalid ID!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	log.Info().Msgf("# Model ID to Delete : [%s]", c.Param("id"))
-
-	// Verify loaded data without prefix
-	model, exists := lkvstore.Get(c.Param("id"))
-	if exists {
-		log.Info().Msgf("Succeeded in Finding the model : [%s]", c.Param("id"))
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if isSoftwareModel, exists := model["isSoftwareModel"]; exists {
-				if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok && isSoftwareModelBool {
-					log.Info().Msg("This model is a Software Model!!")
-				} else {
-					msg := "The Given ID is Not a Software Model ID"
-					log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-					newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isSoftwareModel' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		lkvstore.Delete(c.Param("id"))
-	} else {
-		msg := "Failed to Find the Model from DB with the ID"
-		log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-		newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-
-	// # Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-	}
-
-	return c.JSON(http.StatusOK, "Succeeded in Deleting the model")
-}
-
-// ##############################################################################################
-// ### Target Software Migration User Model
-// ##############################################################################################
-
-type TargetSoftwareModelReqInfo struct {
-	UserId          	string                  		`json:"userId"`
-	IsInitUserModel 	bool                    		`json:"isInitUserModel"`
-	UserModelName   	string                  		`json:"userModelName"`
-	UserModelVer    	string                  		`json:"userModelVersion"`
-	Description     	string                  		`json:"description"`
-	TargetSoftwareModel softwaremodel.TargetGroupSoftwareProperty	`json:"targetSoftwareModel" validate:"required"`	
-}
-
-type TargetSoftwareModelRespInfo struct {
-	Id              	string                  		`json:"id"`
-	UserId          	string                  		`json:"userId"`
-	NodeId          	string                  		`json:"nodeId,omitempty"`
-	IsInitUserModel 	bool                   			`json:"isInitUserModel"`
-	UserModelName   	string                  		`json:"userModelName"`
-	UserModelVer    	string                  		`json:"userModelVersion"`
-	Description     	string                  		`json:"description"`
-	SoftwareModelVer 	string                  		`json:"softwareModelVersion"`
-	CreateTime      	string                  		`json:"createTime"`
-	UpdateTime      	string                  		`json:"updateTime"`
-	IsSoftwareModel     bool                    		`json:"isSoftwareModel"`
-	IsTargetModel   	bool                    		`json:"isTargetModel"`
-	ModelType 		 	string                  	   	`json:"modelType"`
-	TargetSoftwareModel softwaremodel.TargetGroupSoftwareProperty	`json:"targetSoftwareModel" validate:"required"`	
-}
-
-// Caution!!)
-// Init Swagger : ]# swag init --parseDependency --parseInternal
-// Need to add '--parseDependency --parseInternal' in order to apply imported structures
-
-type GetTargetSoftwareModelsResp struct {
-	Models []TargetSoftwareModelRespInfo `json:"models"`
-}
-
-// GetTargetSoftwareModels godoc
-// @ID GetTargetSoftwareModels
-// @Summary Get a list of target software user models
-// @Description Get a list of target software user models.
-// @Tags [API] Target Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} GetTargetSoftwareModelsResp "Successfully Obtained Target Software Migration User Models"
-// @Failure 404 {object} model.Response
-// @Router /softwaremodel/target [get]
-func GetTargetSoftwareModels(c echo.Context) error {
-	modelList, exists := lkvstore.GetWithPrefix("")
-	if exists {
-		//  Returns Only Software Models
-		var softwareModels []map[string]interface{}
-		for _, model := range modelList {
-			// fmt.Printf("# Model value : %v", model)
-			if model, ok := model.(map[string]interface{}); ok {
-				if isSoftwareModel, exists := model["isSoftwareModel"]; exists && isSoftwareModel == true {
-					if isTargetModel, exists := model["isTargetModel"]; exists && isTargetModel == true {
-						softwareModels = append(softwareModels, model)
-					}
-				}
-			}
-		}
-
-		if len(softwareModels) < 1 {
-			return c.JSON(http.StatusOK, nil)
-		}
-
-		return c.JSON(http.StatusOK, softwareModels)
-	} else {
-		return c.JSON(http.StatusOK, nil)
-	}
-}
-
-type GetTargetSoftwareModelResp struct {
-	TargetSoftwareModelRespInfo
-}
-
-// GetTargetSoftwareModel godoc
-// @ID GetTargetSoftwareModel
-// @Summary Get a specific target software user model
-// @Description Get a specific target software user model.
-// @Tags [API] Target Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Success 200 {object} GetTargetSoftwareModelResp "Successfully Obtained the Target Software Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
-// @Router /softwaremodel/target/{id} [get]
-func GetTargetSoftwareModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		msg := "Invalid ID!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	log.Info().Msgf("# Model ID to Get : [%s]", c.Param("id"))
-
-	model, exists := lkvstore.Get(c.Param("id"))
-	if exists {
-		// log.Info().Msgf("# Loaded value for [%s]: %v", c.Param("id"), model)
-
-		if model, ok := model.(map[string]interface{}); ok {
-			// Check if the model is a on-premise model
-			if isSoftwareModel, exists := model["isSoftwareModel"]; exists {
-				if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok {
-					if isSoftwareModelBool {
-						log.Info().Msg("This model is a Software Model!!")
-					} else {
-						msg := "The Given ID is Not a Software Model ID"
-						log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-						newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-						return c.JSON(http.StatusNotFound, newErr)
-					}
-				} else {
-					msg := ("'isSoftwareModel' is not a boolean type")
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isSoftwareModel' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		return c.JSON(http.StatusOK, model)
-	} else {
-		msg := "Failed to Find the Model from DB with the ID"
-		log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-		newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of SoftwareModel
-type CreateTargetSoftwareModelReq struct {
-	TargetSoftwareModelReqInfo
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of SoftwareModel
-type CreateTargetSoftwareModelResp struct {
-	TargetSoftwareModelRespInfo
-}
-
-// CreateTargetSoftwareModel godoc
-// @ID CreateTargetSoftwareModel
-// @Summary Create a new target software user model
-// @Description Create a new target software user model with the given information.
-// @Tags [API] Target Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param Model body CreateTargetSoftwareModelReq true "model information"
-// @Success 201 {object} CreateTargetSoftwareModelResp "Successfully Created the Target Software Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Router /softwaremodel/target [post]
-func CreateTargetSoftwareModel(c echo.Context) error {
-	model := new(CreateTargetSoftwareModelResp)
-
-	if err := c.Bind(model); err != nil {
-		msg := "Invalid Request!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	// fmt.Println("### CreateTargetSoftwareModelResp",)
-	// spew.Dump(model)
-
-	randomStr := uuid.New().String()
-	log.Info().Msgf("Generated UUID : [%s]", randomStr)
-	model.Id = randomStr
-
-	time, err := getSeoulCurrentTime()
-	if err != nil {
-		msg := "Failed to Get the Current time!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	}
-	model.CreateTime 		= time
-	model.IsSoftwareModel 	= true
-	model.IsTargetModel 	= true
-	model.ModelType 		= SWModel
-
-	resultVer, err := getLatestSoftwareModelVersion()
-	if err != nil {
-		newErr := fmt.Errorf("failed to get the latest tagged cm-grasshopper/smdl model version: %w", err)
-		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"success": false, "text": newErr.Error()})
-	}
-	model.SoftwareModelVer = resultVer
-
-	// Convert Int to String type
-	// strNum := strconv.Itoa(randomNum)
-
-	// Save the model to the key-value store
-	lkvstore.Put(randomStr, model)
-
-	// # Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-	}
-
-	return c.JSON(http.StatusCreated, model)
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of TargetSoftwareModel
-type UpdateTargetSoftwareModelReq struct {
-	TargetSoftwareModelReqInfo
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of TargetSoftwareModel
-type UpdateTargetSoftwareModelResp struct {
-	TargetSoftwareModelRespInfo
-}
-
-// UpdateTargetSoftwareModel godoc
-// @ID UpdateTargetSoftwareModel
-// @Summary Update a target software user model
-// @Description Update a target software user model with the given information.
-// @Tags [API] Target Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Param Model body UpdateTargetSoftwareModelReq true "Model information to update"
-// @Success 201 {object} UpdateTargetSoftwareModelResp "Successfully Updated the Target Software Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /softwaremodel/target/{id} [put]
-func UpdateTargetSoftwareModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		err := fmt.Errorf("invalid id")
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-	reqId := c.Param("id")
-	log.Info().Msgf("# Model ID to Update : [%s]", reqId)
-
-	// Bind the request to get the updated fields
-	reqModel := new(UpdateTargetSoftwareModelReq)
-	if err := c.Bind(reqModel); err != nil {
-		msg := "Invalid Request!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-
-	// Get the existing model from the store
-	existingData, exists := lkvstore.Get(reqId)
-	if !exists {
-		msg := "Model not found"
-		log.Error().Msgf("%s : [%s]", msg, reqId)
-		newErr := fmt.Errorf("%s : [%s]", msg, reqId)
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-
-	// Verify it's a software model
-	if softwareModel, ok := existingData.(map[string]interface{}); ok {
-		if isSoftwareModel, exists := softwareModel["isSoftwareModel"]; exists {
-			if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok {
-				if !isSoftwareModelBool {
-					msg := "The Given ID is Not a Software Model ID"
-					log.Error().Msgf("%s : [%s]", msg, reqId)
-					newErr := fmt.Errorf("%s : [%s]", msg, reqId)
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isSoftwareModel' is not a boolean type"
-				log.Debug().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusInternalServerError, newErr)
-			}
-		} else {
-			msg := "'isSoftwareModel' does not exist"
-			log.Error().Msg(msg)
-			newErr := errors.New(msg)
-			return c.JSON(http.StatusInternalServerError, newErr)
-		}
-	}
-
-	// Unmarshal existing data into the full response model struct
-	fullModel := new(CreateTargetSoftwareModelResp)
-	jsonBytes, err := json.Marshal(existingData)
-	if err != nil {
-		msg := "Failed to marshal existing data"
-		log.Error().Err(err).Msg(msg)
-		return c.JSON(http.StatusInternalServerError, errors.New(msg))
-	}
-	if err := json.Unmarshal(jsonBytes, fullModel); err != nil {
-		msg := "Failed to unmarshal existing data into model"
-		log.Error().Err(err).Msg(msg)
-		return c.JSON(http.StatusInternalServerError, errors.New(msg))
-	}
-
-	// Update only the fields provided in the request
-	fullModel.UserId = reqModel.UserId
-	fullModel.IsInitUserModel = reqModel.IsInitUserModel
-	fullModel.UserModelName = reqModel.UserModelName
-	fullModel.UserModelVer = reqModel.UserModelVer
-	fullModel.Description = reqModel.Description
-	fullModel.TargetSoftwareModel = reqModel.TargetSoftwareModel
-
-	updateTime, err := getSeoulCurrentTime()
-	if err != nil {
-		log.Debug().Msg("Failed to Get the Current time!!")
-	}
-	fullModel.UpdateTime = updateTime
-
-	// Save the updated full model back to the store
-	lkvstore.Put(reqId, fullModel)
-
-	// Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusInternalServerError, newErr)
-	}
-	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-
-	log.Info().Msgf("Successfully updated the model: [%s]", reqId)
-	return c.JSON(http.StatusOK, fullModel)
-}
-
-// [Note]
-// No RequestBody required for "DELETE /softwaremodel/target/{id}"
-
-// [Note]
-// No ResponseBody required for "DELETE /softwaremodel/target/{id}"
-
-// DeleteTargetSoftwareModel godoc
-// @ID DeleteTargetSoftwareModel
-// @Summary Delete a target software user model
-// @Description Delete a target software user model with the given information.
-// @Tags [API] Target Software Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Success 200 {string} string "Successfully Deleted the Target Software Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /softwaremodel/target/{id} [delete]
-func DeleteTargetSoftwareModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		msg := "Invalid ID!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	log.Info().Msgf("# Model ID to Delete : [%s]", c.Param("id"))
-
-	// Verify loaded data without prefix
-	model, exists := lkvstore.Get(c.Param("id"))
-	if exists {
-		log.Info().Msgf("Succeeded in Finding the model : [%s]", c.Param("id"))
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if isSoftwareModel, exists := model["isSoftwareModel"]; exists {
-				if isSoftwareModelBool, ok := isSoftwareModel.(bool); ok && isSoftwareModelBool {
-					log.Info().Msg("This model is a Software Model!!")
-				} else {
-					msg := "The Given ID is Not a Software Model ID"
-					log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-					newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isSoftwareModel' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		lkvstore.Delete(c.Param("id"))
-	} else {
-		msg := "Failed to Find the Model from DB with the ID"
-		log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-		newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-
-	// # Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-	}
-
-	return c.JSON(http.StatusOK, "Succeeded in Deleting the model")
-}
-
-// ##############################################################################################
-// ### Unified Software Migration User Model (Source + Target)
+// ### Unified Software Migration User Model (Source + Planning + Target)
 // ##############################################################################################
 
 // [Note]
-// CreateSoftwareModelReq is a unified request body for creating or updating either a source
-// or a target software migration user model. Only the field matching the 'modelStage' query parameter
-// needs to be provided ('sourceSoftwareModel' for source, 'targetSoftwareModel' for planning or target).
+// CreateSoftwareModelReq is a unified request body for creating or updating a source, planning
+// or target software migration user model. Only the field matching the 'modelStage' query parameter
+// needs to be provided ('sourceSoftwareModel' for source or planning, 'targetSoftwareModel' for target).
 type CreateSoftwareModelReq struct {
 	UserId              string                                      `json:"userId"`
 	NodeId              string                                      `json:"nodeId,omitempty"`
@@ -874,32 +48,51 @@ type softwareModelRawReq struct {
 	TargetSoftwareModel json.RawMessage `json:"targetSoftwareModel,omitempty"`
 }
 
+// softwareModelMeta holds the metadata of a stored software migration user model.
+type softwareModelMeta struct {
+	Id               string                   `json:"id"`
+	UserId           string                   `json:"userId"`
+	NodeId           string                   `json:"nodeId,omitempty"`
+	IsInitUserModel  bool                     `json:"isInitUserModel"`
+	UserModelName    string                   `json:"userModelName"`
+	UserModelVer     string                   `json:"userModelVersion"`
+	Description      string                   `json:"description"`
+	SoftwareModelVer string                   `json:"softwareModelVersion"`
+	CreateTime       string                   `json:"createTime"`
+	UpdateTime       string                   `json:"updateTime"`
+	IsSoftwareModel  bool                     `json:"isSoftwareModel"`
+	ModelType        string                   `json:"modelType"`
+	ModelStage       ModelStage               `json:"modelStage"`
+	Lineage          lineage.MigrationLineage `json:"lineage"`
+}
+
 // sourceSoftwareModelRecord and targetSoftwareModelRecord are the stored forms of software models whose
 // 'sourceSoftwareModel' / 'targetSoftwareModel' follow the struct of their own smdl version.
-// A source model is stored as sourceSoftwareModelRecord, and a planning or target model as targetSoftwareModelRecord.
-// 'IsTargetModel' shadows the one of the embedded struct so that it is omitted for the planning stage.
+// A source or planning model is stored as sourceSoftwareModelRecord, and a target model as targetSoftwareModelRecord.
+// (A planning model created before v0.6.6 may be stored as targetSoftwareModelRecord. See isFormerPlanningSoftwareModel.)
 type sourceSoftwareModelRecord struct {
-	SourceSoftwareModelRespInfo
-	ModelStage          ModelStage               `json:"modelStage"`
-	IsTargetModel       *bool                    `json:"isTargetModel,omitempty"`
-	Lineage             lineage.MigrationLineage `json:"lineage"`
-	SourceSoftwareModel json.RawMessage          `json:"sourceSoftwareModel"`
+	softwareModelMeta
+	SourceSoftwareModel json.RawMessage `json:"sourceSoftwareModel"`
 }
 
 type targetSoftwareModelRecord struct {
-	TargetSoftwareModelRespInfo
-	ModelStage          ModelStage               `json:"modelStage"`
-	IsTargetModel       *bool                    `json:"isTargetModel,omitempty"`
-	Lineage             lineage.MigrationLineage `json:"lineage"`
-	TargetSoftwareModel json.RawMessage          `json:"targetSoftwareModel"`
+	softwareModelMeta
+	TargetSoftwareModel json.RawMessage `json:"targetSoftwareModel"`
 }
 
 // rawSoftwareModel returns the raw software model field matching the model stage.
 func (r *softwareModelRawReq) rawSoftwareModel(stage ModelStage) json.RawMessage {
-	if stage == StageSource {
-		return r.SourceSoftwareModel
+	if stage == StageTarget {
+		return r.TargetSoftwareModel
 	}
-	return r.TargetSoftwareModel
+	return r.SourceSoftwareModel
+}
+
+// isFormerPlanningSoftwareModel reports whether the stored model is a planning model in the former target structure
+// ('targetSoftwareModel'), which was used for the planning stage before v0.6.6. It can be read and deleted as it is,
+// but it cannot be converted, because the target structure cannot be turned into the source structure.
+func isFormerPlanningSoftwareModel(m map[string]interface{}, stage ModelStage) bool {
+	return stage == StagePlanning && m[sourceSoftwareModelSchema.FieldName] == nil && m[targetSoftwareModelSchema.FieldName] != nil
 }
 
 func softwareModelErrResp(c echo.Context, status int, err error) error {
@@ -938,7 +131,7 @@ func getSoftwareModelFromStore(id string, stage ModelStage) (map[string]interfac
 			id, storedStage, stage)
 	}
 
-	return withLineage(withModelStage(m, storedStage), storedStage), storedStage, http.StatusOK, nil
+	return decorateModel(m), storedStage, http.StatusOK, nil
 }
 
 // saveSoftwareModelToStore puts the model to the key-value store and saves the store to file.
@@ -955,13 +148,14 @@ func saveSoftwareModelToStore(id string, userModel interface{}) error {
 
 // GetSoftwareModels godoc
 // @ID GetSoftwareModels
-// @Summary Get a list of software migration user models (source or target)
-// @Description Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.
+// @Summary Get a list of software migration user models (source, planning or target)
+// @Description Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
 // @Description The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
-// @Tags [API] Migration User Models
+// @Description 'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
+// @Tags [API] Migration User Models - Software
 // @Accept  json
 // @Produce  json
-// @Param modelStage query string true "Stage of software model to retrieve" Enums(source, planning, target)
+// @Param modelStage query []string true "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning)." Enums(source, planning, target) collectionFormat(csv)
 // @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
 // @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
 // @Param planningModelId query string false "Filter by 'lineage.planningModelId'"
@@ -971,46 +165,24 @@ func saveSoftwareModelToStore(id string, userModel interface{}) error {
 // @Failure 500 {object} model.Response
 // @Router /software-model [get]
 func GetSoftwareModels(c echo.Context) error {
-	modelStage, err := parseModelStageParam(c)
+	modelStages, err := parseModelStagesParam(c, true)
 	if err != nil {
 		return softwareModelErrResp(c, http.StatusBadRequest, err)
 	}
 	lineageFilter := parseLineageFilter(c)
-	log.Info().Msgf("# GetSoftwareModels: modelStage=[%s], lineage=[%+v]", modelStage, lineageFilter)
+	log.Info().Msgf("# GetSoftwareModels: modelStage=%v, lineage=[%+v]", modelStages, lineageFilter)
 
-	result := []map[string]interface{}{}
-	modelList, exists := lkvstore.GetWithPrefix("")
-	if !exists {
-		return c.JSON(http.StatusOK, result)
-	}
-
-	for _, item := range modelList {
-		m, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		if isSoftwareModel, ok := m["isSoftwareModel"].(bool); !ok || !isSoftwareModel {
-			continue
-		}
-		stage, ok := storedModelStage(m)
-		if !ok || stage != modelStage {
-			continue
-		}
-		if !matchLineageFilter(storedLineage(m, stage), lineageFilter) {
-			continue
-		}
-		result = append(result, withLineage(withModelStage(m, stage), stage))
-	}
-
-	return c.JSON(http.StatusOK, result)
+	modelList, _ := lkvstore.GetWithPrefix("")
+	return c.JSON(http.StatusOK, filterModels(modelList, modelStages, categorySoftware, lineageFilter))
 }
 
 // GetSoftwareModel godoc
 // @ID GetSoftwareModel
-// @Summary Get a specific software migration user model (source or target)
+// @Summary Get a specific software migration user model (source, planning or target)
 // @Description Get a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
 // @Description The 'lineage' of the model refers to its upstream models and itself.
-// @Tags [API] Migration User Models
+// @Description 'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
+// @Tags [API] Migration User Models - Software
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -1047,7 +219,8 @@ func GetSoftwareModel(c echo.Context) error {
 // @Description Only the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-grasshopper/smdl tag cannot be converted.
 // @Description The response has the fields of 'GET /software-model/{id}', with 'softwareModelVersion' and 'sourceSoftwareModel' (or 'targetSoftwareModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
 // @Description If a field of the stored model has a value which does not match the type of that field in the requested version (e.g. the free-form 'resources' of Kubernetes before v0.1.4), the model is not converted (400).
-// @Tags [API] Migration User Models
+// @Description A planning model stored in the former target structure ('targetSoftwareModel', before v0.6.6) cannot be converted (400). Update it with 'sourceSoftwareModel' first.
+// @Tags [API] Migration User Models - Software
 // @Accept  json
 // @Produce  json
 // @Param id           path  string true  "Model ID"
@@ -1070,9 +243,13 @@ func ConvertSoftwareModel(c echo.Context) error {
 	}
 	log.Info().Msgf("# ConvertSoftwareModel: id=[%s], modelStage=[%s], modelVersion=[%s]", id, modelStage, c.QueryParam("modelVersion"))
 
-	m, _, status, err := getSoftwareModelFromStore(id, modelStage)
+	m, storedStage, status, err := getSoftwareModelFromStore(id, modelStage)
 	if err != nil {
 		return softwareModelErrResp(c, status, err)
+	}
+	if isFormerPlanningSoftwareModel(m, storedStage) {
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("the planning model with id [%s] is stored in the former target structure ('targetSoftwareModel') and cannot be converted. "+
+			"Update it with 'sourceSoftwareModel' (PUT /software-model/{id}) or create a new planning model", id))
 	}
 
 	softwareVersions, err := getSoftwareModelVersions()
@@ -1137,15 +314,15 @@ func ConvertSoftwareModel(c echo.Context) error {
 
 // CreateSoftwareModel godoc
 // @ID CreateSoftwareModel
-// @Summary Create a new software migration user model (source or target)
+// @Summary Create a new software migration user model (source, planning or target)
 // @Description Create a new software migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.
-// @Description Provide 'sourceSoftwareModel' for a source model (modelStage=source), or 'targetSoftwareModel' for a planning or target model (modelStage=planning or target).
+// @Description Provide 'sourceSoftwareModel' for a source or planning model (modelStage=source or planning), or 'targetSoftwareModel' for a target model (modelStage=target).
 // @Description The 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.
 // @Description 'nodeId' is an optional identifier of the node the model is associated with.
 // @Description [Lineage] 'parentId' is the ID of the software model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
 // @Description 'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
 // @Description (The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Software
 // @Accept  json
 // @Produce  json
 // @Param modelStage query string true "Stage of software model to create" Enums(source, planning, target)
@@ -1199,54 +376,50 @@ func CreateSoftwareModel(c echo.Context) error {
 		log.Debug().Msg("Failed to Get the Current time!!")
 	}
 
+	info := softwareModelMeta{
+		Id:               id,
+		UserId:           reqBody.UserId,
+		NodeId:           reqBody.NodeId,
+		IsInitUserModel:  reqBody.IsInitUserModel,
+		UserModelName:    reqBody.UserModelName,
+		UserModelVer:     reqBody.UserModelVer,
+		Description:      reqBody.Description,
+		SoftwareModelVer: resultVer,
+		CreateTime:       createTime,
+		IsSoftwareModel:  true,
+		ModelType:        SWModel,
+		ModelStage:       modelStage,
+		Lineage:          modelLineage,
+	}
+
 	var userModel interface{}
-	if modelStage != StageSource {
-		userModel = targetSoftwareModelRecord{TargetSoftwareModelRespInfo: TargetSoftwareModelRespInfo{
-			Id:               id,
-			UserId:           reqBody.UserId,
-			NodeId:           reqBody.NodeId,
-			IsInitUserModel:  reqBody.IsInitUserModel,
-			UserModelName:    reqBody.UserModelName,
-			UserModelVer:     reqBody.UserModelVer,
-			Description:      reqBody.Description,
-			SoftwareModelVer: resultVer,
-			CreateTime:       createTime,
-			IsSoftwareModel:  true,
-			ModelType:        SWModel,
-		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, TargetSoftwareModel: softwareModel}
+	if modelStage == StageTarget {
+		userModel = targetSoftwareModelRecord{softwareModelMeta: info, TargetSoftwareModel: softwareModel}
 	} else {
-		userModel = sourceSoftwareModelRecord{SourceSoftwareModelRespInfo: SourceSoftwareModelRespInfo{
-			Id:               id,
-			UserId:           reqBody.UserId,
-			NodeId:           reqBody.NodeId,
-			IsInitUserModel:  reqBody.IsInitUserModel,
-			UserModelName:    reqBody.UserModelName,
-			UserModelVer:     reqBody.UserModelVer,
-			Description:      reqBody.Description,
-			SoftwareModelVer: resultVer,
-			CreateTime:       createTime,
-			IsSoftwareModel:  true,
-			ModelType:        SWModel,
-		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, SourceSoftwareModel: softwareModel}
+		userModel = sourceSoftwareModelRecord{softwareModelMeta: info, SourceSoftwareModel: softwareModel}
 	}
 
 	if err := saveSoftwareModelToStore(id, userModel); err != nil {
 		return softwareModelErrResp(c, http.StatusInternalServerError, err)
 	}
 
-	return c.JSON(http.StatusCreated, userModel)
+	resp, err := decorateRecord(userModel)
+	if err != nil {
+		return softwareModelErrResp(c, http.StatusInternalServerError, err)
+	}
+	return c.JSON(http.StatusCreated, resp)
 }
 
 // UpdateSoftwareModel godoc
 // @ID UpdateSoftwareModel
-// @Summary Update a specific software migration user model (source or target)
+// @Summary Update a specific software migration user model (source, planning or target)
 // @Description Update a specific software migration user model by ID.
 // @Description The model stage is changed to 'modelStage' if it is given, and is preserved otherwise.
-// @Description Provide 'sourceSoftwareModel' if the (resulting) stage is source, or 'targetSoftwareModel' if it is planning or target.
+// @Description Provide 'sourceSoftwareModel' if the (resulting) stage is source or planning, or 'targetSoftwareModel' if it is target.
 // @Description 'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.
 // @Description [Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).
 // @Description The stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Software
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -1332,64 +505,55 @@ func UpdateSoftwareModel(c echo.Context) error {
 
 	// The existing model is loaded first so that the fields not given in the request
 	// (e.g. 'createTime', 'softwareModelVersion') are preserved. If the stage is changed between
-	// source and planning/target, the software model field of the previous stage is not carried over.
+	// source/planning and target, the software model field of the previous stage is not carried over.
+	var info *softwareModelMeta
 	var updatedModel interface{}
-	if modelStage != StageSource {
+	if modelStage == StageTarget {
 		fullModel := new(targetSoftwareModelRecord)
 		if err := json.Unmarshal(existingBytes, fullModel); err != nil {
 			return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to unmarshal the existing model : [%v]", err))
 		}
-		fullModel.Id = id
-		fullModel.UserId = reqBody.UserId
-		fullModel.NodeId = reqBody.NodeId
-		fullModel.IsInitUserModel = reqBody.IsInitUserModel
-		fullModel.UserModelName = reqBody.UserModelName
-		fullModel.UserModelVer = reqBody.UserModelVer
-		fullModel.Description = reqBody.Description
-		fullModel.UpdateTime = updateTime
-		fullModel.IsSoftwareModel = true
-		fullModel.ModelStage = modelStage
-		fullModel.IsTargetModel = modelStage.legacyIsTargetModel()
-		fullModel.Lineage = modelLineage
-		fullModel.ModelType = SWModel
 		fullModel.TargetSoftwareModel = softwareModel
-		updatedModel = fullModel
+		info, updatedModel = &fullModel.softwareModelMeta, fullModel
 	} else {
 		fullModel := new(sourceSoftwareModelRecord)
 		if err := json.Unmarshal(existingBytes, fullModel); err != nil {
 			return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to unmarshal the existing model : [%v]", err))
 		}
-		fullModel.Id = id
-		fullModel.UserId = reqBody.UserId
-		fullModel.NodeId = reqBody.NodeId
-		fullModel.IsInitUserModel = reqBody.IsInitUserModel
-		fullModel.UserModelName = reqBody.UserModelName
-		fullModel.UserModelVer = reqBody.UserModelVer
-		fullModel.Description = reqBody.Description
-		fullModel.UpdateTime = updateTime
-		fullModel.IsSoftwareModel = true
-		fullModel.ModelStage = modelStage
-		fullModel.IsTargetModel = modelStage.legacyIsTargetModel()
-		fullModel.Lineage = modelLineage
-		fullModel.ModelType = SWModel
 		fullModel.SourceSoftwareModel = softwareModel
-		updatedModel = fullModel
+		info, updatedModel = &fullModel.softwareModelMeta, fullModel
 	}
+	info.Id = id
+	info.UserId = reqBody.UserId
+	info.NodeId = reqBody.NodeId
+	info.IsInitUserModel = reqBody.IsInitUserModel
+	info.UserModelName = reqBody.UserModelName
+	info.UserModelVer = reqBody.UserModelVer
+	info.Description = reqBody.Description
+	info.UpdateTime = updateTime
+	info.IsSoftwareModel = true
+	info.ModelType = SWModel
+	info.ModelStage = modelStage
+	info.Lineage = modelLineage
 
 	if err := saveSoftwareModelToStore(id, updatedModel); err != nil {
 		return softwareModelErrResp(c, http.StatusInternalServerError, err)
 	}
 	log.Info().Msgf("Successfully updated the model: [%s]", id)
 
-	return c.JSON(http.StatusOK, updatedModel)
+	resp, err := decorateRecord(updatedModel)
+	if err != nil {
+		return softwareModelErrResp(c, http.StatusInternalServerError, err)
+	}
+	return c.JSON(http.StatusOK, resp)
 }
 
 // DeleteSoftwareModel godoc
 // @ID DeleteSoftwareModel
-// @Summary Delete a specific software migration user model (source or target)
+// @Summary Delete a specific software migration user model (source, planning or target)
 // @Description Delete a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
 // @Description If the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Software
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"

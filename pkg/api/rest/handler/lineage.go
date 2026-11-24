@@ -124,20 +124,6 @@ func storedLineage(m map[string]interface{}, stage ModelStage) lineage.Migration
 	return lin
 }
 
-// withLineage returns the stored model with 'lineage' filled in (for a model stored before the lineage
-// was introduced). The stored map is copied rather than modified.
-func withLineage(m map[string]interface{}, stage ModelStage) map[string]interface{} {
-	if _, exists := m["lineage"]; exists {
-		return m
-	}
-	copied := make(map[string]interface{}, len(m)+1)
-	for k, v := range m {
-		copied[k] = v
-	}
-	copied["lineage"] = storedLineage(m, stage)
-	return copied
-}
-
 // sourceGroupIdPattern keeps 'sourceGroupId' usable as a cloud resource label value ('cm-source-group-id'),
 // following the strictest CSP rule (GCP: lowercase letters, digits, '_' and '-', up to 63 characters).
 var sourceGroupIdPattern = regexp.MustCompile(`^[a-z0-9_-]{1,63}$`)

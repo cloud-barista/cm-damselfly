@@ -62,6 +62,22 @@ func init() {
 
 // @securityDefinitions.basic BasicAuth
 
+// The tags are shown in this order in Swagger UI.
+// @tag.name [API] Migration Models
+// @tag.description Versions of the migration models
+// @tag.name [API] Migration User Models
+// @tag.description Migration user models of all categories
+// @tag.name [API] Migration User Models - Infra
+// @tag.description Infra (on-premise / cloud) migration user models
+// @tag.name [API] Migration User Models - Software
+// @tag.description Software migration user models
+// @tag.name [API] Migration User Models - RDBMS
+// @tag.description RDBMS migration user models
+// @tag.name [API] Migration User Models - Object Storage
+// @tag.description Object storage migration user models
+// @tag.name [Admin] System management
+// @tag.description Readiness and HTTP version of CM-Damselfly
+
 func main() {
 	log.Info().Msg("Preparing to run CM-Damselfly")
 

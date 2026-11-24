@@ -105,8 +105,8 @@ func TestConvertSoftwareModelDropsUndeclaredResourcesKeys(t *testing.T) {
 		{
 			"planning model",
 			StagePlanning,
-			`{"servers":[{"migration_list":{"kubernetes":[{"resources":{"pods":3,"namespaces":["default"]}}]}}]}`,
-			"targetSoftwareModel.servers[0].migration_list.kubernetes[0].resources.pods",
+			`{"source_group_id":"g1","connection_info_list":[{"connection_id":"c1","softwares":{"kubernetes":[{"version":"1.32","kube_config":"cfg","resources":{"pods":3,"namespaces":["default"]}}]}}]}`,
+			"sourceSoftwareModel.connection_info_list[0].softwares.kubernetes[0].resources.pods",
 		},
 		{
 			"target model",

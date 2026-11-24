@@ -23,257 +23,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/cloudmodel": {
-            "get": {
-                "description": "Get a list of cloud user models.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Cloud Migration User Models"
-                ],
-                "summary": "Get a list of cloud user models",
-                "operationId": "GetCloudModels",
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained Cloud Migration User Models",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetCloudModelsResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create a new cloud user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Cloud Migration User Models"
-                ],
-                "summary": "Create a new cloud user model",
-                "operationId": "CreateCloudModel",
-                "parameters": [
-                    {
-                        "description": "model information",
-                        "name": "Model",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateCloudModelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully Created the Cloud Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateCloudModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/cloudmodel/{id}": {
-            "get": {
-                "description": "Get a specific cloud user model.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Cloud Migration User Models"
-                ],
-                "summary": "Get a specific cloud user model",
-                "operationId": "GetCloudModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained the Cloud Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetCloudModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update a cloud user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Cloud Migration User Models"
-                ],
-                "summary": "Update a cloud user model",
-                "operationId": "UpdateCloudModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Model information to update",
-                        "name": "Model",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateCloudModelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully Updated the Cloud Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateCloudModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete a cloud user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Cloud Migration User Models"
-                ],
-                "summary": "Delete a cloud user model",
-                "operationId": "DeleteCloudModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Deleted the Cloud Migration User Model",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/httpVersion": {
             "get": {
                 "description": "Checks and logs the HTTP version of the incoming request to the server console.",
@@ -312,7 +61,7 @@ const docTemplate = `{
         },
         "/infra-model": {
             "get": {
-                "description": "Get a list of infra migration user models filtered by model type and model stage.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).",
+                "description": "Get a list of infra migration user models filtered by model type and model stage. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).\n'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -320,7 +69,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Infra"
                 ],
                 "summary": "Get a list of infra migration user models (on-premise or cloud)",
                 "operationId": "GetInfraModels",
@@ -337,13 +86,17 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "enum": [
-                            "source",
-                            "planning",
-                            "target"
-                        ],
-                        "type": "string",
-                        "description": "Stage of infra model to retrieve",
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "source",
+                                "planning",
+                                "target"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning).",
                         "name": "modelStage",
                         "in": "query",
                         "required": true
@@ -413,7 +166,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Infra"
                 ],
                 "summary": "Create a new infra migration user model (on-premise or cloud)",
                 "operationId": "CreateInfraModel",
@@ -487,7 +240,7 @@ const docTemplate = `{
         },
         "/infra-model/{id}": {
             "get": {
-                "description": "Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.\nThe 'lineage' of the model refers to its upstream models and itself.",
+                "description": "Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.\nThe 'lineage' of the model refers to its upstream models and itself.\n'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -495,7 +248,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Infra"
                 ],
                 "summary": "Get a specific infra migration user model (on-premise or cloud)",
                 "operationId": "GetInfraModel",
@@ -555,7 +308,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Infra"
                 ],
                 "summary": "Update a specific infra migration user model (on-premise or cloud)",
                 "operationId": "UpdateInfraModel",
@@ -641,7 +394,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Infra"
                 ],
                 "summary": "Delete a specific infra migration user model (on-premise or cloud)",
                 "operationId": "DeleteInfraModel",
@@ -705,7 +458,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Infra"
                 ],
                 "summary": "Convert a stored infra migration user model to a newer model version",
                 "operationId": "ConvertInfraModel",
@@ -765,7 +518,7 @@ const docTemplate = `{
         },
         "/model": {
             "get": {
-                "description": "Get a list of migration user models of all categories (infra, software, rdbms and objectStorage).\nUse 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).",
+                "description": "Get a list of migration user models of all categories (infra, software, rdbms and objectStorage).\nUse 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.\nMultiple stages can be given by commas (e.g. 'modelStage=source,planning').\nThe models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).\n'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -779,13 +532,17 @@ const docTemplate = `{
                 "operationId": "GetModels",
                 "parameters": [
                     {
-                        "enum": [
-                            "source",
-                            "planning",
-                            "target"
-                        ],
-                        "type": "string",
-                        "description": "Stage of models to retrieve. If empty, the models of all stages are returned.",
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "source",
+                                "planning",
+                                "target"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning). If empty, the models of all stages are returned.",
                         "name": "modelStage",
                         "in": "query"
                     },
@@ -890,7 +647,7 @@ const docTemplate = `{
         },
         "/object-storage-model": {
             "get": {
-                "description": "Get a list of object storage migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).",
+                "description": "Get a list of object storage migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).\n'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -898,19 +655,23 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Object Storage"
                 ],
                 "summary": "Get a list of object storage migration user models (source, planning or target)",
                 "operationId": "GetObjectStorageModels",
                 "parameters": [
                     {
-                        "enum": [
-                            "source",
-                            "planning",
-                            "target"
-                        ],
-                        "type": "string",
-                        "description": "Stage of object storage model to retrieve",
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "source",
+                                "planning",
+                                "target"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning).",
                         "name": "modelStage",
                         "in": "query",
                         "required": true
@@ -974,7 +735,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Object Storage"
                 ],
                 "summary": "Create a new object storage migration user model (source, planning or target)",
                 "operationId": "CreateObjectStorageModel",
@@ -1037,7 +798,7 @@ const docTemplate = `{
         },
         "/object-storage-model/{id}": {
             "get": {
-                "description": "Get a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.",
+                "description": "Get a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.\n'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1045,7 +806,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Object Storage"
                 ],
                 "summary": "Get a specific object storage migration user model (source, planning or target)",
                 "operationId": "GetObjectStorageModel",
@@ -1106,7 +867,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Object Storage"
                 ],
                 "summary": "Update a specific object storage migration user model (source, planning or target)",
                 "operationId": "UpdateObjectStorageModel",
@@ -1181,7 +942,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Object Storage"
                 ],
                 "summary": "Delete a specific object storage migration user model (source, planning or target)",
                 "operationId": "DeleteObjectStorageModel",
@@ -1257,7 +1018,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Object Storage"
                 ],
                 "summary": "Convert a stored object storage migration user model to a newer model version",
                 "operationId": "ConvertObjectStorageModel",
@@ -1316,248 +1077,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/onpremmodel": {
-            "get": {
-                "description": "Get a list of on-premise models.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] On-Premise Migration User Models"
-                ],
-                "summary": "Get a list of on-premise models",
-                "operationId": "GetOnPremModels",
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained On-Premise Migration User Models",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetOnPremModelsResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create a new on-premise model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] On-Premise Migration User Models"
-                ],
-                "summary": "Create a new on-premise model",
-                "operationId": "CreateOnPremModel",
-                "parameters": [
-                    {
-                        "description": "model information",
-                        "name": "Model",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateOnPremModelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully Created the On-Premise Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateOnPremModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/onpremmodel/{id}": {
-            "get": {
-                "description": "Get a specific on-premise model.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] On-Premise Migration User Models"
-                ],
-                "summary": "Get a specific on-premise model",
-                "operationId": "GetOnPremModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained the On-Premise Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetOnPremModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update a on-premise model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] On-Premise Migration User Models"
-                ],
-                "summary": "Update a on-premise model",
-                "operationId": "UpdateOnPremModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Model information to update",
-                        "name": "Model",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateOnPremModelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully Updated the On-Premise Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateOnPremModelResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete a on-premise model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] On-Premise Migration User Models"
-                ],
-                "summary": "Delete a on-premise model",
-                "operationId": "DeleteOnPremModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Deleted the On-Premise Migration User Model",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/rdbms-model": {
             "get": {
-                "description": "Get a list of RDBMS migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).",
+                "description": "Get a list of RDBMS migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).\n'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1565,19 +1087,23 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - RDBMS"
                 ],
                 "summary": "Get a list of RDBMS migration user models (source, planning or target)",
                 "operationId": "GetRDBMSModels",
                 "parameters": [
                     {
-                        "enum": [
-                            "source",
-                            "planning",
-                            "target"
-                        ],
-                        "type": "string",
-                        "description": "Stage of RDBMS model to retrieve",
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "source",
+                                "planning",
+                                "target"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning).",
                         "name": "modelStage",
                         "in": "query",
                         "required": true
@@ -1641,7 +1167,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - RDBMS"
                 ],
                 "summary": "Create a new RDBMS migration user model (source, planning or target)",
                 "operationId": "CreateRDBMSModel",
@@ -1704,7 +1230,7 @@ const docTemplate = `{
         },
         "/rdbms-model/{id}": {
             "get": {
-                "description": "Get a specific RDBMS migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.",
+                "description": "Get a specific RDBMS migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.\n'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1712,7 +1238,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - RDBMS"
                 ],
                 "summary": "Get a specific RDBMS migration user model (source, planning or target)",
                 "operationId": "GetRDBMSModel",
@@ -1773,7 +1299,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - RDBMS"
                 ],
                 "summary": "Update a specific RDBMS migration user model (source, planning or target)",
                 "operationId": "UpdateRDBMSModel",
@@ -1848,7 +1374,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - RDBMS"
                 ],
                 "summary": "Delete a specific RDBMS migration user model (source, planning or target)",
                 "operationId": "DeleteRDBMSModel",
@@ -1924,7 +1450,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - RDBMS"
                 ],
                 "summary": "Convert a stored RDBMS migration user model to a newer model version",
                 "operationId": "ConvertRDBMSModel",
@@ -2015,7 +1541,7 @@ const docTemplate = `{
         },
         "/software-model": {
             "get": {
-                "description": "Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).",
+                "description": "Get a list of software migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').\nThe models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).\n'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2023,19 +1549,23 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Software"
                 ],
-                "summary": "Get a list of software migration user models (source or target)",
+                "summary": "Get a list of software migration user models (source, planning or target)",
                 "operationId": "GetSoftwareModels",
                 "parameters": [
                     {
-                        "enum": [
-                            "source",
-                            "planning",
-                            "target"
-                        ],
-                        "type": "string",
-                        "description": "Stage of software model to retrieve",
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "source",
+                                "planning",
+                                "target"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning).",
                         "name": "modelStage",
                         "in": "query",
                         "required": true
@@ -2091,7 +1621,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new software migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.\nProvide 'sourceSoftwareModel' for a source model (modelStage=source), or 'targetSoftwareModel' for a planning or target model (modelStage=planning or target).\nThe 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n[Lineage] 'parentId' is the ID of the software model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.\n'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.\n(The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
+                "description": "Create a new software migration user model. Use 'modelStage' to select the stage (source, planning or target) of the model.\nProvide 'sourceSoftwareModel' for a source or planning model (modelStage=source or planning), or 'targetSoftwareModel' for a target model (modelStage=target).\nThe 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the 'SourceGroupSoftwareProperty' (or 'TargetGroupSoftwareProperty') struct of the cm-grasshopper/smdl tagged version given by 'softwareModelVersion', and is stored in that struct's form.\n'nodeId' is an optional identifier of the node the model is associated with.\n[Lineage] 'parentId' is the ID of the software model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.\n'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.\n(The body schema below shows the struct of the cm-grasshopper/smdl version built into cm-damselfly. To see the struct of another version, choose 'smdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)",
                 "consumes": [
                     "application/json"
                 ],
@@ -2099,9 +1629,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Software"
                 ],
-                "summary": "Create a new software migration user model (source or target)",
+                "summary": "Create a new software migration user model (source, planning or target)",
                 "operationId": "CreateSoftwareModel",
                 "parameters": [
                     {
@@ -2162,7 +1692,7 @@ const docTemplate = `{
         },
         "/software-model/{id}": {
             "get": {
-                "description": "Get a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.",
+                "description": "Get a specific software migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.\nThe 'lineage' of the model refers to its upstream models and itself.\n'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2170,9 +1700,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Software"
                 ],
-                "summary": "Get a specific software migration user model (source or target)",
+                "summary": "Get a specific software migration user model (source, planning or target)",
                 "operationId": "GetSoftwareModel",
                 "parameters": [
                     {
@@ -2223,7 +1753,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a specific software migration user model by ID.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nProvide 'sourceSoftwareModel' if the (resulting) stage is source, or 'targetSoftwareModel' if it is planning or target.\n'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.\n[Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).\nThe stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').",
+                "description": "Update a specific software migration user model by ID.\nThe model stage is changed to 'modelStage' if it is given, and is preserved otherwise.\nProvide 'sourceSoftwareModel' if the (resulting) stage is source or planning, or 'targetSoftwareModel' if it is target.\n'createTime' and 'softwareModelVersion' of the stored model are preserved, and 'sourceSoftwareModel' (or 'targetSoftwareModel') is validated against the struct of that cm-grasshopper/smdl tagged version.\n[Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).\nThe stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').",
                 "consumes": [
                     "application/json"
                 ],
@@ -2231,9 +1761,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Software"
                 ],
-                "summary": "Update a specific software migration user model (source or target)",
+                "summary": "Update a specific software migration user model (source, planning or target)",
                 "operationId": "UpdateSoftwareModel",
                 "parameters": [
                     {
@@ -2306,9 +1836,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Software"
                 ],
-                "summary": "Delete a specific software migration user model (source or target)",
+                "summary": "Delete a specific software migration user model (source, planning or target)",
                 "operationId": "DeleteSoftwareModel",
                 "parameters": [
                     {
@@ -2374,7 +1904,7 @@ const docTemplate = `{
         },
         "/software-model/{id}/convert": {
             "get": {
-                "description": "Get a stored software migration user model converted to the struct of the cm-grasshopper/smdl tagged version given by 'modelVersion'. The stored model is not changed.\nOnly the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-grasshopper/smdl tag cannot be converted.\nThe response has the fields of 'GET /software-model/{id}', with 'softwareModelVersion' and 'sourceSoftwareModel' (or 'targetSoftwareModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).\nIf a field of the stored model has a value which does not match the type of that field in the requested version (e.g. the free-form 'resources' of Kubernetes before v0.1.4), the model is not converted (400).",
+                "description": "Get a stored software migration user model converted to the struct of the cm-grasshopper/smdl tagged version given by 'modelVersion'. The stored model is not changed.\nOnly the conversion to the same or a newer version is allowed, and a model whose stored version is not a cm-grasshopper/smdl tag cannot be converted.\nThe response has the fields of 'GET /software-model/{id}', with 'softwareModelVersion' and 'sourceSoftwareModel' (or 'targetSoftwareModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).\nIf a field of the stored model has a value which does not match the type of that field in the requested version (e.g. the free-form 'resources' of Kubernetes before v0.1.4), the model is not converted (400).\nA planning model stored in the former target structure ('targetSoftwareModel', before v0.6.6) cannot be converted (400). Update it with 'sourceSoftwareModel' first.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2382,7 +1912,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[API] Migration User Models"
+                    "[API] Migration User Models - Software"
                 ],
                 "summary": "Convert a stored software migration user model to a newer model version",
                 "operationId": "ConvertSoftwareModel",
@@ -2430,448 +1960,6 @@ const docTemplate = `{
                         "description": "Model Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/softwaremodel/source": {
-            "get": {
-                "description": "Get a list of source software user models.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Source Software Migration User Models"
-                ],
-                "summary": "Get a list of source software user models",
-                "operationId": "GetSourceSoftwareModels",
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained Source Software Migration User Models",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetSourceSoftwareModelsResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create a new source software user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Source Software Migration User Models"
-                ],
-                "summary": "Create a new source software user model",
-                "operationId": "CreateSourceSoftwareModel",
-                "parameters": [
-                    {
-                        "description": "model information",
-                        "name": "Model",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateSourceSoftwareModelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully Created the Source Software Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateSourceSoftwareModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            }
-        },
-        "/softwaremodel/source/{id}": {
-            "get": {
-                "description": "Get a specific source software user model.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Source Software Migration User Models"
-                ],
-                "summary": "Get a specific source software user model",
-                "operationId": "GetSourceSoftwareModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained the Source Software Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetSourceSoftwareModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update a source software user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Source Software Migration User Models"
-                ],
-                "summary": "Update a source software user model",
-                "operationId": "UpdateSourceSoftwareModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Model information to update",
-                        "name": "Model",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateSourceSoftwareModelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully Updated the Source Software Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateSourceSoftwareModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete a source software user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Source Software Migration User Models"
-                ],
-                "summary": "Delete a source software user model",
-                "operationId": "DeleteSourceSoftwareModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Deleted the Source Software Migration User Model",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/softwaremodel/target": {
-            "get": {
-                "description": "Get a list of target software user models.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Target Software Migration User Models"
-                ],
-                "summary": "Get a list of target software user models",
-                "operationId": "GetTargetSoftwareModels",
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained Target Software Migration User Models",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetTargetSoftwareModelsResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create a new target software user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Target Software Migration User Models"
-                ],
-                "summary": "Create a new target software user model",
-                "operationId": "CreateTargetSoftwareModel",
-                "parameters": [
-                    {
-                        "description": "model information",
-                        "name": "Model",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateTargetSoftwareModelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully Created the Target Software Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateTargetSoftwareModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            }
-        },
-        "/softwaremodel/target/{id}": {
-            "get": {
-                "description": "Get a specific target software user model.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Target Software Migration User Models"
-                ],
-                "summary": "Get a specific target software user model",
-                "operationId": "GetTargetSoftwareModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Obtained the Target Software Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetTargetSoftwareModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update a target software user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Target Software Migration User Models"
-                ],
-                "summary": "Update a target software user model",
-                "operationId": "UpdateTargetSoftwareModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Model information to update",
-                        "name": "Model",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateTargetSoftwareModelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully Updated the Target Software Migration User Model",
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateTargetSoftwareModelResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.Response"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete a target software user model with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[API] Target Software Migration User Models"
-                ],
-                "summary": "Delete a target software user model",
-                "operationId": "DeleteTargetSoftwareModel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Deleted the Target Software Migration User Model",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "404": {
-                        "description": "Model Not Found",
-                        "schema": {
-                            "type": "object"
                         }
                     },
                     "500": {
@@ -4007,156 +3095,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CloudModelRespInfo": {
-            "type": "object",
-            "required": [
-                "cloudInfraModel"
-            ],
-            "properties": {
-                "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
-                },
-                "cloudModelVersion": {
-                    "type": "string"
-                },
-                "createTime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.CreateCloudModelReq": {
-            "type": "object",
-            "required": [
-                "cloudInfraModel"
-            ],
-            "properties": {
-                "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.CreateCloudModelResp": {
-            "type": "object",
-            "required": [
-                "cloudInfraModel"
-            ],
-            "properties": {
-                "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
-                },
-                "cloudModelVersion": {
-                    "type": "string"
-                },
-                "createTime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
         "handler.CreateInfraModelReq": {
             "type": "object",
             "properties": {
@@ -4235,79 +3173,6 @@ const docTemplate = `{
                 },
                 "targetObjectStorageModel": {
                     "$ref": "#/definitions/storagemodel.RecommendedObjectStorage"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.CreateOnPremModelReq": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.CreateOnPremModelResp": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "onpremModelVersion": {
-                    "type": "string"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                },
-                "updateTime": {
-                    "type": "string"
                 },
                 "userId": {
                     "type": "string"
@@ -4404,410 +3269,11 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateSourceSoftwareModelReq": {
-            "type": "object",
-            "required": [
-                "sourceSoftwareModel"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "sourceSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.CreateSourceSoftwareModelResp": {
-            "type": "object",
-            "required": [
-                "sourceSoftwareModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "sourceSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.CreateTargetSoftwareModelReq": {
-            "type": "object",
-            "required": [
-                "targetSoftwareModel"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "targetSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.CreateTargetSoftwareModelResp": {
-            "type": "object",
-            "required": [
-                "targetSoftwareModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "targetSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.GetCloudModelResp": {
-            "type": "object",
-            "required": [
-                "cloudInfraModel"
-            ],
-            "properties": {
-                "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
-                },
-                "cloudModelVersion": {
-                    "type": "string"
-                },
-                "createTime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.GetCloudModelsResp": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.CloudModelRespInfo"
-                    }
-                }
-            }
-        },
         "handler.GetModelsVersionResp": {
             "type": "object",
             "properties": {
                 "modelsVersion": {
                     "$ref": "#/definitions/handler.ModelsVersionRespInfo"
-                }
-            }
-        },
-        "handler.GetOnPremModelResp": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "onpremModelVersion": {
-                    "type": "string"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.GetOnPremModelsResp": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.OnPremModelRespInfo"
-                    }
-                }
-            }
-        },
-        "handler.GetSourceSoftwareModelResp": {
-            "type": "object",
-            "required": [
-                "sourceSoftwareModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "sourceSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.GetSourceSoftwareModelsResp": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.SourceSoftwareModelRespInfo"
-                    }
-                }
-            }
-        },
-        "handler.GetTargetSoftwareModelResp": {
-            "type": "object",
-            "required": [
-                "targetSoftwareModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "targetSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.GetTargetSoftwareModelsResp": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.TargetSoftwareModelRespInfo"
-                    }
                 }
             }
         },
@@ -4846,53 +3312,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.OnPremModelRespInfo": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "onpremModelVersion": {
-                    "type": "string"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
         "handler.ResHTTPVersion": {
             "type": "object",
             "properties": {
@@ -4905,425 +3324,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.SourceSoftwareModelRespInfo": {
-            "type": "object",
-            "required": [
-                "sourceSoftwareModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "sourceSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.TargetSoftwareModelRespInfo": {
-            "type": "object",
-            "required": [
-                "targetSoftwareModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "targetSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateCloudModelReq": {
-            "type": "object",
-            "required": [
-                "cloudInfraModel"
-            ],
-            "properties": {
-                "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateCloudModelResp": {
-            "type": "object",
-            "required": [
-                "cloudInfraModel"
-            ],
-            "properties": {
-                "cloudInfraModel": {
-                    "$ref": "#/definitions/cloudmodel.RecommendedInfra"
-                },
-                "cloudModelVersion": {
-                    "type": "string"
-                },
-                "createTime": {
-                    "type": "string"
-                },
-                "csp": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateOnPremModelReq": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateOnPremModelResp": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isCloudModel": {
-                    "type": "boolean"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "onpremModelVersion": {
-                    "type": "string"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateSourceSoftwareModelReq": {
-            "type": "object",
-            "required": [
-                "sourceSoftwareModel"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "sourceSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateSourceSoftwareModelResp": {
-            "type": "object",
-            "required": [
-                "sourceSoftwareModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "sourceSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.SourceGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateTargetSoftwareModelReq": {
-            "type": "object",
-            "required": [
-                "targetSoftwareModel"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "targetSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateTargetSoftwareModelResp": {
-            "type": "object",
-            "required": [
-                "targetSoftwareModel"
-            ],
-            "properties": {
-                "createTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isInitUserModel": {
-                    "type": "boolean"
-                },
-                "isSoftwareModel": {
-                    "type": "boolean"
-                },
-                "isTargetModel": {
-                    "type": "boolean"
-                },
-                "modelType": {
-                    "type": "string"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "softwareModelVersion": {
-                    "type": "string"
-                },
-                "targetSoftwareModel": {
-                    "$ref": "#/definitions/softwaremodel.TargetGroupSoftwareProperty"
-                },
-                "updateTime": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                },
-                "userModelName": {
-                    "type": "string"
-                },
-                "userModelVersion": {
                     "type": "string"
                 }
             }
@@ -5610,6 +3610,31 @@ const docTemplate = `{
                 }
             }
         },
+        "onpremisemodel.ListeningPortProperty": {
+            "type": "object",
+            "properties": {
+                "bindAddress": {
+                    "description": "Local bind address (e.g., \"0.0.0.0\", \"::\", \"127.0.0.1\")",
+                    "type": "string",
+                    "example": "0.0.0.0"
+                },
+                "port": {
+                    "description": "Listening port number",
+                    "type": "integer",
+                    "example": 8080
+                },
+                "processName": {
+                    "description": "Owning process name if available",
+                    "type": "string",
+                    "example": "nginx"
+                },
+                "protocol": {
+                    "description": "Transport protocol (e.g., \"tcp\", \"udp\")",
+                    "type": "string",
+                    "example": "tcp"
+                }
+            }
+        },
         "onpremisemodel.MemoryProperty": {
             "type": "object",
             "required": [
@@ -5849,6 +3874,13 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
+                    }
+                },
+                "listeningPorts": {
+                    "description": "Listening TCP/UDP sockets on the node",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.ListeningPortProperty"
                     }
                 },
                 "machineId": {
@@ -7621,7 +5653,37 @@ const docTemplate = `{
         "BasicAuth": {
             "type": "basic"
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "Versions of the migration models",
+            "name": "[API] Migration Models"
+        },
+        {
+            "description": "Migration user models of all categories",
+            "name": "[API] Migration User Models"
+        },
+        {
+            "description": "Infra (on-premise / cloud) migration user models",
+            "name": "[API] Migration User Models - Infra"
+        },
+        {
+            "description": "Software migration user models",
+            "name": "[API] Migration User Models - Software"
+        },
+        {
+            "description": "RDBMS migration user models",
+            "name": "[API] Migration User Models - RDBMS"
+        },
+        {
+            "description": "Object storage migration user models",
+            "name": "[API] Migration User Models - Object Storage"
+        },
+        {
+            "description": "Readiness and HTTP version of CM-Damselfly",
+            "name": "[Admin] System management"
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it

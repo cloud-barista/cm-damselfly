@@ -136,7 +136,7 @@ func getObjectStorageModelFromStore(id string, stage ModelStage) (map[string]int
 			id, storedStage, stage)
 	}
 
-	return withLineage(withModelStage(m, storedStage), storedStage), storedStage, http.StatusOK, nil
+	return decorateModel(m), storedStage, http.StatusOK, nil
 }
 
 // saveObjectStorageModelToStore puts the model to the key-value store and saves the store to file.
@@ -154,12 +154,13 @@ func saveObjectStorageModelToStore(id string, userModel interface{}) error {
 // GetObjectStorageModels godoc
 // @ID GetObjectStorageModels
 // @Summary Get a list of object storage migration user models (source, planning or target)
-// @Description Get a list of object storage migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models.
+// @Description Get a list of object storage migration user models. Use 'modelStage' to select the stage (source, planning or target) of the models. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
 // @Description The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
-// @Tags [API] Migration User Models
+// @Description 'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
+// @Tags [API] Migration User Models - Object Storage
 // @Accept  json
 // @Produce  json
-// @Param modelStage query string true "Stage of object storage model to retrieve" Enums(source, planning, target)
+// @Param modelStage query []string true "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning)." Enums(source, planning, target) collectionFormat(csv)
 // @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
 // @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
 // @Param planningModelId query string false "Filter by 'lineage.planningModelId'"
@@ -169,15 +170,15 @@ func saveObjectStorageModelToStore(id string, userModel interface{}) error {
 // @Failure 500 {object} model.Response
 // @Router /object-storage-model [get]
 func GetObjectStorageModels(c echo.Context) error {
-	modelStage, err := parseModelStageParam(c)
+	modelStages, err := parseModelStagesParam(c, true)
 	if err != nil {
 		return objectStorageModelErrResp(c, http.StatusBadRequest, err)
 	}
 	lineageFilter := parseLineageFilter(c)
-	log.Info().Msgf("# GetObjectStorageModels: modelStage=[%s], lineage=[%+v]", modelStage, lineageFilter)
+	log.Info().Msgf("# GetObjectStorageModels: modelStage=%v, lineage=[%+v]", modelStages, lineageFilter)
 
 	modelList, _ := lkvstore.GetWithPrefix("")
-	return c.JSON(http.StatusOK, filterModels(modelList, modelStage, categoryObjectStorage, lineageFilter))
+	return c.JSON(http.StatusOK, filterModels(modelList, modelStages, categoryObjectStorage, lineageFilter))
 }
 
 // GetObjectStorageModel godoc
@@ -185,7 +186,8 @@ func GetObjectStorageModels(c echo.Context) error {
 // @Summary Get a specific object storage migration user model (source, planning or target)
 // @Description Get a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
 // @Description The 'lineage' of the model refers to its upstream models and itself.
-// @Tags [API] Migration User Models
+// @Description 'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
+// @Tags [API] Migration User Models - Object Storage
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -223,7 +225,7 @@ func GetObjectStorageModel(c echo.Context) error {
 // @Description The response has the fields of 'GET /object-storage-model/{id}', with 'objectStorageModelVersion' and 'sourceObjectStorageModel' (or 'targetObjectStorageModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
 // @Description [Migrations] v0.1.6: 'nameSeed' of 'targetObjectStorageModel' was removed (reported in 'droppedFields', and in 'warnings' if it has a value). v0.1.11: 'sourceObjectStorageModel', which described a single bucket, is converted to a group of buckets: the bucket fields are moved into 'sourceObjectStorages[0]'.
 // @Description If a field of the stored model has a value which does not match the type of that field in the requested version, the model is not converted (400).
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Object Storage
 // @Accept  json
 // @Produce  json
 // @Param id                        path  string true  "Model ID"
@@ -321,7 +323,7 @@ func ConvertObjectStorageModel(c echo.Context) error {
 // @Description [Lineage] 'parentId' is the ID of the object storage model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
 // @Description 'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
 // @Description (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Object Storage
 // @Accept  json
 // @Produce  json
 // @Param modelStage query string true "Stage of object storage model to create" Enums(source, planning, target)
@@ -402,7 +404,11 @@ func CreateObjectStorageModel(c echo.Context) error {
 		return objectStorageModelErrResp(c, http.StatusInternalServerError, err)
 	}
 
-	return c.JSON(http.StatusCreated, userModel)
+	resp, err := decorateRecord(userModel)
+	if err != nil {
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, err)
+	}
+	return c.JSON(http.StatusCreated, resp)
 }
 
 // UpdateObjectStorageModel godoc
@@ -414,7 +420,7 @@ func CreateObjectStorageModel(c echo.Context) error {
 // @Description 'createTime' and 'objectStorageModelVersion' of the stored model are preserved, and 'sourceObjectStorageModel' (or 'targetObjectStorageModel') is validated against the struct of that cm-beetle/imdl tagged version.
 // @Description [Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that object storage model in the previous stage (source → planning → target).
 // @Description The stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Object Storage
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -536,7 +542,11 @@ func UpdateObjectStorageModel(c echo.Context) error {
 	}
 	log.Info().Msgf("Successfully updated the model: [%s]", id)
 
-	return c.JSON(http.StatusOK, updatedModel)
+	resp, err := decorateRecord(updatedModel)
+	if err != nil {
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, err)
+	}
+	return c.JSON(http.StatusOK, resp)
 }
 
 // DeleteObjectStorageModel godoc
@@ -544,7 +554,7 @@ func UpdateObjectStorageModel(c echo.Context) error {
 // @Summary Delete a specific object storage migration user model (source, planning or target)
 // @Description Delete a specific object storage migration user model by ID. Use 'modelStage' to specify the stage (source, planning or target) of the model.
 // @Description If the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Object Storage
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"

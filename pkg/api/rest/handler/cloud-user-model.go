@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"errors"
+	"slices"
 	"strings"
 	"github.com/google/uuid"
 	echo "github.com/labstack/echo/v4"
@@ -36,8 +36,11 @@ const (
 	CloudModel         string = "CloudModel"
 	SWModel            string = "SoftwareModel"
 	RDBMSModel         string = "RDBMSModel"
-	ObjectStorageModel string = "objectStorageModel"
+	ObjectStorageModel string = "ObjectStorageModel"
 )
+
+// formerObjectStorageModel is the 'modelType' of the object storage models stored before v0.6.6.
+const formerObjectStorageModel string = "objectStorageModel"
 
 // GetModelsVersions godoc
 // @ID GetModelsVersions
@@ -95,11 +98,13 @@ func GetModelsVersions(c echo.Context) error {
 // @Summary Get a list of migration user models (infra, software, RDBMS and object storage)
 // @Description Get a list of migration user models of all categories (infra, software, rdbms and objectStorage).
 // @Description Use 'modelStage' to select the stage (source, planning or target) of the models, and 'category' to select the category. If omitted, the models of all stages (or all categories) are returned.
+// @Description Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
 // @Description The models can be further filtered by their 'lineage' (e.g. 'sourceGroupId' to get all the models derived from a source group).
+// @Description 'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
 // @Tags [API] Migration User Models
 // @Accept  json
 // @Produce  json
-// @Param modelStage      query string false "Stage of models to retrieve. If empty, the models of all stages are returned." Enums(source, planning, target)
+// @Param modelStage      query []string false "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning). If empty, the models of all stages are returned." Enums(source, planning, target) collectionFormat(csv)
 // @Param category        query string false "Category of models to retrieve. If empty, the models of all categories are returned." Enums(infra, software, rdbms, objectStorage)
 // @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
 // @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
@@ -111,14 +116,10 @@ func GetModelsVersions(c echo.Context) error {
 // @Router /model [get]
 func GetModels(c echo.Context) error {
 	// 'modelStage' is optional. If it is empty, the models of all stages are returned.
-	var modelStage ModelStage
-	if strings.TrimSpace(c.QueryParam("modelStage")) != "" {
-		stage, err := parseModelStageParam(c)
-		if err != nil {
-			log.Warn().Msg(err.Error())
-			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
-		}
-		modelStage = stage
+	modelStages, err := parseModelStagesParam(c, false)
+	if err != nil {
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
 	}
 
 	// 'category' is optional. If it is empty, the models of all categories are returned.
@@ -135,16 +136,16 @@ func GetModels(c echo.Context) error {
 	}
 
 	lineageFilter := parseLineageFilter(c)
-	log.Info().Msgf("# GetModels: modelStage=[%s], category=[%s], lineage=[%+v]", modelStage, category, lineageFilter)
+	log.Info().Msgf("# GetModels: modelStage=%v, category=[%s], lineage=[%+v]", modelStages, category, lineageFilter)
 
 	modelList, _ := lkvstore.GetWithPrefix("")
-	return c.JSON(http.StatusOK, filterModels(modelList, modelStage, category, lineageFilter))
+	return c.JSON(http.StatusOK, filterModels(modelList, modelStages, category, lineageFilter))
 }
 
-// filterModels returns the stored models of the given stage and category whose lineage matches the filter,
-// with 'modelStage' and 'lineage' filled in. An empty stage or category matches all stages or categories.
+// filterModels returns the stored models of the given stages and category whose lineage matches the filter,
+// in the form of decorateModel. No stage or an empty category matches all stages or categories.
 // The models without a valid category or stage are skipped.
-func filterModels(modelList []interface{}, stage ModelStage, category modelCategory, filter lineage.MigrationLineage) []map[string]interface{} {
+func filterModels(modelList []interface{}, stages []ModelStage, category modelCategory, filter lineage.MigrationLineage) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	for _, item := range modelList {
 		m, ok := item.(map[string]interface{})
@@ -156,44 +157,15 @@ func filterModels(modelList []interface{}, stage ModelStage, category modelCateg
 			continue
 		}
 		s, ok := storedModelStage(m)
-		if !ok || (stage != "" && s != stage) {
+		if !ok || (len(stages) > 0 && !slices.Contains(stages, s)) {
 			continue
 		}
 		if !matchLineageFilter(storedLineage(m, s), filter) {
 			continue
 		}
-		result = append(result, withLineage(withModelStage(m, s), s))
+		result = append(result, decorateModel(m))
 	}
 	return result
-}
-
-// ##############################################################################################
-// ### On-premise Migration User Model
-// ##############################################################################################
-
-type OnPremModelReqInfo struct {
-	UserId           string             		`json:"userId"`
-	IsInitUserModel  bool               		`json:"isInitUserModel"`
-	UserModelName    string             		`json:"userModelName"`
-	UserModelVer     string             		`json:"userModelVersion"`
-	Description      string             		`json:"description"`
-	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
-}
-
-type OnPremModelRespInfo struct {
-	Id               string             		`json:"id"`
-	UserId           string             		`json:"userId"`
-	IsInitUserModel  bool               		`json:"isInitUserModel"`
-	UserModelName    string             		`json:"userModelName"`
-	UserModelVer     string             		`json:"userModelVersion"`
-	Description      string             		`json:"description"`
-	OnPremModelVer   string             		`json:"onpremModelVersion"`
-	CreateTime       string             		`json:"createTime"`
-	UpdateTime       string             		`json:"updateTime"`
-	IsTargetModel    bool               		`json:"isTargetModel"`
-	IsCloudModel     bool               		`json:"isCloudModel"`
-	ModelType 		 string                  	`json:"modelType"`
-	OnpremInfraModel onpremisemodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
 }
 
 // ##############################################################################################
@@ -203,13 +175,14 @@ type OnPremModelRespInfo struct {
 // GetInfraModels godoc
 // @ID GetInfraModels
 // @Summary Get a list of infra migration user models (on-premise or cloud)
-// @Description Get a list of infra migration user models filtered by model type and model stage.
+// @Description Get a list of infra migration user models filtered by model type and model stage. Multiple stages can be given by commas (e.g. 'modelStage=source,planning').
 // @Description The models can be further filtered by their 'lineage' (e.g. 'sourceModelId' to find the models derived from a source model).
-// @Tags [API] Migration User Models
+// @Description 'category' of each model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
+// @Tags [API] Migration User Models - Infra
 // @Accept  json
 // @Produce  json
 // @Param modelType  query string true  "Type of infra model to retrieve" Enums(onprem, cloud)
-// @Param modelStage query string true  "Stage of infra model to retrieve" Enums(source, planning, target)
+// @Param modelStage query []string true "Stages of the models to retrieve. Multiple stages are separated by commas (e.g. source,planning)." Enums(source, planning, target) collectionFormat(csv)
 // @Param sourceGroupId   query string false "Filter by 'lineage.sourceGroupId'"
 // @Param sourceModelId   query string false "Filter by 'lineage.sourceModelId'"
 // @Param planningModelId query string false "Filter by 'lineage.planningModelId'"
@@ -231,7 +204,7 @@ func GetInfraModels(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	modelStage, err := parseModelStageParam(c)
+	modelStages, err := parseModelStagesParam(c, true)
 	if err != nil {
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
@@ -240,54 +213,14 @@ func GetInfraModels(c echo.Context) error {
 	isCloudModelFilter := strings.EqualFold(modelTypeParam, "cloud")
 	lineageFilter := parseLineageFilter(c)
 
-	log.Info().Msgf("# GetInfraModels: modelType=[%s], modelStage=[%s], lineage=[%+v]", modelTypeParam, modelStage, lineageFilter)
+	log.Info().Msgf("# GetInfraModels: modelType=[%s], modelStage=%v, lineage=[%+v]", modelTypeParam, modelStages, lineageFilter)
 
-	modelList, exists := lkvstore.GetWithPrefix("")
-	if !exists {
-		return c.JSON(http.StatusOK, []map[string]interface{}{})
-	}
-
-	var result []map[string]interface{}
-	for _, item := range modelList {
-		m, ok := item.(map[string]interface{})
-		if !ok {
-			continue
+	modelList, _ := lkvstore.GetWithPrefix("")
+	result := []map[string]interface{}{}
+	for _, m := range filterModels(modelList, modelStages, categoryInfra, lineageFilter) {
+		if m["isCloudModel"] == isCloudModelFilter {
+			result = append(result, m)
 		}
-
-		// Skip software models
-		if isSoftwareModel, exists := m["isSoftwareModel"]; exists && isSoftwareModel == true {
-			continue
-		}
-
-		// Filter by isCloudModel
-		isCloudModelVal, cloudModelExists := m["isCloudModel"]
-		if !cloudModelExists {
-			continue
-		}
-		isCloudModelBool, ok := isCloudModelVal.(bool)
-		if !ok {
-			continue
-		}
-		if isCloudModelBool != isCloudModelFilter {
-			continue
-		}
-
-		// Filter by modelStage
-		stage, ok := storedModelStage(m)
-		if !ok || stage != modelStage {
-			continue
-		}
-
-		// Filter by lineage
-		if !matchLineageFilter(storedLineage(m, stage), lineageFilter) {
-			continue
-		}
-
-		result = append(result, withLineage(withModelStage(m, stage), stage))
-	}
-
-	if len(result) == 0 {
-		return c.JSON(http.StatusOK, []map[string]interface{}{})
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -320,23 +253,63 @@ type infraModelRawReq struct {
 	CloudInfraModel  json.RawMessage `json:"cloudInfraModel,omitempty"`
 }
 
+// onPremModelMeta holds the metadata of a stored on-premise migration user model.
+type onPremModelMeta struct {
+	Id              string `json:"id"`
+	UserId          string `json:"userId"`
+	IsInitUserModel bool   `json:"isInitUserModel"`
+	UserModelName   string `json:"userModelName"`
+	UserModelVer    string `json:"userModelVersion"`
+	Description     string `json:"description"`
+	OnPremModelVer  string `json:"onpremModelVersion"`
+	CreateTime      string `json:"createTime"`
+	UpdateTime      string `json:"updateTime"`
+	IsCloudModel    bool   `json:"isCloudModel"`
+	ModelType       string `json:"modelType"`
+}
+
+// cloudModelMeta holds the metadata of a stored cloud migration user model.
+type cloudModelMeta struct {
+	Id              string `json:"id"`
+	UserId          string `json:"userId"`
+	IsInitUserModel bool   `json:"isInitUserModel"`
+	UserModelName   string `json:"userModelName"`
+	Description     string `json:"description"`
+	UserModelVer    string `json:"userModelVersion"`
+	CreateTime      string `json:"createTime"`
+	UpdateTime      string `json:"updateTime"`
+	CSP             string `json:"csp"`
+	Region          string `json:"region"`
+	Zone            string `json:"zone"`
+	IsCloudModel    bool   `json:"isCloudModel"`
+	CloudModelVer   string `json:"cloudModelVersion"`
+	ModelType       string `json:"modelType"`
+}
+
 // onPremModelRecord and cloudModelRecord are the stored forms of infra models whose
 // 'onpremiseInfraModel' / 'cloudInfraModel' follow the struct of their own imdl version.
-// 'IsTargetModel' shadows the one of the embedded struct so that it is omitted for the planning stage.
 type onPremModelRecord struct {
-	OnPremModelRespInfo
+	onPremModelMeta
 	ModelStage       ModelStage               `json:"modelStage"`
-	IsTargetModel    *bool                    `json:"isTargetModel,omitempty"`
 	Lineage          lineage.MigrationLineage `json:"lineage"`
 	OnpremInfraModel json.RawMessage          `json:"onpremiseInfraModel"`
 }
 
 type cloudModelRecord struct {
-	CloudModelRespInfo
+	cloudModelMeta
 	ModelStage      ModelStage               `json:"modelStage"`
-	IsTargetModel   *bool                    `json:"isTargetModel,omitempty"`
 	Lineage         lineage.MigrationLineage `json:"lineage"`
 	CloudInfraModel json.RawMessage          `json:"cloudInfraModel"`
+}
+
+// infraModelRecordResp responds with the record of an infra model just stored.
+func infraModelRecordResp(c echo.Context, status int, record interface{}) error {
+	resp, err := decorateRecord(record)
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: err.Error()})
+	}
+	return c.JSON(status, resp)
 }
 
 // CreateInfraModel godoc
@@ -348,7 +321,7 @@ type cloudModelRecord struct {
 // @Description (The body schema below shows the struct of the cm-beetle/imdl version built into cm-damselfly. To see the struct of another version, choose 'imdl/{version}/doc.json' in 'Select a definition' at the top of Swagger UI.)
 // @Description [Lineage] 'parentId' is the ID of the infra model this model is derived from, which must be in the previous stage (source → planning → target): a source model for a planning model, and a planning model for a target model. The upstream fields of 'lineage' are derived from the parent.
 // @Description 'lineage' can also be given explicitly (e.g. 'sourceGroupId'). The field of the model's own stage (e.g. 'planningModelId' of a planning model) is set to the ID of the created model by the server.
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Infra
 // @Accept  json
 // @Produce  json
 // @Param modelType  query string true  "Type of infra model to create" Enums(onprem, cloud)
@@ -442,7 +415,7 @@ func CreateInfraModel(c echo.Context) error {
 
 	if isCloudModel {
 		// --- Create a Cloud migration user model ---
-		userModel := cloudModelRecord{CloudModelRespInfo: CloudModelRespInfo{
+		userModel := cloudModelRecord{cloudModelMeta: cloudModelMeta{
 			Id:              id,
 			UserId:          reqBody.UserId,
 			IsInitUserModel: reqBody.IsInitUserModel,
@@ -456,7 +429,7 @@ func CreateInfraModel(c echo.Context) error {
 			IsCloudModel:    true,
 			CloudModelVer:   resultVer,
 			ModelType:       CloudModel,
-		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, CloudInfraModel: infraModel}
+		}, ModelStage: modelStage, Lineage: modelLineage, CloudInfraModel: infraModel}
 		log.Info().Msgf("Cloud Model version: %s", resultVer)
 
 		lkvstore.Put(userModel.Id, userModel)
@@ -469,11 +442,11 @@ func CreateInfraModel(c echo.Context) error {
 		}
 		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
-		return c.JSON(http.StatusCreated, userModel)
+		return infraModelRecordResp(c, http.StatusCreated, userModel)
 	}
 
 	// --- Create an On-premise migration user model ---
-	userModel := onPremModelRecord{OnPremModelRespInfo: OnPremModelRespInfo{
+	userModel := onPremModelRecord{onPremModelMeta: onPremModelMeta{
 		Id:               id,
 		UserId:           reqBody.UserId,
 		IsInitUserModel:  reqBody.IsInitUserModel,
@@ -484,7 +457,7 @@ func CreateInfraModel(c echo.Context) error {
 		CreateTime:       createTime,
 		IsCloudModel:     false,
 		ModelType:        OnPremModel,
-	}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, OnpremInfraModel: infraModel}
+	}, ModelStage: modelStage, Lineage: modelLineage, OnpremInfraModel: infraModel}
 	log.Info().Msgf("On-premise Model version: %s", resultVer)
 
 	lkvstore.Put(userModel.Id, userModel)
@@ -497,7 +470,7 @@ func CreateInfraModel(c echo.Context) error {
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
-	return c.JSON(http.StatusCreated, userModel)
+	return infraModelRecordResp(c, http.StatusCreated, userModel)
 }
 
 // GetInfraModel godoc
@@ -505,7 +478,8 @@ func CreateInfraModel(c echo.Context) error {
 // @Summary Get a specific infra migration user model (on-premise or cloud)
 // @Description Get a specific infra migration user model by ID. Use 'modelType' to specify whether it is an on-premise or cloud model.
 // @Description The 'lineage' of the model refers to its upstream models and itself.
-// @Tags [API] Migration User Models
+// @Description 'category' of the model (infra, software, rdbms or objectStorage) has the same values as the 'category' filter of 'GET /model'.
+// @Tags [API] Migration User Models - Infra
 // @Accept  json
 // @Produce  json
 // @Param id          path  string true "Model ID"
@@ -524,7 +498,7 @@ func GetInfraModel(c echo.Context) error {
 }
 
 // getStoredInfraModel validates the 'id' and 'modelType' parameters and returns the stored infra model
-// with 'modelStage' and 'lineage' filled in, and whether it is a cloud model.
+// in the form of decorateModel, and whether it is a cloud model.
 // On failure, it also returns the HTTP status code to respond with.
 func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}, bool, int, error) {
 	if strings.EqualFold(c.Param("id"), "") {
@@ -580,10 +554,7 @@ func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}
 		return nil, false, http.StatusBadRequest, newErr
 	}
 
-	if stage, ok := storedModelStage(m); ok {
-		m = withLineage(withModelStage(m, stage), stage)
-	}
-	return m, isCloudModelFilter, 0, nil
+	return decorateModel(m), isCloudModelFilter, 0, nil
 }
 
 // ConvertInfraModel godoc
@@ -593,7 +564,7 @@ func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}
 // @Description Only the conversion to the same or a newer version is allowed. A cloud model cannot be converted to a version older than v0.1.2, and a model whose stored version is not a cm-beetle/imdl tag cannot be converted.
 // @Description The response has the fields of 'GET /infra-model/{id}', with the model version and 'onpremiseInfraModel' (or 'cloudInfraModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
 // @Description The values are not changed by the conversion unless a field's structure requires it. e.g. the disk sizes are kept as they are although their unit was changed from GiB to GB in the comments of v0.1.11.
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Infra
 // @Accept  json
 // @Produce  json
 // @Param id           path  string true  "Model ID"
@@ -692,7 +663,7 @@ func ConvertInfraModel(c echo.Context) error {
 // @Description The model version is preserved, and 'onpremiseInfraModel' (or 'cloudInfraModel') is validated against the struct of that cm-beetle/imdl tagged version.
 // @Description [Lineage] The stored 'lineage' is preserved if neither 'lineage' nor 'parentId' is given. If 'lineage' is given, it replaces the stored one. If 'parentId' is given, the upstream fields are derived from that model in the previous stage (source → planning → target).
 // @Description The stage cannot be changed while the model is referred to by the lineage of other models (409 Conflict with the referring models in 'list').
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Infra
 // @Accept  json
 // @Produce  json
 // @Param id          path  string true "Model ID"
@@ -872,7 +843,7 @@ func UpdateInfraModel(c echo.Context) error {
 	if isCloudModelFilter {
 		cloudModelVer := preservedVer
 
-		updatedModel := cloudModelRecord{CloudModelRespInfo: CloudModelRespInfo{
+		updatedModel := cloudModelRecord{cloudModelMeta: cloudModelMeta{
 			Id:              reqId,
 			UserId:          reqBody.UserId,
 			IsInitUserModel: reqBody.IsInitUserModel,
@@ -887,7 +858,7 @@ func UpdateInfraModel(c echo.Context) error {
 			IsCloudModel:    true,
 			CloudModelVer:   cloudModelVer,
 			ModelType:       CloudModel,
-		}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, CloudInfraModel: infraModel}
+		}, ModelStage: modelStage, Lineage: modelLineage, CloudInfraModel: infraModel}
 		log.Info().Msgf("Cloud Model version (preserved): %s", cloudModelVer)
 
 		lkvstore.Put(reqId, updatedModel)
@@ -903,13 +874,12 @@ func UpdateInfraModel(c echo.Context) error {
 		}
 		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
-		saved, _ := lkvstore.Get(reqId)
-		return c.JSON(http.StatusOK, saved)
+		return infraModelRecordResp(c, http.StatusOK, updatedModel)
 	}
 
 	onpremModelVer := preservedVer
 
-	updatedModel := onPremModelRecord{OnPremModelRespInfo: OnPremModelRespInfo{
+	updatedModel := onPremModelRecord{onPremModelMeta: onPremModelMeta{
 		Id:               reqId,
 		UserId:           reqBody.UserId,
 		IsInitUserModel:  reqBody.IsInitUserModel,
@@ -921,7 +891,7 @@ func UpdateInfraModel(c echo.Context) error {
 		UpdateTime:       updateTime,
 		IsCloudModel:     false,
 		ModelType:        OnPremModel,
-	}, ModelStage: modelStage, IsTargetModel: modelStage.legacyIsTargetModel(), Lineage: modelLineage, OnpremInfraModel: infraModel}
+	}, ModelStage: modelStage, Lineage: modelLineage, OnpremInfraModel: infraModel}
 	log.Info().Msgf("On-premise Model version (preserved): %s", onpremModelVer)
 
 	lkvstore.Put(reqId, updatedModel)
@@ -937,8 +907,7 @@ func UpdateInfraModel(c echo.Context) error {
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
-	saved, _ := lkvstore.Get(reqId)
-	return c.JSON(http.StatusOK, saved)
+	return infraModelRecordResp(c, http.StatusOK, updatedModel)
 }
 
 // DeleteInfraModel godoc
@@ -946,7 +915,7 @@ func UpdateInfraModel(c echo.Context) error {
 // @Summary Delete a specific infra migration user model (on-premise or cloud)
 // @Description Delete a specific infra migration user model by ID. Works for both on-premise and cloud models without requiring the caller to specify the model type.
 // @Description If the model is referred to by the lineage of other models, it is not deleted (409 Conflict with the referring models in 'list') unless 'force' is true.
-// @Tags [API] Migration User Models
+// @Tags [API] Migration User Models - Infra
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Model ID"
@@ -1042,946 +1011,4 @@ func DeleteInfraModel(c echo.Context) error {
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
 	return c.JSON(http.StatusOK, "Succeeded in Deleting the infra model")
-}
-
-type GetOnPremModelsResp struct {
-	Models []OnPremModelRespInfo `json:"models"`
-}
-
-// GetOnPremModels godoc
-// @ID GetOnPremModels
-// @Summary Get a list of on-premise models
-// @Description Get a list of on-premise models.
-// @Tags [API] On-Premise Migration User Models
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} GetOnPremModelsResp "Successfully Obtained On-Premise Migration User Models"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /onpremmodel [get]
-func GetOnPremModels(c echo.Context) error {
-	var onpremModels []map[string]interface{}
-	modelList, exists := lkvstore.GetWithPrefix("")
-	if exists {
-		// # Returns Only On-prem Models
-		for _, model := range modelList {
-			if model, ok := model.(map[string]interface{}); ok {
-				if isCloudModel, exists := model["isCloudModel"]; exists && isCloudModel == false {
-
-					// if id, exists := model["id"]; exists {
-					// 	// fmt.Printf("Loaded value-1 for [%s]: %v", c.Param("id"), model)
-					// 	if id, ok := id.(string); ok {
-					// 		log.Debug().Msgf("# Model ID to Add : [%s]", id)
-					// 	} else {
-					// 		msg := ("'id' is not a string type")
-					// 		log.Error().Msg(msg)
-
-					// 		newErr := fmt.Errorf("'id' is not a string type")
-					// 		return c.JSON(http.StatusNotFound, newErr)
-					// 	}
-					// } else {
-					// 	msg := ("'id' does not exist")
-					// 	log.Error().Msg(msg)
-
-					// 	newErr := fmt.Errorf("'id' does not exist")
-					// 	return c.JSON(http.StatusNotFound, newErr)
-					// }
-
-					onpremModels = append(onpremModels, model)
-				}
-			}
-		}
-
-		return c.JSON(http.StatusOK, onpremModels)
-	} else {
-		return c.JSON(http.StatusOK, nil)
-	}
-}
-
-type GetOnPremModelResp struct {
-	OnPremModelRespInfo
-}
-
-// GetOnPremModel godoc
-// @ID GetOnPremModel
-// @Summary Get a specific on-premise model
-// @Description Get a specific on-premise model.
-// @Tags [API] On-Premise Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Success 200 {object} GetOnPremModelResp "Successfully Obtained the On-Premise Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /onpremmodel/{id} [get]
-func GetOnPremModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		newErr := fmt.Errorf("Invalid request, invalid model id")
-		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-	log.Info().Msgf("# Model ID to Get : [%s]", c.Param("id"))
-
-	userModel, exists := lkvstore.Get(c.Param("id"))
-	if exists {
-		// log.Info().Msgf("Loaded value for [%s]: %v", c.Param("id"), value)
-
-		if userModel, ok := userModel.(map[string]interface{}); ok {
-			// Check if the userModel is a on-premise userModel
-			if isCloudModel, exists := userModel["isCloudModel"]; exists {
-				if isCloudModelBool, ok := isCloudModel.(bool); ok {
-					if isCloudModelBool {
-						newErr := fmt.Errorf("invalid request, invalid on-premise userModel id")
-						log.Warn().Msg(newErr.Error())
-						res := model.Response{
-							Success: false,
-							Text:    newErr.Error(),
-						}
-						return c.JSON(http.StatusBadRequest, res)
-					} else {
-						log.Info().Msg("This userModel is a On-premise Model!!")
-					}
-				} else {		
-					newErr := fmt.Errorf("isCloudModel' is not a boolean type")
-					log.Warn().Msg(newErr.Error())
-					res := model.Response{
-						Success: false,
-						Text:    newErr.Error(),
-					}
-					return c.JSON(http.StatusBadRequest, res)
-				}
-			} else {
-				newErr := fmt.Errorf("'isCloudModel' does not exist. This is neither on-premise user model nor cloud user model.")
-				log.Warn().Msg(newErr.Error())
-				res := model.Response{
-					Success: false,
-					Text:    newErr.Error(),
-				}
-				return c.JSON(http.StatusBadRequest, res)
-			}
-		}
-
-		return c.JSON(http.StatusOK, userModel)
-	} else {
-		newErr := fmt.Errorf("Failed to find the model from db with the id")
-		log.Error().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusNotFound, res)
-	}
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of OnPremModel
-type CreateOnPremModelReq struct {
-	OnPremModelReqInfo
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of OnPremModel
-type CreateOnPremModelResp struct {
-	OnPremModelRespInfo
-}
-
-// CreateOnPremModel godoc
-// @ID CreateOnPremModel
-// @Summary Create a new on-premise model
-// @Description Create a new on-premise model with the given information.
-// @Tags [API] On-Premise Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param Model body CreateOnPremModelReq true "model information"
-// @Success 201 {object} CreateOnPremModelResp "Successfully Created the On-Premise Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /onpremmodel [post]
-func CreateOnPremModel(c echo.Context) error {
-	userModel := new(CreateOnPremModelResp)
-
-	if err := c.Bind(userModel); err != nil {
-		newErr := fmt.Errorf("invalid request : [%v]", err)
-		log.Warn().Msg(newErr.Error())
-		res := model.Response{
-			Success: false,
-			Text:    newErr.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-	// fmt.Println("### OnPremModel",)
-	// spew.Dump(userModel)
-
-	userModel.Id = uuid.New().String()
-
-	time, err := getSeoulCurrentTime()
-	if err != nil {
-		msg := "Failed to Get the Current time!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	}
-	userModel.CreateTime 	= time
-	userModel.IsTargetModel = false
-	userModel.IsCloudModel 	= false
-	userModel.ModelType 	= OnPremModel
-
-	resultVer, err := getLatestInfraModelVersion()
-	if err != nil {
-		newErr := fmt.Errorf("failed to get the latest tagged cm-beetle/imdl model version: %w", err)
-		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
-	}
-	userModel.OnPremModelVer = resultVer
-
-	// Convert Int to String type
-	// strNum := strconv.Itoa(randomNum)
-
-	// Save the userModel to the key-value store
-	lkvstore.Put(userModel.Id, userModel)
-
-	// # Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-	}
-
-	return c.JSON(http.StatusCreated, userModel)
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of OnPremModel
-type UpdateOnPremModelReq struct {
-	OnPremModelReqInfo
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of OnPremModel
-type UpdateOnPremModelResp struct {
-	OnPremModelRespInfo
-}
-
-// UpdateOnPremModel godoc
-// @ID UpdateOnPremModel
-// @Summary Update a on-premise model
-// @Description Update a on-premise model with the given information.
-// @Tags [API] On-Premise Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Param Model body UpdateOnPremModelReq true "Model information to update"
-// @Success 201 {object} UpdateOnPremModelResp "Successfully Updated the On-Premise Migration User Model"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /onpremmodel/{id} [put]
-func UpdateOnPremModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		msg := "Invalid ID!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	reqId := c.Param("id")
-	log.Info().Msgf("# Model ID to Update : [%s]", reqId)
-
-	updateModel := new(UpdateOnPremModelResp)
-
-	model, exists := lkvstore.Get(reqId)
-	if exists {
-		log.Info().Msgf("Succeeded in Finding the model : [%s]", reqId)
-
-		if err := c.Bind(updateModel); err != nil {
-			msg := "Invalid Request!!"
-			log.Error().Msg(msg)
-			newErr := errors.New(msg)
-			return c.JSON(http.StatusBadRequest, newErr)
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
-			// Check if the model is a on-premise model
-			if isCloudModel, exists := model["isCloudModel"]; exists {
-				if isCloudModelBool, ok := isCloudModel.(bool); ok {
-					if isCloudModelBool {
-						msg := "The Given ID is Not a On-premise Model ID"
-						log.Error().Msgf("%s : [%s]", msg, reqId)
-						newErr := fmt.Errorf("%s : [%s]", msg, reqId)
-						return c.JSON(http.StatusNotFound, newErr)
-					} else {
-						log.Info().Msg("This model is a On-premise Model!!")
-					}
-				} else {
-					msg := "'isCloudModel' is not a boolean type"
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isCloudModel' does not exist. This is neither on-premise user model nor cloud user model."
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if onPremModelVer, exists := model["onpremModelVersion"]; exists {
-				if onpremModelVerStr, ok := onPremModelVer.(string); ok {
-					updateModel.OnPremModelVer = onpremModelVerStr
-					log.Info().Msgf("On-premise Model version : [%s]", onpremModelVerStr)
-				} else {
-					msg := "'onpremModelVersion' is not a string type of value"
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'onpremModelVersion' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-
-		}
-		// else {
-		// 	msg := "Error!! Error!! Error!! Error!! Error!!"
-		// 	log.Error().Msg(msg)
-		// }
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if createTime, exists := model["createTime"]; exists {
-				if createTimeStr, ok := createTime.(string); ok {
-					// fmt.Printf("### createTimeStr : [%s]", createTimeStr)
-					updateModel.CreateTime = createTimeStr
-				} else {
-					msg := "'createTime' is not a string type of value"
-					log.Debug().Msg(msg)
-					// newErr := errors.New(msg)
-					// return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'createTime' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		// onpremModelVer, err := getModuleVersion("github.com/cloud-barista/cm-model")
-		// if err != nil {
-		// 	fmt.Println("Error:", err)
-		// } else {
-		// 	fmt.Printf("On-premise Model version: %s", onpremModelVer)
-		// }
-		// updateModel.OnPremModelVer = onpremModelVer
-
-		updateModel.Id = reqId
-
-		time, err := getSeoulCurrentTime()
-		if err != nil {
-			msg := "Failed to Get the Current time!!"
-			log.Debug().Msg(msg)
-			// newErr := errors.New(msg)
-			// return c.JSON(http.StatusNotFound, newErr)
-		}
-		updateModel.UpdateTime = time
-		updateModel.IsTargetModel = false
-		updateModel.IsCloudModel = false
-
-		// Convert to String type
-		// strNum := strconv.Itoa(id)
-
-		// Save the model to the key-value store
-		lkvstore.Put(reqId, updateModel)
-
-		// # Save the current state of the key-value store to file (Memory to file)
-		if err := lkvstore.SaveLkvStore(); err != nil {
-			msg := "Failed to Save the lkvstore to file."
-			log.Error().Msgf("%s : [%v]", msg, err)
-			newErr := fmt.Errorf("%s : [%v]", msg, err)
-			return c.JSON(http.StatusNotFound, newErr)
-		} else {
-			log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-		}
-
-		// return c.JSON(http.StatusCreated, updateModel)
-		// => Not http.StatusCreated
-
-		// Get the model from the DB
-		model, exists := lkvstore.Get(reqId)
-		if exists {
-			// log.Info().Msgf("Loaded value for [%s]: %v", c.Param("id"), model)
-			return c.JSON(http.StatusOK, model)
-		} else {
-			msg := "Failed to Find the Model from DB with the ID"
-			log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-			newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-			return c.JSON(http.StatusNotFound, newErr)
-		}
-	} else {
-		msg := "Failed to Find the Model from DB"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-}
-
-// [Note]
-// No RequestBody required for "DELETE /onpremmodel/{id}"
-
-// [Note]
-// No ResponseBody required for "DELETE /onpremmodel/{id}"
-
-// DeleteOnPremModel godoc
-// @ID DeleteOnPremModel
-// @Summary Delete a on-premise model
-// @Description Delete a on-premise model with the given information.
-// @Tags [API] On-Premise Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Success 200 {string} string "Successfully Deleted the On-Premise Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /onpremmodel/{id} [delete]
-func DeleteOnPremModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		msg := "Invalid ID!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	log.Info().Msgf("# Model ID to Delete : [%s]", c.Param("id"))
-
-	// Verify loaded data without prefix
-	model, exists := lkvstore.Get(c.Param("id"))
-	if exists {
-		log.Info().Msgf("Succeeded in Finding the model : [%s]", c.Param("id"))
-
-		if model, ok := model.(map[string]interface{}); ok {
-			// Check if the model is a on-premise model
-			if isCloudModel, exists := model["isCloudModel"]; exists {
-				if isCloudModelBool, ok := isCloudModel.(bool); ok {
-					if isCloudModelBool {
-						msg := "The Given ID is Not a On-premise Model ID"
-						log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-						newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-						return c.JSON(http.StatusNotFound, newErr)
-					} else {
-						log.Info().Msg("This model is a Cloud Model!!")
-					}
-				} else {
-					msg := "'isCloudModel' is not a boolean type"
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isCloudModel' does not exist. This is neither on-premise user model nor cloud user model."
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		lkvstore.Delete(c.Param("id"))		
-	} else {
-		msg := "Failed to Find the Model from DB "
-		log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-		newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-
-	// # Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-	}
-
-	return c.JSON(http.StatusOK, "Succeeded in Deleting the model")
-}
-
-// ##############################################################################################
-// ### Cloud Migration User Model
-// ##############################################################################################
-
-type CloudModelReqInfo struct {
-	UserId          string                  		`json:"userId"`
-	IsTargetModel   bool                    		`json:"isTargetModel"`
-	IsInitUserModel bool                    		`json:"isInitUserModel"`
-	UserModelName   string                  		`json:"userModelName"`
-	Description     string                  		`json:"description"`
-	UserModelVer    string                  		`json:"userModelVersion"`
-	CSP             string                  		`json:"csp"`
-	Region          string                  		`json:"region"`
-	Zone            string                  		`json:"zone"`
-	CloudInfraModel cloudmodel.RecommendedInfra 	`json:"cloudInfraModel" validate:"required"`
-}
-
-type CloudModelRespInfo struct {
-	Id              string                  		`json:"id"`
-	UserId          string                  		`json:"userId"`
-	IsTargetModel   bool                    		`json:"isTargetModel"`
-	IsInitUserModel bool                   			`json:"isInitUserModel"`
-	UserModelName   string                  		`json:"userModelName"`
-	Description     string                  		`json:"description"`
-	UserModelVer    string                  		`json:"userModelVersion"`
-	CreateTime      string                  		`json:"createTime"`
-	UpdateTime      string                  		`json:"updateTime"`
-	CSP             string                  		`json:"csp"`
-	Region          string                  		`json:"region"`
-	Zone            string                  		`json:"zone"`
-	IsCloudModel    bool                    		`json:"isCloudModel"`
-	CloudModelVer   string                  		`json:"cloudModelVersion"`
-	ModelType 		 string                  	   	`json:"modelType"`
-	CloudInfraModel cloudmodel.RecommendedInfra 	`json:"cloudInfraModel" validate:"required"`
-}
-
-// Caution!!)
-// Init Swagger : ]# swag init --parseDependency --parseInternal
-// Need to add '--parseDependency --parseInternal' in order to apply imported structures
-
-type GetCloudModelsResp struct {
-	Models []CloudModelRespInfo `json:"models"`
-}
-
-// GetCloudModels godoc
-// @ID GetCloudModels
-// @Summary Get a list of cloud user models
-// @Description Get a list of cloud user models.
-// @Tags [API] Cloud Migration User Models
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} GetCloudModelsResp "Successfully Obtained Cloud Migration User Models"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /cloudmodel [get]
-func GetCloudModels(c echo.Context) error {
-	modelList, exists := lkvstore.GetWithPrefix("")
-	if exists {
-		//  Returns Only Cloud Models
-		var cloudModels []map[string]interface{}
-		for _, model := range modelList {
-			// fmt.Printf("# Model value : %v", model)
-			if model, ok := model.(map[string]interface{}); ok {
-				if isCloudModel, exists := model["isCloudModel"]; exists && isCloudModel == true {
-					cloudModels = append(cloudModels, model)
-				}
-			}
-		}
-
-		if len(cloudModels) < 1 {
-			return c.JSON(http.StatusOK, nil)
-		}
-
-		return c.JSON(http.StatusOK, cloudModels)
-	} else {
-		return c.JSON(http.StatusOK, nil)
-	}
-}
-
-type GetCloudModelResp struct {
-	CloudModelRespInfo
-}
-
-// GetCloudModel godoc
-// @ID GetCloudModel
-// @Summary Get a specific cloud user model
-// @Description Get a specific cloud user model.
-// @Tags [API] Cloud Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Success 200 {object} GetCloudModelResp "Successfully Obtained the Cloud Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /cloudmodel/{id} [get]
-func GetCloudModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		msg := "Invalid ID!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	log.Info().Msgf("# Model ID to Get : [%s]", c.Param("id"))
-
-	model, exists := lkvstore.Get(c.Param("id"))
-	if exists {
-		// log.Info().Msgf("# Loaded value for [%s]: %v", c.Param("id"), model)
-
-		if model, ok := model.(map[string]interface{}); ok {
-			// Check if the model is a on-premise model
-			if isCloudModel, exists := model["isCloudModel"]; exists {
-				if isCloudModelBool, ok := isCloudModel.(bool); ok {
-					if isCloudModelBool {
-						log.Info().Msg("This model is a Cloud Model!!")
-					} else {
-						msg := "The Given ID is Not a Cloud Model ID"
-						log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-						newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-						return c.JSON(http.StatusNotFound, newErr)
-					}
-				} else {
-					msg := ("'isCloudModel' is not a boolean type")
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isCloudModel' does not exist. This is neither on-premise user model nor cloud user model."
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		return c.JSON(http.StatusOK, model)
-	} else {
-		msg := "Failed to Find the Model from DB with the ID"
-		log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-		newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of CloudModel
-type CreateCloudModelReq struct {
-	CloudModelReqInfo
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of CloudModel
-type CreateCloudModelResp struct {
-	CloudModelRespInfo
-}
-
-// CreateCloudModel godoc
-// @ID CreateCloudModel
-// @Summary Create a new cloud user model
-// @Description Create a new cloud user model with the given information.
-// @Tags [API] Cloud Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param Model body CreateCloudModelReq true "model information"
-// @Success 201 {object} CreateCloudModelResp "Successfully Created the Cloud Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /cloudmodel [post]
-func CreateCloudModel(c echo.Context) error {
-	userModel := new(CreateCloudModelResp)
-
-	if err := c.Bind(userModel); err != nil {
-		msg := "Invalid Request!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	// fmt.Println("### CreateCloudModelResp",)
-	// spew.Dump(userModel)
-
-	userModel.Id = uuid.New().String()
-
-	time, err := getSeoulCurrentTime()
-	if err != nil {
-		msg := "Failed to Get the Current time!!"
-		log.Debug().Msg(msg)
-		// newErr := errors.New(msg)
-		// return c.JSON(http.StatusNotFound, newErr)
-	}
-	userModel.CreateTime 	= time
-	userModel.IsCloudModel 	= true
-	userModel.ModelType 	= CloudModel
-
-	resultVer, err := getLatestInfraModelVersion()
-	if err != nil {
-		newErr := fmt.Errorf("failed to get the latest tagged cm-beetle/imdl model version: %w", err)
-		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
-	}
-	userModel.CloudModelVer = resultVer
-
-	// Convert Int to String type
-	// strNum := strconv.Itoa(randomNum)
-
-	// Save the userModel to the key-value store
-	lkvstore.Put(userModel.Id, userModel)
-
-	// # Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusInternalServerError, newErr)
-	} else {
-		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-	}
-
-	return c.JSON(http.StatusCreated, userModel)
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of CloudModel
-type UpdateCloudModelReq struct {
-	CloudModelReqInfo
-}
-
-// [Note]
-// Struct Embedding is used to inherit the fields of CloudModel
-type UpdateCloudModelResp struct {
-	CloudModelRespInfo
-}
-
-// UpdateCloudModel godoc
-// @ID UpdateCloudModel
-// @Summary Update a cloud user model
-// @Description Update a cloud user model with the given information.
-// @Tags [API] Cloud Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Param Model body UpdateCloudModelReq true "Model information to update"
-// @Success 201 {object} UpdateCloudModelResp "Successfully Updated the Cloud Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /cloudmodel/{id} [put]
-func UpdateCloudModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		err := fmt.Errorf("invalid id")
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-	reqId := c.Param("id")
-	log.Info().Msgf("# Model ID to Update : [%s]", reqId)
-
-	updateModel := new(UpdateCloudModelResp)
-
-	if err := c.Bind(updateModel); err != nil {
-		msg := "Invalid Request!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	// fmt.Printf("New Req Values for [%s]: %v", c.Param("id"), updateModel)
-
-	model, exists := lkvstore.Get(reqId)
-	if exists {
-		log.Info().Msgf("Succeeded in Finding the model : [%s]", reqId)
-		// fmt.Printf("Values from DB [%s]: %v", c.Param("id"), model)
-
-		if cloudModel, ok := model.(map[string]interface{}); ok {
-			// Check if the model is a on-premise model
-			if isCloudModel, exists := cloudModel["isCloudModel"]; exists {
-				if isCloudModelBool, ok := isCloudModel.(bool); ok {
-					log.Info().Msgf("The value of isCloudModel is: %v", isCloudModel)
-
-					if isCloudModelBool {
-						log.Info().Msg("This model is a Cloud Model!!")
-					} else {
-						msg := "The Given ID is Not a Cloud Model ID"
-						log.Error().Msgf("%s : [%s]", msg, reqId)
-						newErr := fmt.Errorf("%s : [%s]", msg, reqId)
-						return c.JSON(http.StatusNotFound, newErr)
-					}
-				} else {
-		
-					msg := "'isCloudModel' is not a boolean type"
-					log.Debug().Msg(msg)
-					newErr := errors.New(msg)
-					return c.JSON(http.StatusNotFound, newErr)			
-
-				}
-			} else {
-				msg := "'isCloudModel' does not exist. This is neither on-premise user model nor cloud user model."
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if cloudModelVer, exists := model["cloudModelVersion"]; exists {
-				if cloudModelVerStr, ok := cloudModelVer.(string); ok {
-
-					updateModel.CloudModelVer = cloudModelVerStr
-
-					log.Info().Msgf("# cloudModelVer : [%s]", cloudModelVerStr)
-				} else {
-					log.Info().Msg("'cloudModelVersion' is not a string type of value")
-				}
-			} else {
-				msg := "'cloudModelVersion' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if createTime, exists := model["createTime"]; exists {
-				if createTimeStr, ok := createTime.(string); ok {
-					updateModel.CreateTime = createTimeStr
-				} else {
-					msg := "'createTime' is not a string type of value"
-					log.Debug().Msg(msg)
-					// newErr := errors.New(msg)
-					// return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'createTime' does not exist"
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		// cloudModelVer, err := getModuleVersion("github.com/cloud-barista/cb-tumblebug")
-		// if err != nil {
-		// 	fmt.Println("Error:", err)
-		// } else {
-		// 	fmt.Printf("Cloud Model version: %s", cloudModelVer)
-		// }
-		// updateModel.CloudModelVer = cloudModelVer
-
-		updateModel.Id = reqId
-		time, err := getSeoulCurrentTime()
-		if err != nil {
-			msg := "Failed to Get the Current time!!"
-			log.Debug().Msg(msg)
-			// newErr := errors.New(msg)
-			// return c.JSON(http.StatusNotFound, newErr)
-		}
-		updateModel.UpdateTime = time
-		updateModel.IsCloudModel = true
-
-		// fmt.Println("### updateModel",)
-		// spew.Dump(updateModel)
-
-		// Convert to String type
-		// strNum := strconv.Itoa(id)
-
-		// Save the model to the key-value store
-		lkvstore.Put(reqId, updateModel)
-
-		// # Save the current state of the key-value store to file
-		if err := lkvstore.SaveLkvStore(); err != nil {
-			msg := "Failed to Save the lkvstore to file."
-			log.Error().Msgf("%s : [%v]", msg, err)
-			newErr := fmt.Errorf("%s : [%v]", msg, err)
-			return c.JSON(http.StatusNotFound, newErr)
-		} else {
-			log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-		}
-
-		// Get the model from the DB
-		model, exists := lkvstore.Get(reqId)
-		if exists {
-			// log.Info().Msgf("Loaded value for [%s]: %v", c.Param("id"), model)
-			return c.JSON(http.StatusOK, model)
-		} else {
-			msg := "Failed to Find the Model from DB with the ID"
-			log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-			newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-			return c.JSON(http.StatusNotFound, newErr)
-		}
-	} else {
-		msg := "Failed to Find the Model from DB"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-}
-
-// [Note]
-// No RequestBody required for "DELETE /cloudmodel/{id}"
-
-// [Note]
-// No ResponseBody required for "DELETE /cloudmodel/{id}"
-
-// DeleteCloudModel godoc
-// @ID DeleteCloudModel
-// @Summary Delete a cloud user model
-// @Description Delete a cloud user model with the given information.
-// @Tags [API] Cloud Migration User Models
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Model ID"
-// @Success 200 {string} string "Successfully Deleted the Cloud Migration User Model"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} model.Response "Model Not Found"
-// @Failure 500 {object} model.Response
-// @Router /cloudmodel/{id} [delete]
-func DeleteCloudModel(c echo.Context) error {
-	if strings.EqualFold(c.Param("id"), "") {
-		msg := "Invalid ID!!"
-		log.Error().Msg(msg)
-		newErr := errors.New(msg)
-		return c.JSON(http.StatusBadRequest, newErr)
-	}
-	log.Info().Msgf("# Model ID to Delete : [%s]", c.Param("id"))
-
-	// Verify loaded data without prefix
-	model, exists := lkvstore.Get(c.Param("id"))
-	if exists {
-		log.Info().Msgf("Succeeded in Finding the model : [%s]", c.Param("id"))
-
-		if model, ok := model.(map[string]interface{}); ok {
-			if isCloudModel, exists := model["isCloudModel"]; exists {
-				if isCloudModelBool, ok := isCloudModel.(bool); ok && isCloudModelBool {
-					log.Info().Msg("This model is a Cloud Model!!")
-				} else {
-					msg := "The Given ID is Not a Cloud Model ID"
-					log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-					newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-					return c.JSON(http.StatusNotFound, newErr)
-				}
-			} else {
-				msg := "'isCloudModel' does not exist. This is neither on-premise user model nor cloud user model."
-				log.Error().Msg(msg)
-				newErr := errors.New(msg)
-				return c.JSON(http.StatusNotFound, newErr)
-			}
-		}
-
-		lkvstore.Delete(c.Param("id"))
-	} else {
-		msg := "Failed to Find the Model from DB with the ID"
-		log.Error().Msgf("%s : [%s]", msg, c.Param("id"))
-		newErr := fmt.Errorf("%s : [%s]", msg, c.Param("id"))
-		return c.JSON(http.StatusNotFound, newErr)
-	}
-
-	// # Save the current state of the key-value store to file
-	if err := lkvstore.SaveLkvStore(); err != nil {
-		msg := "Failed to Save the lkvstore to file."
-		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusNotFound, newErr)
-	} else {
-		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
-	}
-
-	return c.JSON(http.StatusOK, "Succeeded in Deleting the model")
 }
