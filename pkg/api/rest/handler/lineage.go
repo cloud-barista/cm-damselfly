@@ -171,11 +171,11 @@ func resolveLineage(lookup modelLookup, selfId string, category modelCategory, s
 		switch {
 		case s == stage || *field == selfId:
 			if explicit {
-				return result, http.StatusBadRequest, fmt.Errorf("invalid request: 'lineage.%s' (%s) cannot be set: the ID of the model itself is set by the server in the field of its own stage", name, *field)
+				return result, http.StatusBadRequest, fmt.Errorf("'lineage.%s' (%s) cannot be set: the model's own ID is set by the server in the field of its own stage", name, *field)
 			}
 		case s.order() > stage.order():
 			if explicit {
-				return result, http.StatusBadRequest, fmt.Errorf("invalid request: 'lineage.%s' cannot be set for a %s model: the lineage refers only to upstream models", name, stage)
+				return result, http.StatusBadRequest, fmt.Errorf("'lineage.%s' cannot be set for a %s model: lineage refers only to upstream models", name, stage)
 			}
 		default:
 			continue
@@ -185,16 +185,16 @@ func resolveLineage(lookup modelLookup, selfId string, category modelCategory, s
 	}
 
 	if explicit && result.SourceGroupId != "" && !sourceGroupIdPattern.MatchString(result.SourceGroupId) {
-		return result, http.StatusBadRequest, fmt.Errorf("invalid request: 'lineage.sourceGroupId' (%s) must consist of 1 to 63 lowercase letters, digits, '_' or '-' to be used as a cloud resource label", result.SourceGroupId)
+		return result, http.StatusBadRequest, fmt.Errorf("'lineage.sourceGroupId' (%s) must be 1 to 63 lowercase letters, digits, '_' or '-'", result.SourceGroupId)
 	}
 
 	parentId := strings.TrimSpace(req.ParentId)
 	if parentId != "" {
 		if stage == StageSource {
-			return result, http.StatusBadRequest, fmt.Errorf("invalid request: a source model cannot have a parent model ('parentId')")
+			return result, http.StatusBadRequest, fmt.Errorf("A source model cannot have a parent model ('parentId')")
 		}
 		if parentId == selfId {
-			return result, http.StatusBadRequest, fmt.Errorf("invalid request: a model cannot be its own parent")
+			return result, http.StatusBadRequest, fmt.Errorf("A model cannot be its own parent")
 		}
 		parent, _, status, err := getLineageModel(lookup, "parentId", parentId, category, stage.previous())
 		if err != nil {
@@ -219,7 +219,7 @@ func resolveLineage(lookup modelLookup, selfId string, category modelCategory, s
 				continue
 			}
 			if explicit && *u.value != "" {
-				return result, http.StatusBadRequest, fmt.Errorf("invalid request: 'lineage.%s' (%s) conflicts with that of the parent model [%s] (%s)", u.name, *u.value, parentId, *u.derived)
+				return result, http.StatusBadRequest, fmt.Errorf("'lineage.%s' (%s) conflicts with that of the parent model [%s] (%s)", u.name, *u.value, parentId, *u.derived)
 			}
 			*u.value = *u.derived
 		}
@@ -227,7 +227,7 @@ func resolveLineage(lookup modelLookup, selfId string, category modelCategory, s
 
 	// A target model must be derived through a planning model.
 	if stage == StageTarget && result.SourceModelId != "" && result.PlanningModelId == "" {
-		return result, http.StatusBadRequest, fmt.Errorf("invalid request: a target model cannot skip the planning stage (source → planning → target). Specify 'parentId' of a planning model")
+		return result, http.StatusBadRequest, fmt.Errorf("A target model cannot skip the planning stage (source → planning → target): specify 'parentId' of a planning model")
 	}
 
 	// The upstream models given by the request must exist and be consistent with one another, and the empty upstream
@@ -246,7 +246,7 @@ func resolveLineage(lookup modelLookup, selfId string, category modelCategory, s
 			}
 			refLin := storedLineage(ref, refStage)
 			if refLin.SourceGroupId != "" && result.SourceGroupId != "" && refLin.SourceGroupId != result.SourceGroupId {
-				return result, http.StatusBadRequest, fmt.Errorf("invalid request: 'lineage.sourceGroupId' (%s) conflicts with that of the model [%s] (%s)", result.SourceGroupId, *field, refLin.SourceGroupId)
+				return result, http.StatusBadRequest, fmt.Errorf("'lineage.sourceGroupId' (%s) conflicts with that of the model [%s] (%s)", result.SourceGroupId, *field, refLin.SourceGroupId)
 			}
 			if result.SourceGroupId == "" {
 				result.SourceGroupId = refLin.SourceGroupId
@@ -255,7 +255,7 @@ func resolveLineage(lookup modelLookup, selfId string, category modelCategory, s
 				value, upperName := lineageModelIdField(&result, upper)
 				refValue, _ := lineageModelIdField(&refLin, upper)
 				if *refValue != "" && *value != "" && *refValue != *value {
-					return result, http.StatusBadRequest, fmt.Errorf("invalid request: 'lineage.%s' (%s) conflicts with that of the model [%s] (%s)", upperName, *value, *field, *refValue)
+					return result, http.StatusBadRequest, fmt.Errorf("'lineage.%s' (%s) conflicts with that of the model [%s] (%s)", upperName, *value, *field, *refValue)
 				}
 				if *value == "" {
 					*value = *refValue
@@ -273,14 +273,14 @@ func resolveLineage(lookup modelLookup, selfId string, category modelCategory, s
 func getLineageModel(lookup modelLookup, what, id string, category modelCategory, stage ModelStage) (map[string]interface{}, ModelStage, int, error) {
 	m, exists := lookup(id)
 	if !exists {
-		return nil, "", http.StatusNotFound, fmt.Errorf("the model given by '%s' [%s] does not exist", what, id)
+		return nil, "", http.StatusNotFound, fmt.Errorf("Model '%s' [%s] does not exist", what, id)
 	}
 	if c, ok := storedModelCategory(m); !ok || c != category {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("invalid request: the model given by '%s' [%s] must be a model of the '%s' category", what, id, category)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Model '%s' [%s] must be a model of the '%s' category", what, id, category)
 	}
 	s, ok := storedModelStage(m)
 	if !ok || s != stage {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("invalid request: the model given by '%s' [%s] must be a %s model, but it is a '%s' model (stages: source → planning → target)", what, id, stage, s)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Model '%s' [%s] must be a %s model, but it is a '%s' model (stages: source → planning → target)", what, id, stage, s)
 	}
 	return m, s, 0, nil
 }
@@ -326,14 +326,14 @@ func parseForceParam(c echo.Context) (bool, error) {
 	}
 	force, err := strconv.ParseBool(param)
 	if err != nil {
-		return false, fmt.Errorf("invalid request: 'force' must be 'true' or 'false', got '%s'", param)
+		return false, fmt.Errorf("'force' must be 'true' or 'false'")
 	}
 	return force, nil
 }
 
 // lineageConflictResp is the response for deleting (or changing the stage of) a model referred to by other models.
 func lineageConflictResp(c echo.Context, id, action string, referrers []interface{}) error {
-	newErr := fmt.Errorf("cannot %s the model [%s]: it is referred to by the lineage of %d model(s) listed in 'list'", action, id, len(referrers))
+	newErr := fmt.Errorf("Cannot %s model [%s]: referenced by the lineage of %d model(s) in 'list'", action, id, len(referrers))
 	log.Warn().Msg(newErr.Error())
 	return c.JSON(http.StatusConflict, model.Response{Success: false, Text: newErr.Error(), List: referrers})
 }

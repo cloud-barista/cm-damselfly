@@ -60,7 +60,7 @@ func GetModelsVersions(c echo.Context) error {
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
-			Text:    newErr.Error(),
+			Text:    "Model versions unavailable",
 		}
 		return c.JSON(http.StatusInternalServerError, res)
 	}
@@ -71,7 +71,7 @@ func GetModelsVersions(c echo.Context) error {
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
-			Text:    newErr.Error(),
+			Text:    "Model versions unavailable",
 		}
 		return c.JSON(http.StatusInternalServerError, res)
 	}
@@ -130,7 +130,8 @@ func GetModels(c echo.Context) error {
 			newErr := fmt.Errorf("invalid request: 'category' must be '%s', '%s', '%s' or '%s', got '%s'",
 				categoryInfra, categorySoftware, categoryRDBMS, categoryObjectStorage, c.QueryParam("category"))
 			log.Warn().Msg(newErr.Error())
-			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: fmt.Sprintf("'category' must be '%s', '%s', '%s' or '%s'",
+				categoryInfra, categorySoftware, categoryRDBMS, categoryObjectStorage)})
 		}
 		category = parsed
 	}
@@ -199,7 +200,7 @@ func GetInfraModels(c echo.Context) error {
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
-			Text:    newErr.Error(),
+			Text:    "'modelType' must be 'onprem' or 'cloud'",
 		}
 		return c.JSON(http.StatusBadRequest, res)
 	}
@@ -340,7 +341,7 @@ func CreateInfraModel(c echo.Context) error {
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
-			Text:    newErr.Error(),
+			Text:    "'modelType' must be 'onprem' or 'cloud'",
 		}
 		return c.JSON(http.StatusBadRequest, res)
 	}
@@ -357,7 +358,7 @@ func CreateInfraModel(c echo.Context) error {
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
-			Text:    newErr.Error(),
+			Text:    "Malformed request body: check JSON syntax",
 		}
 		return c.JSON(http.StatusBadRequest, res)
 	}
@@ -370,7 +371,7 @@ func CreateInfraModel(c echo.Context) error {
 		if c.QueryParams().Has(formerParam) {
 			newErr := fmt.Errorf("invalid request: '%s' is no longer supported. Use 'modelVersion' instead", formerParam)
 			log.Warn().Msg(newErr.Error())
-			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+			return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: fmt.Sprintf("'%s' no longer supported: use 'modelVersion'", formerParam)})
 		}
 	}
 	requestedVer := strings.TrimSpace(c.QueryParam("modelVersion"))
@@ -387,14 +388,14 @@ func CreateInfraModel(c echo.Context) error {
 	if err != nil {
 		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
 		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: "Model versions unavailable"})
 	}
 
 	resultVer, err := selectModelVersion(requestedVer, infraVersions)
 	if err != nil {
 		newErr := fmt.Errorf("invalid infra model version: %w", err)
 		log.Warn().Msg(newErr.Error())
-		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
 	}
 
 	rawInfraModel := reqBody.OnpremInfraModel
@@ -437,8 +438,7 @@ func CreateInfraModel(c echo.Context) error {
 		if err := lkvstore.SaveLkvStore(); err != nil {
 			msg := "Failed to Save the lkvstore to file."
 			log.Error().Msgf("%s : [%v]", msg, err)
-			newErr := fmt.Errorf("%s : [%v]", msg, err)
-			return c.JSON(http.StatusInternalServerError, newErr)
+			return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: "Model save failed"})
 		}
 		log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
@@ -465,8 +465,7 @@ func CreateInfraModel(c echo.Context) error {
 	if err := lkvstore.SaveLkvStore(); err != nil {
 		msg := "Failed to Save the lkvstore to file."
 		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
-		return c.JSON(http.StatusInternalServerError, newErr)
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: "Model save failed"})
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
@@ -502,14 +501,14 @@ func GetInfraModel(c echo.Context) error {
 // On failure, it also returns the HTTP status code to respond with.
 func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}, bool, int, error) {
 	if strings.EqualFold(c.Param("id"), "") {
-		newErr := fmt.Errorf("invalid request: model id is required")
+		newErr := fmt.Errorf("Model ID required")
 		log.Warn().Msg(newErr.Error())
 		return nil, false, http.StatusBadRequest, newErr
 	}
 
 	modelTypeParam := c.QueryParam("modelType")
 	if !strings.EqualFold(modelTypeParam, "onprem") && !strings.EqualFold(modelTypeParam, "cloud") {
-		newErr := fmt.Errorf("invalid request: 'modelType' must be 'onprem' or 'cloud', got '%s'", modelTypeParam)
+		newErr := fmt.Errorf("'modelType' must be 'onprem' or 'cloud'")
 		log.Warn().Msg(newErr.Error())
 		return nil, false, http.StatusBadRequest, newErr
 	}
@@ -519,14 +518,14 @@ func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}
 
 	userModel, exists := lkvstore.Get(c.Param("id"))
 	if !exists {
-		newErr := fmt.Errorf("failed to find the model from db with id: [%s]", c.Param("id"))
+		newErr := fmt.Errorf("Model [%s] not found", c.Param("id"))
 		log.Error().Msg(newErr.Error())
 		return nil, false, http.StatusNotFound, newErr
 	}
 
 	m, ok := userModel.(map[string]interface{})
 	if !ok {
-		newErr := fmt.Errorf("internal error: unexpected model data format")
+		newErr := fmt.Errorf("Model data unreadable")
 		log.Error().Msg(newErr.Error())
 		return nil, false, http.StatusInternalServerError, newErr
 	}
@@ -534,13 +533,13 @@ func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}
 	// --- Verify modelType matches the stored model ---
 	isCloudModelVal, cloudModelExists := m["isCloudModel"]
 	if !cloudModelExists {
-		newErr := fmt.Errorf("'isCloudModel' does not exist. This is neither on-premise nor cloud user model")
+		newErr := fmt.Errorf("Model is neither an on-premise nor a cloud infra model")
 		log.Warn().Msg(newErr.Error())
 		return nil, false, http.StatusBadRequest, newErr
 	}
 	isCloudModelBool, ok := isCloudModelVal.(bool)
 	if !ok {
-		newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
+		newErr := fmt.Errorf("Model is neither an on-premise nor a cloud infra model")
 		log.Warn().Msg(newErr.Error())
 		return nil, false, http.StatusBadRequest, newErr
 	}
@@ -549,7 +548,7 @@ func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}
 		if isCloudModelBool {
 			expected = "cloud"
 		}
-		newErr := fmt.Errorf("model type mismatch: the model with id [%s] is a '%s' model, not '%s'", c.Param("id"), expected, modelTypeParam)
+		newErr := fmt.Errorf("Model [%s] is a '%s' model, not '%s'", c.Param("id"), expected, modelTypeParam)
 		log.Warn().Msg(newErr.Error())
 		return nil, false, http.StatusBadRequest, newErr
 	}
@@ -564,6 +563,7 @@ func getStoredInfraModel(c echo.Context, apiName string) (map[string]interface{}
 // @Description Only the conversion to the same or a newer version is allowed. A cloud model cannot be converted to a version older than v0.1.2, and a model whose stored version is not a cm-beetle/imdl tag cannot be converted.
 // @Description The response has the fields of 'GET /infra-model/{id}', with the model version and 'onpremiseInfraModel' (or 'cloudInfraModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
 // @Description The values are not changed by the conversion unless a field's structure requires it. e.g. the disk sizes are kept as they are although their unit was changed from GiB to GB in the comments of v0.1.11.
+// @Description [Migrations] v0.1.22: 'targetInfra.postCommands' of a cloud model is converted to 'targetInfra.postScript.phases'. 'postCommandAsync' and 'installMonAgent' were removed, so they are dropped (with a warning if they were true / yes).
 // @Tags [API] Migration User Models - Infra
 // @Accept  json
 // @Produce  json
@@ -585,14 +585,14 @@ func ConvertInfraModel(c echo.Context) error {
 	if err != nil {
 		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
 		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: "Model versions unavailable"})
 	}
 
 	currentVersion, err := selectModelVersion(c.QueryParam("modelVersion"), infraVersions)
 	if err != nil {
 		newErr := fmt.Errorf("invalid infra model version: %w", err)
 		log.Warn().Msg(newErr.Error())
-		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: err.Error()})
 	}
 
 	schema, versionField := onpremInfraModelSchema, "onpremModelVersion"
@@ -625,27 +625,27 @@ func ConvertInfraModel(c echo.Context) error {
 	if m[schema.FieldName] == nil {
 		newErr := fmt.Errorf("the stored model with id [%s] has no '%s' to convert", c.Param("id"), schema.FieldName)
 		log.Warn().Msg(newErr.Error())
-		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: fmt.Sprintf("Model [%s] has no '%s' to convert", c.Param("id"), schema.FieldName)})
 	}
 	rawInfraModel, err := json.Marshal(m[schema.FieldName])
 	if err != nil {
 		newErr := fmt.Errorf("failed to read the stored '%s' : [%v]", schema.FieldName, err)
 		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: "Model data unreadable"})
 	}
 
 	pkg, err := modelschema.LoadPackage(c.Request().Context(), infraModelSchemaSource, currentVersion, schema.PkgDir)
 	if err != nil {
 		newErr := fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", currentVersion, schema.PkgDir, err)
 		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: fmt.Sprintf("Model schema for version %s unavailable", currentVersion)})
 	}
 
 	infraModel, conversion, err := convertInfraModel(pkg, isCloudModel, originVersion, currentVersion, rawInfraModel)
 	if err != nil {
 		newErr := fmt.Errorf("failed to convert the model with id [%s] from %s to %s : [%v]", c.Param("id"), originVersion, currentVersion, err)
 		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: fmt.Sprintf("Model [%s] conversion from %s to %s failed", c.Param("id"), originVersion, currentVersion)})
 	}
 	log.Info().Msgf("Converted the model [%s] from %s to %s (dropped fields: %d, warnings: %d)", c.Param("id"), originVersion, currentVersion, len(conversion.DroppedFields), len(conversion.Warnings))
 
@@ -678,7 +678,7 @@ func ConvertInfraModel(c echo.Context) error {
 // @Router /infra-model/{id} [put]
 func UpdateInfraModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
-		newErr := fmt.Errorf("invalid request: model id is required")
+		newErr := fmt.Errorf("Model ID required")
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -690,7 +690,7 @@ func UpdateInfraModel(c echo.Context) error {
 
 	modelTypeParam := c.QueryParam("modelType")
 	if !strings.EqualFold(modelTypeParam, "onprem") && !strings.EqualFold(modelTypeParam, "cloud") {
-		newErr := fmt.Errorf("invalid request: 'modelType' must be 'onprem' or 'cloud', got '%s'", modelTypeParam)
+		newErr := fmt.Errorf("'modelType' must be 'onprem' or 'cloud'")
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -719,14 +719,14 @@ func UpdateInfraModel(c echo.Context) error {
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
-			Text:    newErr.Error(),
+			Text:    "Malformed request body: check JSON syntax",
 		}
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
 	existingRaw, exists := lkvstore.Get(reqId)
 	if !exists {
-		newErr := fmt.Errorf("failed to find the model from db with id: [%s]", reqId)
+		newErr := fmt.Errorf("Model [%s] not found", reqId)
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -737,7 +737,7 @@ func UpdateInfraModel(c echo.Context) error {
 
 	existing, ok := existingRaw.(map[string]interface{})
 	if !ok {
-		newErr := fmt.Errorf("internal error: unexpected model data format")
+		newErr := fmt.Errorf("Model data unreadable")
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -749,7 +749,7 @@ func UpdateInfraModel(c echo.Context) error {
 	// --- Verify modelType matches the stored model ---
 	isCloudModelVal, cloudModelExists := existing["isCloudModel"]
 	if !cloudModelExists {
-		newErr := fmt.Errorf("'isCloudModel' does not exist. This is neither on-premise nor cloud user model")
+		newErr := fmt.Errorf("Model is neither an on-premise nor a cloud infra model")
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -759,7 +759,7 @@ func UpdateInfraModel(c echo.Context) error {
 	}
 	isCloudModelBool, ok := isCloudModelVal.(bool)
 	if !ok {
-		newErr := fmt.Errorf("'isCloudModel' is not a boolean type")
+		newErr := fmt.Errorf("Model is neither an on-premise nor a cloud infra model")
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -772,7 +772,7 @@ func UpdateInfraModel(c echo.Context) error {
 		if isCloudModelBool {
 			expected = "cloud"
 		}
-		newErr := fmt.Errorf("model type mismatch: the model with id [%s] is a '%s' model, not '%s'", reqId, expected, modelTypeParam)
+		newErr := fmt.Errorf("Model [%s] is a '%s' model, not '%s'", reqId, expected, modelTypeParam)
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -789,7 +789,7 @@ func UpdateInfraModel(c echo.Context) error {
 			log.Info().Msgf("Changing the model stage of [%s]: [%s] -> [%s]", reqId, storedStage, requestedStage)
 		}
 	} else if !hasStoredStage {
-		newErr := fmt.Errorf("the model with id [%s] has neither a valid 'modelStage' nor 'isTargetModel'. Specify 'modelStage' to set it", reqId)
+		newErr := fmt.Errorf("Model [%s] has no valid 'modelStage': specify 'modelStage' to set it", reqId)
 		log.Warn().Msg(newErr.Error())
 		return c.JSON(http.StatusBadRequest, model.Response{Success: false, Text: newErr.Error()})
 	}
@@ -825,7 +825,7 @@ func UpdateInfraModel(c echo.Context) error {
 	if err != nil {
 		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
 		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: "Model versions unavailable"})
 	}
 
 	var infraModel json.RawMessage
@@ -865,10 +865,9 @@ func UpdateInfraModel(c echo.Context) error {
 		if err := lkvstore.SaveLkvStore(); err != nil {
 			msg := "Failed to Save the lkvstore to file."
 			log.Error().Msgf("%s : [%v]", msg, err)
-			newErr := fmt.Errorf("%s : [%v]", msg, err)
 			res := model.Response{
 				Success: false,
-				Text:    newErr.Error(),
+				Text:    "Model save failed",
 			}
 			return c.JSON(http.StatusInternalServerError, res)
 		}
@@ -898,10 +897,9 @@ func UpdateInfraModel(c echo.Context) error {
 	if err := lkvstore.SaveLkvStore(); err != nil {
 		msg := "Failed to Save the lkvstore to file."
 		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
 		res := model.Response{
 			Success: false,
-			Text:    newErr.Error(),
+			Text:    "Model save failed",
 		}
 		return c.JSON(http.StatusInternalServerError, res)
 	}
@@ -928,7 +926,7 @@ func UpdateInfraModel(c echo.Context) error {
 // @Router /infra-model/{id} [delete]
 func DeleteInfraModel(c echo.Context) error {
 	if strings.EqualFold(c.Param("id"), "") {
-		newErr := fmt.Errorf("invalid request: model id is required")
+		newErr := fmt.Errorf("Model ID required")
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -947,7 +945,7 @@ func DeleteInfraModel(c echo.Context) error {
 
 	existingRaw, exists := lkvstore.Get(c.Param("id"))
 	if !exists {
-		newErr := fmt.Errorf("failed to find the model from db with id: [%s]", c.Param("id"))
+		newErr := fmt.Errorf("Model [%s] not found", c.Param("id"))
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -958,7 +956,7 @@ func DeleteInfraModel(c echo.Context) error {
 
 	existing, ok := existingRaw.(map[string]interface{})
 	if !ok {
-		newErr := fmt.Errorf("internal error: unexpected model data format")
+		newErr := fmt.Errorf("Model data unreadable")
 		log.Error().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -969,7 +967,7 @@ func DeleteInfraModel(c echo.Context) error {
 
 	// --- Verify this is an infra model (not a software model) ---
 	if isSoftwareModel, exists := existing["isSoftwareModel"]; exists && isSoftwareModel == true {
-		newErr := fmt.Errorf("invalid request: the model with id [%s] is a software model, not an infra model", c.Param("id"))
+		newErr := fmt.Errorf("Model [%s] is a software model, not an infra model", c.Param("id"))
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -978,7 +976,7 @@ func DeleteInfraModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 	if _, cloudModelExists := existing["isCloudModel"]; !cloudModelExists {
-		newErr := fmt.Errorf("invalid request: the model with id [%s] is neither an on-premise nor a cloud infra model", c.Param("id"))
+		newErr := fmt.Errorf("Model [%s] is neither an on-premise nor a cloud infra model", c.Param("id"))
 		log.Warn().Msg(newErr.Error())
 		res := model.Response{
 			Success: false,
@@ -1001,14 +999,13 @@ func DeleteInfraModel(c echo.Context) error {
 	if err := lkvstore.SaveLkvStore(); err != nil {
 		msg := "Failed to Save the lkvstore to file."
 		log.Error().Msgf("%s : [%v]", msg, err)
-		newErr := fmt.Errorf("%s : [%v]", msg, err)
 		res := model.Response{
 			Success: false,
-			Text:    newErr.Error(),
+			Text:    "Model save failed",
 		}
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
-	return c.JSON(http.StatusOK, "Succeeded in Deleting the infra model")
+	return c.JSON(http.StatusOK, "Infra model deleted")
 }

@@ -57,9 +57,9 @@ func TestSoftwareModelRequiresFieldOfStage(t *testing.T) {
 	for _, tc := range []struct {
 		stage, body, wantText string
 	}{
-		{"source", target, "'sourceSoftwareModel' is required"},
-		{"planning", target, "'sourceSoftwareModel' is required"},
-		{"target", source, "'targetSoftwareModel' is required"},
+		{"source", target, "'sourceSoftwareModel' required"},
+		{"planning", target, "'sourceSoftwareModel' required"},
+		{"target", source, "'targetSoftwareModel' required"},
 	} {
 		rec := request(t, e, http.MethodPost, "/software-model?modelStage="+tc.stage, tc.body)
 		if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), tc.wantText) {
@@ -106,7 +106,7 @@ func TestFormerPlanningSoftwareModel(t *testing.T) {
 
 	// Updated with the source structure only
 	rec := request(t, e, http.MethodPut, path, `{"targetSoftwareModel":{"servers":[]}}`)
-	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "'sourceSoftwareModel' is required") {
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "'sourceSoftwareModel' required") {
 		t.Errorf("status = %d, body = %s, want 400", rec.Code, rec.Body)
 	}
 	sourceBody := `{"userModelName":"plan","sourceSoftwareModel":{"source_group_id":"g1","connection_info_list":[]}}`

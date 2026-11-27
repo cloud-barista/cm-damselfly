@@ -113,24 +113,24 @@ func isStoredRDBMSModel(m map[string]interface{}) bool {
 func getRDBMSModelFromStore(id string, stage ModelStage) (map[string]interface{}, ModelStage, int, error) {
 	stored, exists := lkvstore.Get(id)
 	if !exists {
-		return nil, "", http.StatusNotFound, fmt.Errorf("failed to find the model from db with id: [%s]", id)
+		return nil, "", http.StatusNotFound, fmt.Errorf("Model [%s] not found", id)
 	}
 
 	m, ok := stored.(map[string]interface{})
 	if !ok {
-		return nil, "", http.StatusInternalServerError, fmt.Errorf("internal error: unexpected model data format")
+		return nil, "", http.StatusInternalServerError, fmt.Errorf("Model data unreadable")
 	}
 
 	if !isStoredRDBMSModel(m) {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("invalid request: the model with id [%s] is not an RDBMS model", id)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Model [%s] is not an RDBMS model", id)
 	}
 
 	storedStage, ok := storedModelStage(m)
 	if !ok {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("the model with id [%s] has no valid 'modelStage'", id)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Model [%s] has no valid 'modelStage'", id)
 	}
 	if stage != "" && storedStage != stage {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("model stage mismatch: the RDBMS model with id [%s] is a '%s' model, not '%s'",
+		return nil, "", http.StatusBadRequest, fmt.Errorf("RDBMS model [%s] is a '%s' model, not '%s'",
 			id, storedStage, stage)
 	}
 
@@ -140,10 +140,12 @@ func getRDBMSModelFromStore(id string, stage ModelStage) (map[string]interface{}
 // saveRDBMSModelToStore puts the model to the key-value store and saves the store to file.
 func saveRDBMSModelToStore(id string, userModel interface{}) error {
 	if err := lkvstore.Put(id, userModel); err != nil {
-		return fmt.Errorf("failed to put the model to the lkvstore : [%v]", err)
+		log.Error().Err(err).Msg("Failed to put the model to the lkvstore")
+		return fmt.Errorf("Model save failed")
 	}
 	if err := lkvstore.SaveLkvStore(); err != nil {
-		return fmt.Errorf("failed to save the lkvstore to file : [%v]", err)
+		log.Error().Err(err).Msg("Failed to save the lkvstore to file")
+		return fmt.Errorf("Model save failed")
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 	return nil
@@ -198,7 +200,7 @@ func GetRDBMSModels(c echo.Context) error {
 func GetRDBMSModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -237,7 +239,7 @@ func GetRDBMSModel(c echo.Context) error {
 func ConvertRDBMSModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -253,13 +255,13 @@ func ConvertRDBMSModel(c echo.Context) error {
 
 	rdbmsVersions, err := getRDBMSModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
-		return rdbmsModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-beetle/imdl model versions")
+		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	currentVersion, err := selectModelVersion(c.QueryParam("rdbmsModelVersion"), rdbmsVersions)
 	if err != nil {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid RDBMS model version: %w", err))
+		return rdbmsModelErrResp(c, http.StatusBadRequest, err)
 	}
 
 	originVersion, _ := m["rdbmsModelVersion"].(string)
@@ -279,28 +281,31 @@ func ConvertRDBMSModel(c echo.Context) error {
 
 	schema := rdbmsModelSchemaOf(modelStage)
 	if m[schema.FieldName] == nil {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("the stored model with id [%s] has no '%s' to convert", id, schema.FieldName))
+		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model [%s] has no '%s' to convert", id, schema.FieldName))
 	}
 	rawRDBMSModel, err := json.Marshal(m[schema.FieldName])
 	if err != nil {
-		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to read the stored '%s' : [%v]", schema.FieldName, err))
+		log.Error().Err(err).Msgf("Failed to read the stored '%s'", schema.FieldName)
+		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model data unreadable"))
 	}
 
 	pkg, err := modelschema.LoadPackage(c.Request().Context(), infraModelSchemaSource, currentVersion, rdbmsModelPkgDir)
 	if err != nil {
-		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", currentVersion, rdbmsModelPkgDir, err))
+		log.Error().Err(err).Msgf("Failed to load the cm-beetle/imdl %s '%s' model", currentVersion, rdbmsModelPkgDir)
+		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model schema for version %s unavailable", currentVersion))
 	}
 	if !pkg.HasType(schema.RootType) {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-beetle/imdl %s '%s'. Use another version", schema.RootType, currentVersion, rdbmsModelPkgDir))
+		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Version %s does not support this model: use another version", currentVersion))
 	}
 
 	rdbmsModel, conversion, err := convertRDBMSModel(pkg, modelStage, originVersion, currentVersion, rawRDBMSModel)
 	if err != nil {
-		newErr := fmt.Errorf("failed to convert the model with id [%s] from %s to %s : [%v]", id, originVersion, currentVersion, err)
+		newErr := fmt.Errorf("Model [%s] conversion from %s to %s failed", id, originVersion, currentVersion)
 		var validationErr *modelschema.ValidationError
 		if errors.As(err, &validationErr) {
-			return rdbmsModelErrResp(c, http.StatusBadRequest, newErr)
+			return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("%w: %v", newErr, validationErr))
 		}
+		log.Error().Err(err).Msgf("Failed to convert the model [%s] from %s to %s", id, originVersion, currentVersion)
 		return rdbmsModelErrResp(c, http.StatusInternalServerError, newErr)
 	}
 	log.Info().Msgf("Converted the model [%s] from %s to %s (dropped fields: %d, warnings: %d)", id, originVersion, currentVersion, len(conversion.DroppedFields), len(conversion.Warnings))
@@ -340,20 +345,21 @@ func CreateRDBMSModel(c echo.Context) error {
 
 	reqBody := new(rdbmsModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request : [%v]", err))
+		log.Warn().Err(err).Msg("Failed to bind the request body")
+		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Malformed request body: check JSON syntax"))
 	}
 	requestedVer := strings.TrimSpace(c.QueryParam("rdbmsModelVersion"))
 	log.Info().Msgf("# CreateRDBMSModel: modelStage=[%s], rdbmsModelVersion=[%s]", modelStage, requestedVer)
 
 	rdbmsVersions, err := getRDBMSModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
-		return rdbmsModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-beetle/imdl model versions")
+		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	resultVer, err := selectModelVersion(requestedVer, rdbmsVersions)
 	if err != nil {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid RDBMS model version: %w", err))
+		return rdbmsModelErrResp(c, http.StatusBadRequest, err)
 	}
 	log.Info().Msgf("RDBMS Model version: %s", resultVer)
 
@@ -433,7 +439,7 @@ func CreateRDBMSModel(c echo.Context) error {
 func UpdateRDBMSModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	// 'modelStage' is optional. If it is empty, the stored stage is preserved.
@@ -448,7 +454,8 @@ func UpdateRDBMSModel(c echo.Context) error {
 
 	reqBody := new(rdbmsModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request : [%v]", err))
+		log.Warn().Err(err).Msg("Failed to bind the request body")
+		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Malformed request body: check JSON syntax"))
 	}
 	log.Info().Msgf("# UpdateRDBMSModel: id=[%s], modelStage=[%s]", id, requestedStage)
 
@@ -474,15 +481,16 @@ func UpdateRDBMSModel(c echo.Context) error {
 
 	existingBytes, err := json.Marshal(existing)
 	if err != nil {
-		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to marshal the existing model : [%v]", err))
+		log.Error().Err(err).Msg("Failed to marshal the existing model")
+		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 	}
 
 	// The RDBMS model is validated against the struct of the stored (preserved) cm-beetle/imdl version.
 	preservedVer, _ := existing["rdbmsModelVersion"].(string)
 	rdbmsVersions, err := getRDBMSModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
-		return rdbmsModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-beetle/imdl model versions")
+		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	var rdbmsModel json.RawMessage
@@ -510,14 +518,16 @@ func UpdateRDBMSModel(c echo.Context) error {
 	if modelStage == StageTarget {
 		fullModel := new(targetRDBMSModelRecord)
 		if err := json.Unmarshal(existingBytes, fullModel); err != nil {
-			return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to unmarshal the existing model : [%v]", err))
+			log.Error().Err(err).Msg("Failed to unmarshal the existing model")
+			return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 		}
 		fullModel.TargetRDBMSModel = rdbmsModel
 		info, updatedModel = &fullModel.RDBMSModelRespInfo, fullModel
 	} else {
 		fullModel := new(sourceRDBMSModelRecord)
 		if err := json.Unmarshal(existingBytes, fullModel); err != nil {
-			return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to unmarshal the existing model : [%v]", err))
+			log.Error().Err(err).Msg("Failed to unmarshal the existing model")
+			return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 		}
 		fullModel.SourceRDBMSModel = rdbmsModel
 		info, updatedModel = &fullModel.RDBMSModelRespInfo, fullModel
@@ -567,7 +577,7 @@ func UpdateRDBMSModel(c echo.Context) error {
 func DeleteRDBMSModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return rdbmsModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -596,9 +606,10 @@ func DeleteRDBMSModel(c echo.Context) error {
 	log.Info().Msgf("Succeeded in Deleting the model : [%s]", id)
 
 	if err := lkvstore.SaveLkvStore(); err != nil {
-		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to save the lkvstore to file : [%v]", err))
+		log.Error().Err(err).Msg("Failed to save the lkvstore to file")
+		return rdbmsModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model save failed"))
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
-	return c.JSON(http.StatusOK, "Succeeded in Deleting the RDBMS model")
+	return c.JSON(http.StatusOK, "RDBMS model deleted")
 }

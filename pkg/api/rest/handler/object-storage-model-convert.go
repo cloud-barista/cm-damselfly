@@ -67,10 +67,10 @@ func newObjectStorageModelConversion(originVersion, currentVersion string, conve
 // to the same or a newer version is allowed.
 func validateObjectStorageModelConversion(originVersion, currentVersion string, supportedVersions []string) error {
 	if _, err := selectModelVersion(originVersion, supportedVersions); originVersion == "" || err != nil {
-		return fmt.Errorf("the stored model version '%s' is not a cm-beetle/imdl tag with the object storage model (%s or later), so the model cannot be converted", originVersion, minObjectStorageModelVersion)
+		return fmt.Errorf("Model version '%s' not convertible: use a tagged version with object storage model support (%s or later)", originVersion, minObjectStorageModelVersion)
 	}
 	if compareModuleVersions(currentVersion, originVersion) < 0 {
-		return fmt.Errorf("the model version %s cannot be converted to the older version %s: only the conversion to a newer version is allowed", originVersion, currentVersion)
+		return fmt.Errorf("Model version %s not convertible to older version %s: use a newer version", originVersion, currentVersion)
 	}
 	return nil
 }

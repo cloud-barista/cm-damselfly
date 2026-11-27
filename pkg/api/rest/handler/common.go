@@ -345,7 +345,7 @@ func normalizeModelVersions(tags []string) []string {
 // or the latest supported version if no version is requested.
 func selectModelVersion(requestedVersion string, supportedVersions []string) (string, error) {
 	if len(supportedVersions) == 0 {
-		return "", fmt.Errorf("no supported versions are available")
+		return "", fmt.Errorf("No supported versions available")
 	}
 
 	requestedVersion = strings.TrimSpace(requestedVersion)
@@ -355,7 +355,7 @@ func selectModelVersion(requestedVersion string, supportedVersions []string) (st
 				return version, nil
 			}
 		}
-		return "", fmt.Errorf("version %q is not a tagged version (supported: %s)", requestedVersion, strings.Join(supportedVersions, ", "))
+		return "", fmt.Errorf("Unsupported version '%s' (supported: %s)", requestedVersion, strings.Join(supportedVersions, ", "))
 	}
 
 	latestVersion := supportedVersions[0]
@@ -419,24 +419,26 @@ func normalizeInfraModel(ctx context.Context, version string, isCloudModel bool,
 	}
 
 	if trimmed := bytes.TrimSpace(raw); len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("'%s' is required", schema.FieldName)
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' required", schema.FieldName)
 	}
 
 	pkg, err := modelschema.LoadPackage(ctx, infraModelSchemaSource, version, schema.PkgDir)
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", version, schema.PkgDir, err)
+		log.Error().Err(err).Msgf("Failed to load the cm-beetle/imdl %s '%s' model", version, schema.PkgDir)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model schema for version %s unavailable", version)
 	}
 	if !pkg.HasType(schema.RootType) {
-		return nil, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-beetle/imdl %s '%s'. Use another version", schema.RootType, version, schema.PkgDir)
+		return nil, http.StatusBadRequest, fmt.Errorf("Version %s does not support this model: use another version", version)
 	}
 
 	normalized, err := pkg.Normalize(raw, schema.RootType, schema.FieldName)
 	if err != nil {
 		var validationErr *modelschema.ValidationError
 		if errors.As(err, &validationErr) {
-			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match the '%s' struct of cm-beetle/imdl %s : [%v]", schema.FieldName, schema.RootType, version, err)
+			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match version %s: %v", schema.FieldName, version, validationErr)
 		}
-		return nil, http.StatusInternalServerError, err
+		log.Error().Err(err).Msgf("Failed to normalize '%s'", schema.FieldName)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model processing failed")
 	}
 	log.Info().Msgf("Validated '%s' against the '%s' struct of cm-beetle/imdl %s", schema.FieldName, schema.RootType, version)
 	return normalized, 0, nil
@@ -451,12 +453,14 @@ func normalizeInfraModelWithCompiledStruct(isCloudModel bool, raw json.RawMessag
 	}
 	if trimmed := bytes.TrimSpace(raw); len(trimmed) > 0 {
 		if err := json.Unmarshal(trimmed, target); err != nil {
-			return nil, http.StatusBadRequest, fmt.Errorf("invalid infra model : [%v]", err)
+			log.Warn().Err(err).Msg("Failed to decode the infra model")
+			return nil, http.StatusBadRequest, fmt.Errorf("Malformed infra model: check JSON syntax and field types")
 		}
 	}
 	normalized, err := json.Marshal(target)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		log.Error().Err(err).Msg("Failed to marshal the infra model")
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model processing failed")
 	}
 	return normalized, 0, nil
 }
@@ -498,24 +502,26 @@ func normalizeSoftwareModel(ctx context.Context, version string, stage ModelStag
 	schema := softwareModelSchemaOf(stage)
 
 	if trimmed := bytes.TrimSpace(raw); len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' required when 'modelStage' is '%s'", schema.FieldName, stage)
 	}
 
 	pkg, err := modelschema.LoadPackage(ctx, softwareModelSchemaSource, version, "")
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-grasshopper/smdl %s model : [%v]", version, err)
+		log.Error().Err(err).Msgf("Failed to load the cm-grasshopper/smdl %s model", version)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model schema for version %s unavailable", version)
 	}
 	if !pkg.HasType(schema.RootType) {
-		return nil, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-grasshopper/smdl %s. Use another version", schema.RootType, version)
+		return nil, http.StatusBadRequest, fmt.Errorf("Version %s does not support this model: use another version", version)
 	}
 
 	normalized, err := pkg.Normalize(raw, schema.RootType, schema.FieldName)
 	if err != nil {
 		var validationErr *modelschema.ValidationError
 		if errors.As(err, &validationErr) {
-			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match the '%s' struct of cm-grasshopper/smdl %s : [%v]", schema.FieldName, schema.RootType, version, err)
+			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match version %s: %v", schema.FieldName, version, validationErr)
 		}
-		return nil, http.StatusInternalServerError, err
+		log.Error().Err(err).Msgf("Failed to normalize '%s'", schema.FieldName)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model processing failed")
 	}
 	log.Info().Msgf("Validated '%s' against the '%s' struct of cm-grasshopper/smdl %s", schema.FieldName, schema.RootType, version)
 	return normalized, 0, nil
@@ -531,14 +537,16 @@ func normalizeSoftwareModelWithCompiledStruct(stage ModelStage, raw json.RawMess
 	}
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' required when 'modelStage' is '%s'", schema.FieldName, stage)
 	}
 	if err := json.Unmarshal(trimmed, target); err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid software model : [%v]", err)
+		log.Warn().Err(err).Msg("Failed to decode the software model")
+		return nil, http.StatusBadRequest, fmt.Errorf("Malformed software model: check JSON syntax and field types")
 	}
 	normalized, err := json.Marshal(target)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		log.Error().Err(err).Msg("Failed to marshal the software model")
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model processing failed")
 	}
 	return normalized, 0, nil
 }
@@ -573,24 +581,26 @@ func normalizeRDBMSModel(ctx context.Context, version string, stage ModelStage, 
 	schema := rdbmsModelSchemaOf(stage)
 
 	if trimmed := bytes.TrimSpace(raw); len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' required when 'modelStage' is '%s'", schema.FieldName, stage)
 	}
 
 	pkg, err := modelschema.LoadPackage(ctx, infraModelSchemaSource, version, rdbmsModelPkgDir)
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", version, rdbmsModelPkgDir, err)
+		log.Error().Err(err).Msgf("Failed to load the cm-beetle/imdl %s '%s' model", version, rdbmsModelPkgDir)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model schema for version %s unavailable", version)
 	}
 	if !pkg.HasType(schema.RootType) {
-		return nil, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-beetle/imdl %s '%s'. Use another version", schema.RootType, version, rdbmsModelPkgDir)
+		return nil, http.StatusBadRequest, fmt.Errorf("Version %s does not support this model: use another version", version)
 	}
 
 	normalized, err := pkg.Normalize(raw, schema.RootType, schema.FieldName)
 	if err != nil {
 		var validationErr *modelschema.ValidationError
 		if errors.As(err, &validationErr) {
-			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match the '%s' struct of cm-beetle/imdl %s : [%v]", schema.FieldName, schema.RootType, version, err)
+			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match version %s: %v", schema.FieldName, version, validationErr)
 		}
-		return nil, http.StatusInternalServerError, err
+		log.Error().Err(err).Msgf("Failed to normalize '%s'", schema.FieldName)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model processing failed")
 	}
 	log.Info().Msgf("Validated '%s' against the '%s' struct of cm-beetle/imdl %s", schema.FieldName, schema.RootType, version)
 	return normalized, 0, nil
@@ -606,14 +616,16 @@ func normalizeRDBMSModelWithCompiledStruct(stage ModelStage, raw json.RawMessage
 	}
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' required when 'modelStage' is '%s'", schema.FieldName, stage)
 	}
 	if err := json.Unmarshal(trimmed, target); err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid RDBMS model : [%v]", err)
+		log.Warn().Err(err).Msg("Failed to decode the RDBMS model")
+		return nil, http.StatusBadRequest, fmt.Errorf("Malformed RDBMS model: check JSON syntax and field types")
 	}
 	normalized, err := json.Marshal(target)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		log.Error().Err(err).Msg("Failed to marshal the RDBMS model")
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model processing failed")
 	}
 	return normalized, 0, nil
 }
@@ -643,24 +655,26 @@ func normalizeObjectStorageModel(ctx context.Context, version string, stage Mode
 	schema := objectStorageModelSchemaOf(stage)
 
 	if trimmed := bytes.TrimSpace(raw); len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' required when 'modelStage' is '%s'", schema.FieldName, stage)
 	}
 
 	pkg, err := modelschema.LoadPackage(ctx, infraModelSchemaSource, version, objectStorageModelPkgDir)
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", version, objectStorageModelPkgDir, err)
+		log.Error().Err(err).Msgf("Failed to load the cm-beetle/imdl %s '%s' model", version, objectStorageModelPkgDir)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model schema for version %s unavailable", version)
 	}
 	if !pkg.HasType(schema.RootType) {
-		return nil, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-beetle/imdl %s '%s'. Use another version", schema.RootType, version, objectStorageModelPkgDir)
+		return nil, http.StatusBadRequest, fmt.Errorf("Version %s does not support this model: use another version", version)
 	}
 
 	normalized, err := pkg.Normalize(raw, schema.RootType, schema.FieldName)
 	if err != nil {
 		var validationErr *modelschema.ValidationError
 		if errors.As(err, &validationErr) {
-			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match the '%s' struct of cm-beetle/imdl %s : [%v]", schema.FieldName, schema.RootType, version, err)
+			return nil, http.StatusBadRequest, fmt.Errorf("'%s' does not match version %s: %v", schema.FieldName, version, validationErr)
 		}
-		return nil, http.StatusInternalServerError, err
+		log.Error().Err(err).Msgf("Failed to normalize '%s'", schema.FieldName)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model processing failed")
 	}
 	log.Info().Msgf("Validated '%s' against the '%s' struct of cm-beetle/imdl %s", schema.FieldName, schema.RootType, version)
 	return normalized, 0, nil
@@ -677,14 +691,16 @@ func normalizeObjectStorageModelWithCompiledStruct(stage ModelStage, raw json.Ra
 	}
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid request: '%s' is required when 'modelStage' is '%s'", schema.FieldName, stage)
+		return nil, http.StatusBadRequest, fmt.Errorf("'%s' required when 'modelStage' is '%s'", schema.FieldName, stage)
 	}
 	if err := json.Unmarshal(trimmed, target); err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid object storage model : [%v]", err)
+		log.Warn().Err(err).Msg("Failed to decode the object storage model")
+		return nil, http.StatusBadRequest, fmt.Errorf("Malformed object storage model: check JSON syntax and field types")
 	}
 	normalized, err := json.Marshal(target)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		log.Error().Err(err).Msg("Failed to marshal the object storage model")
+		return nil, http.StatusInternalServerError, fmt.Errorf("Model processing failed")
 	}
 	return normalized, 0, nil
 }
@@ -706,8 +722,8 @@ func (s ModelStage) isValid() bool {
 func parseModelStageParam(c echo.Context) (ModelStage, error) {
 	stage := ModelStage(strings.ToLower(strings.TrimSpace(c.QueryParam("modelStage"))))
 	if !stage.isValid() {
-		return "", fmt.Errorf("invalid request: 'modelStage' must be '%s', '%s' or '%s', got '%s'",
-			StageSource, StagePlanning, StageTarget, c.QueryParam("modelStage"))
+		return "", fmt.Errorf("'modelStage' must be '%s', '%s' or '%s'",
+			StageSource, StagePlanning, StageTarget)
 	}
 	return stage, nil
 }
@@ -724,8 +740,8 @@ func parseModelStagesParam(c echo.Context, required bool) ([]ModelStage, error) 
 	for _, value := range strings.Split(param, ",") {
 		stage := ModelStage(strings.ToLower(strings.TrimSpace(value)))
 		if !stage.isValid() {
-			return nil, fmt.Errorf("invalid request: 'modelStage' must be '%s', '%s' or '%s' (multiple stages are separated by commas), got '%s'",
-				StageSource, StagePlanning, StageTarget, param)
+			return nil, fmt.Errorf("'modelStage' must be '%s', '%s' or '%s' (separate multiple stages with commas)",
+				StageSource, StagePlanning, StageTarget)
 		}
 		if !slices.Contains(stages, stage) {
 			stages = append(stages, stage)
@@ -778,13 +794,15 @@ func decorateModel(m map[string]interface{}) map[string]interface{} {
 func decorateRecord(record interface{}) (map[string]interface{}, error) {
 	b, err := json.Marshal(record)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal the model : [%v]", err)
+		log.Error().Err(err).Msg("Failed to marshal the model")
+		return nil, fmt.Errorf("Model processing failed")
 	}
 	var m map[string]interface{}
 	decoder := json.NewDecoder(bytes.NewReader(b))
 	decoder.UseNumber() // so that the large integers of the model body are kept as they are
 	if err := decoder.Decode(&m); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal the model : [%v]", err)
+		log.Error().Err(err).Msg("Failed to unmarshal the model")
+		return nil, fmt.Errorf("Model processing failed")
 	}
 	return decorateModel(m), nil
 }
