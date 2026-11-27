@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/cloud-barista/cm-damselfly/pkg/modelschema"
+	"github.com/rs/zerolog/log"
 )
 
 // [Note]
@@ -49,6 +51,7 @@ var (
 		{version: "v0.1.1", apply: migrateSubGroupsToNodeGroups},
 		{version: "v0.1.2", apply: migrateTargetVmFields},
 		{version: "v0.1.11", apply: migratePostCommandToPostCommands},
+		{version: "v0.1.22", apply: migratePostCommandsToPostScript},
 	}
 )
 
@@ -56,13 +59,13 @@ var (
 // Both versions must be tagged, and only the conversion to the same or a newer version is allowed.
 func validateInfraModelConversion(isCloudModel bool, originVersion, currentVersion string, supportedVersions []string) error {
 	if _, err := selectModelVersion(originVersion, supportedVersions); originVersion == "" || err != nil {
-		return fmt.Errorf("the stored model version '%s' is not a cm-beetle/imdl tag, so the model cannot be converted", originVersion)
+		return fmt.Errorf("Model version '%s' not convertible: not a tagged version", originVersion)
 	}
 	if isCloudModel && compareModuleVersions(currentVersion, minCloudModelCurrentVersion) < 0 {
-		return fmt.Errorf("a cloud model cannot be converted to %s: the '%s' struct does not exist before %s", currentVersion, cloudInfraModelSchema.RootType, minCloudModelCurrentVersion)
+		return fmt.Errorf("Cloud model not convertible to %s: use %s or later", currentVersion, minCloudModelCurrentVersion)
 	}
 	if compareModuleVersions(currentVersion, originVersion) < 0 {
-		return fmt.Errorf("the model version %s cannot be converted to the older version %s: only the conversion to a newer version is allowed", originVersion, currentVersion)
+		return fmt.Errorf("Model version %s not convertible to older version %s: use a newer version", originVersion, currentVersion)
 	}
 	return nil
 }
@@ -103,7 +106,8 @@ func migrateInfraModel(migrations []infraModelMigration, originVersion, currentV
 	dec.UseNumber()
 	var infraModel map[string]interface{}
 	if err := dec.Decode(&infraModel); err != nil {
-		return nil, nil, fmt.Errorf("the stored infra model is not a JSON object : [%v]", err)
+		log.Error().Err(err).Msg("Failed to decode the stored infra model")
+		return nil, nil, fmt.Errorf("Stored infra model not convertible: not a JSON object")
 	}
 
 	var warnings []string
@@ -299,6 +303,39 @@ func migratePostCommandToPostCommands(infraModel map[string]interface{}) []strin
 		targetInfra["postCommands"] = []interface{}{postCommand}
 	}
 	return nil
+}
+
+// migratePostCommandsToPostScript applies the changes of cloud model v0.1.22: 'targetInfra.postCommands[]' -> 'targetInfra.postScript.phases[]'.
+// A phase ('PostScriptPhase') has all the fields of a former post command ('PostCommandReq'), so the entries are moved as they are.
+// 'postCommandAsync' (now the 'postScriptAsync' query parameter, not a body field) and 'installMonAgent' were removed, so they are left
+// to be reported as dropped fields, with a warning if they had an effect.
+func migratePostCommandsToPostScript(infraModel map[string]interface{}) []string {
+	targetInfra, ok := infraModel["targetInfra"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	if postCommands, exists := targetInfra["postCommands"]; exists {
+		_, hasPostScript := targetInfra["postScript"]
+		phases, isList := postCommands.([]interface{})
+		// A value which is not a list (or a model which already has 'postScript') is left to be reported as a dropped field.
+		if !hasPostScript && (isList || postCommands == nil) {
+			delete(targetInfra, "postCommands")
+			if len(phases) > 0 {
+				targetInfra["postScript"] = map[string]interface{}{"phases": phases}
+			}
+		}
+	}
+
+	var warnings []string
+	if async, _ := targetInfra["postCommandAsync"].(bool); async {
+		warnings = append(warnings, "targetInfra.postCommandAsync: 'true' was not kept, because it was removed in v0.1.22. "+
+			"To run 'postScript' in the background, give the 'postScriptAsync' query parameter when the infra is created.")
+	}
+	if agent, _ := targetInfra["installMonAgent"].(string); strings.EqualFold(agent, "yes") {
+		warnings = append(warnings, "targetInfra.installMonAgent: 'yes' was not kept, because the option to install the monitoring agent was removed in v0.1.22.")
+	}
+	return warnings
 }
 
 func hasNonEmptyString(values []interface{}) bool {

@@ -235,7 +235,17 @@ type Root struct {
 	Next    *Root             ` + "`json:\"next,omitempty\"`" + `
 	Any     interface{}       ` + "`json:\"any\"`" + `
 	Data    []byte            ` + "`json:\"data\"`" + `
+	Flag    *bool             ` + "`json:\"flag,omitempty\"`" + `
+	Used    *int64            ` + "`json:\"used,omitempty\"`" + `
+	Rate    *float32          ` + "`json:\"rate,omitempty\"`" + `
+	Memo    *string           ` + "`json:\"memo,omitempty\"`" + `
+	PKind   *Kind             ` + "`json:\"pKind,omitempty\"`" + `
+	PFlag   FlagPtr           ` + "`json:\"pFlag,omitempty\"`" + `
+	List    *[]string         ` + "`json:\"list,omitempty\"`" + `
+	Must    *bool             ` + "`json:\"must\"`" + `
 }
+
+type FlagPtr *bool
 `
 
 type sampleKind string
@@ -266,7 +276,17 @@ type sampleRoot struct {
 	Next    *sampleRoot       `json:"next,omitempty"`
 	Any     interface{}       `json:"any"`
 	Data    []byte            `json:"data"`
+	Flag    *bool             `json:"flag,omitempty"`
+	Used    *int64            `json:"used,omitempty"`
+	Rate    *float32          `json:"rate,omitempty"`
+	Memo    *string           `json:"memo,omitempty"`
+	PKind   *sampleKind       `json:"pKind,omitempty"`
+	PFlag   sampleFlagPtr     `json:"pFlag,omitempty"`
+	List    *[]string         `json:"list,omitempty"`
+	Must    *bool             `json:"must"`
 }
+
+type sampleFlagPtr *bool
 
 func TestNormalizeSample(t *testing.T) {
 	pkg, err := ParsePackage(map[string][]byte{"sample.go": []byte(testSource)})
@@ -280,6 +300,9 @@ func TestNormalizeSample(t *testing.T) {
 		`{"id":"a","NAME":"n","count":-3,"size":7,"ratio":1.25,"tags":[],"pair":[1],"byPort":{"80":"http"},"created":"2026-01-02T03:04:05+09:00","any":{"x":[1,true]},"data":"aGVsbG8="}`,
 		`{"note":"embedded pointer is allocated","next":{"name":"child","pair":[1,2,3]}}`,
 		`{"name":null,"tags":null,"labels":{}}`,
+		`{"flag":false,"used":0,"rate":0,"memo":"","pKind":"","pFlag":false,"list":[],"must":false}`,
+		`{"flag":true,"used":3,"rate":0.5,"memo":"m","pKind":"a","pFlag":true,"list":["x"],"must":true}`,
+		`{"flag":null,"used":null,"rate":null,"memo":null,"pKind":null,"pFlag":null,"list":null,"must":null}`,
 	}
 	for _, input := range valid {
 		assertEquivalent(t, pkg, "Root", []byte(input), newTarget)
