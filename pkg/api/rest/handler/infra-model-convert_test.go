@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -60,6 +61,42 @@ type OsImage struct {
 }
 type Spec struct {
 	Id string ` + "`json:\"id\"`" + `
+}
+`
+
+// convertTestCloudSourceV0122 has the parts of the cloud model of cm-beetle/imdl v0.1.22, where 'postCommands' became 'postScript'.
+const convertTestCloudSourceV0122 = `package cloud
+type RecommendedInfra struct {
+	TargetInfra InfraReq ` + "`json:\"targetInfra\"`" + `
+}
+type InfraReq struct {
+	Name            string       ` + "`json:\"name\"`" + `
+	NodeGroups      []NodeGroup  ` + "`json:\"nodeGroups\"`" + `
+	PostScript      *PostScriptReq ` + "`json:\"postScript,omitempty\"`" + `
+	PostScriptAsync bool         ` + "`json:\"-\"`" + `
+}
+type NodeGroup struct {
+	NodeGroupSize int            ` + "`json:\"nodeGroupSize\"`" + `
+	InitScript    *InitScriptReq ` + "`json:\"initScript,omitempty\"`" + `
+}
+type InitScriptReq struct {
+	Mode   string ` + "`json:\"mode,omitempty\"`" + `
+	Notify *bool  ` + "`json:\"notify,omitempty\"`" + `
+}
+type InfraCmdReq struct {
+	UserName       string   ` + "`json:\"userName\"`" + `
+	Command        []string ` + "`json:\"command\" validate:\"required_without_all=TemplateId Scripts\"`" + `
+	TemplateId     string   ` + "`json:\"templateId,omitempty\"`" + `
+	TimeoutMinutes int      ` + "`json:\"timeoutMinutes,omitempty\"`" + `
+}
+type PostScriptReq struct {
+	Phases []PostScriptPhase ` + "`json:\"phases\"`" + `
+}
+type PostScriptPhase struct {
+	InfraCmdReq
+	NodeGroupId     string ` + "`json:\"nodeGroupId,omitempty\"`" + `
+	LabelSelector   string ` + "`json:\"labelSelector,omitempty\"`" + `
+	ContinueOnError bool   ` + "`json:\"continueOnError,omitempty\"`" + `
 }
 `
 
@@ -264,6 +301,127 @@ func TestConvertCloudEmptyPostCommandIsNotAPhase(t *testing.T) {
 	}
 }
 
+func TestConvertCloudPostCommandsToPostScript(t *testing.T) {
+	pkg := parseConvertTestPackage(t, convertTestCloudSourceV0122)
+	raw := `{"targetInfra":{"name":"i","installMonAgent":"yes","postCommandAsync":true,"postCommands":[
+		{"userName":"cb-user","command":["echo 1"],"timeoutMinutes":10,"nodeGroupId":"g1","continueOnError":true},
+		{"command":["echo 2"],"labelSelector":"role=web"}]}}`
+
+	out, conversion, err := convertInfraModel(pkg, true, "v0.1.21", "v0.1.22", json.RawMessage(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	targetInfra := decodeJSON(t, out)["targetInfra"].(map[string]interface{})
+	want := `{"phases":[{"command":["echo 1"],"continueOnError":true,"nodeGroupId":"g1","timeoutMinutes":10,"userName":"cb-user"},` +
+		`{"command":["echo 2"],"labelSelector":"role=web","userName":""}]}`
+	if got, _ := json.Marshal(targetInfra["postScript"]); string(got) != want {
+		t.Fatalf("'postCommands' must become the phases of 'postScript'\n got: %s\nwant: %s", got, want)
+	}
+	if _, exists := targetInfra["postCommands"]; exists {
+		t.Fatalf("'postCommands' must not remain: %s", out)
+	}
+	wantDropped := []string{"cloudInfraModel.targetInfra.installMonAgent", "cloudInfraModel.targetInfra.postCommandAsync"}
+	if !reflect.DeepEqual(conversion.DroppedFields, wantDropped) {
+		t.Fatalf("droppedFields = %v, want %v", conversion.DroppedFields, wantDropped)
+	}
+	if len(conversion.Warnings) != 2 || !strings.Contains(conversion.Warnings[0], "postScriptAsync") || !strings.Contains(conversion.Warnings[1], "installMonAgent") {
+		t.Fatalf("unexpected warnings: %v", conversion.Warnings)
+	}
+}
+
+// 'postCommand' (before v0.1.11) becomes 'postCommands' and then 'postScript'.
+func TestConvertCloudPostCommandToPostScript(t *testing.T) {
+	pkg := parseConvertTestPackage(t, convertTestCloudSourceV0122)
+	out, conversion, err := convertInfraModel(pkg, true, "v0.1.10", "v0.1.22", json.RawMessage(`{"targetInfra":{"name":"i","postCommand":{"command":["ls"],"userName":"u"}}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := json.Marshal(decodeJSON(t, out)["targetInfra"].(map[string]interface{})["postScript"]); string(got) != `{"phases":[{"command":["ls"],"userName":"u"}]}` {
+		t.Fatalf("unexpected 'postScript': %s", got)
+	}
+	if len(conversion.DroppedFields) != 0 || len(conversion.Warnings) != 0 {
+		t.Fatalf("nothing must be lost: %+v", conversion)
+	}
+}
+
+func TestConvertCloudWithoutPostCommandsToV0122(t *testing.T) {
+	pkg := parseConvertTestPackage(t, convertTestCloudSourceV0122)
+	for _, raw := range []string{
+		`{"targetInfra":{"name":"i","installMonAgent":"no","postCommandAsync":false}}`,
+		`{"targetInfra":{"name":"i","installMonAgent":"no","postCommands":[]}}`,
+		`{"targetInfra":{"name":"i","installMonAgent":"no","postCommands":null}}`,
+	} {
+		out, conversion, err := convertInfraModel(pkg, true, "v0.1.21", "v0.1.22", json.RawMessage(raw))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, exists := decodeJSON(t, out)["targetInfra"].(map[string]interface{})["postScript"]; exists {
+			t.Errorf("%s: no post command must not become a 'postScript': %s", raw, out)
+		}
+		for _, dropped := range conversion.DroppedFields {
+			if strings.Contains(dropped, "postCommands") {
+				t.Errorf("%s: 'postCommands' must be moved rather than dropped: %v", raw, conversion.DroppedFields)
+			}
+		}
+		if len(conversion.Warnings) != 0 {
+			t.Errorf("%s: the removed fields had no effect, so no warning is needed: %v", raw, conversion.Warnings)
+		}
+	}
+}
+
+// A model stored as v0.1.21 can already have 'postScript'. It is kept, and 'postCommands' is reported as dropped.
+func TestConvertCloudKeepsPostScriptNewerThanStoredVersion(t *testing.T) {
+	pkg := parseConvertTestPackage(t, convertTestCloudSourceV0122)
+	raw := `{"targetInfra":{"name":"i","postScript":{"phases":[{"command":["new"]}]},"postCommands":[{"command":["old"]}]}}`
+	out, conversion, err := convertInfraModel(pkg, true, "v0.1.21", "v0.1.22", json.RawMessage(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := json.Marshal(decodeJSON(t, out)["targetInfra"].(map[string]interface{})["postScript"]); !strings.Contains(string(got), `"new"`) || strings.Contains(string(got), `"old"`) {
+		t.Fatalf("the stored 'postScript' must be kept: %s", got)
+	}
+	if !reflect.DeepEqual(conversion.DroppedFields, []string{"cloudInfraModel.targetInfra.postCommands"}) {
+		t.Fatalf("unexpected dropped fields: %v", conversion.DroppedFields)
+	}
+}
+
+func TestCloudPostScriptMigrationAppliesOnlyToVersionsInRange(t *testing.T) {
+	raw := json.RawMessage(`{"targetInfra":{"postCommands":[{"command":["ls"]}]}}`)
+	for _, tt := range []struct {
+		origin, current string
+		wantPostScript  bool
+	}{
+		{"v0.1.21", "v0.1.22", true},
+		{"v0.1.11", "v0.1.21", false},
+		{"v0.1.22", "v0.1.22", false},
+	} {
+		out, _, err := migrateInfraModel(cloudInfraModelMigrations, tt.origin, tt.current, raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, has := decodeJSON(t, out)["targetInfra"].(map[string]interface{})["postScript"]; has != tt.wantPostScript {
+			t.Errorf("%s -> %s: has 'postScript' = %v, want %v: %s", tt.origin, tt.current, has, tt.wantPostScript, out)
+		}
+	}
+}
+
+// A pointer field with 'omitempty' (e.g. '*bool' of v0.1.22) keeps its false value.
+func TestConvertCloudKeepsFalsePointerValue(t *testing.T) {
+	pkg := parseConvertTestPackage(t, convertTestCloudSourceV0122)
+	raw := `{"targetInfra":{"name":"i","nodeGroups":[{"nodeGroupSize":1,"initScript":{"notify":false}},{"nodeGroupSize":1,"initScript":{}}]}}`
+	out, _, err := convertInfraModel(pkg, true, "v0.1.22", "v0.1.22", json.RawMessage(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	groups := decodeJSON(t, out)["targetInfra"].(map[string]interface{})["nodeGroups"].([]interface{})
+	if notify, exists := groups[0].(map[string]interface{})["initScript"].(map[string]interface{})["notify"]; !exists || notify != false {
+		t.Fatalf("'notify': false must be kept: %s", out)
+	}
+	if _, exists := groups[1].(map[string]interface{})["initScript"].(map[string]interface{})["notify"]; exists {
+		t.Fatalf("a missing 'notify' must stay missing: %s", out)
+	}
+}
+
 func TestConvertDropsFieldsOfRemovedVersions(t *testing.T) {
 	pkg := parseConvertTestPackage(t, convertTestCloudSource)
 	out, conversion, err := convertInfraModel(pkg, true, "v0.1.3", "v0.1.19", json.RawMessage(`{"nameSeed":"x","targetInfra":{"name":"i"}}`))
@@ -329,11 +487,11 @@ func TestValidateInfraModelConversion(t *testing.T) {
 		{"versions are compared as numbers", false, "v0.1.9", "v0.1.10", ""},
 		{"onprem can target v0.1.0", false, "v0.1.0", "v0.1.0", ""},
 		{"cloud upgrade to v0.1.2", true, "v0.1.0", "v0.1.2", ""},
-		{"downgrade", false, "v0.1.10", "v0.1.9", "only the conversion to a newer version"},
-		{"cloud v0.1.0 to v0.1.1", true, "v0.1.0", "v0.1.1", "does not exist before"},
-		{"cloud to v0.1.0", true, "v0.1.0", "v0.1.0", "does not exist before"},
-		{"stored version is not a tag", false, "v9.9.9", "v0.1.19", "not a cm-beetle/imdl tag"},
-		{"stored version is empty", false, "", "v0.1.19", "not a cm-beetle/imdl tag"},
+		{"downgrade", false, "v0.1.10", "v0.1.9", "not convertible to older version"},
+		{"cloud v0.1.0 to v0.1.1", true, "v0.1.0", "v0.1.1", "Cloud model not convertible"},
+		{"cloud to v0.1.0", true, "v0.1.0", "v0.1.0", "Cloud model not convertible"},
+		{"stored version is not a tag", false, "v9.9.9", "v0.1.19", "not a tagged version"},
+		{"stored version is empty", false, "", "v0.1.19", "not a tagged version"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -402,12 +560,12 @@ func TestConvertInfraModelHandler(t *testing.T) {
 		wantText   string
 	}{
 		{"modelType is required", "convert-onprem-new", "", http.StatusBadRequest, "'modelType' must be"},
-		{"model not found", "convert-no-such-model", "modelType=onprem", http.StatusNotFound, "failed to find"},
-		{"model type mismatch", "convert-onprem-new", "modelType=cloud", http.StatusBadRequest, "model type mismatch"},
-		{"version is not a tag", "convert-onprem-new", "modelType=onprem&modelVersion=v9.9.9", http.StatusBadRequest, "not a tagged version"},
-		{"downgrade", "convert-onprem-new", "modelType=onprem&modelVersion=v0.1.2", http.StatusBadRequest, "only the conversion to a newer version"},
-		{"stored version is not a tag", "convert-onprem-untagged", "modelType=onprem", http.StatusBadRequest, "not a cm-beetle/imdl tag"},
-		{"cloud v0.1.0 to v0.1.1", "convert-cloud-old", "modelType=cloud&modelVersion=v0.1.1", http.StatusBadRequest, "does not exist before"},
+		{"model not found", "convert-no-such-model", "modelType=onprem", http.StatusNotFound, "not found"},
+		{"model type mismatch", "convert-onprem-new", "modelType=cloud", http.StatusBadRequest, "is a 'onprem' model, not 'cloud'"},
+		{"version is not a tag", "convert-onprem-new", "modelType=onprem&modelVersion=v9.9.9", http.StatusBadRequest, "Unsupported version"},
+		{"downgrade", "convert-onprem-new", "modelType=onprem&modelVersion=v0.1.2", http.StatusBadRequest, "not convertible to older version"},
+		{"stored version is not a tag", "convert-onprem-untagged", "modelType=onprem", http.StatusBadRequest, "not a tagged version"},
+		{"cloud v0.1.0 to v0.1.1", "convert-cloud-old", "modelType=cloud&modelVersion=v0.1.1", http.StatusBadRequest, "Cloud model not convertible"},
 		{"stored model has no body", "convert-onprem-nobody", "modelType=onprem", http.StatusBadRequest, "no 'onpremiseInfraModel'"},
 	}
 	for _, tt := range tests {

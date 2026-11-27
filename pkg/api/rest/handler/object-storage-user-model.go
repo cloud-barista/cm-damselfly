@@ -115,24 +115,24 @@ func isStoredObjectStorageModel(m map[string]interface{}) bool {
 func getObjectStorageModelFromStore(id string, stage ModelStage) (map[string]interface{}, ModelStage, int, error) {
 	stored, exists := lkvstore.Get(id)
 	if !exists {
-		return nil, "", http.StatusNotFound, fmt.Errorf("failed to find the model from db with id: [%s]", id)
+		return nil, "", http.StatusNotFound, fmt.Errorf("Model [%s] not found", id)
 	}
 
 	m, ok := stored.(map[string]interface{})
 	if !ok {
-		return nil, "", http.StatusInternalServerError, fmt.Errorf("internal error: unexpected model data format")
+		return nil, "", http.StatusInternalServerError, fmt.Errorf("Model data unreadable")
 	}
 
 	if !isStoredObjectStorageModel(m) {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("invalid request: the model with id [%s] is not an object storage model", id)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Model [%s] is not an object storage model", id)
 	}
 
 	storedStage, ok := storedModelStage(m)
 	if !ok {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("the model with id [%s] has no valid 'modelStage'", id)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Model [%s] has no valid 'modelStage'", id)
 	}
 	if stage != "" && storedStage != stage {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("model stage mismatch: the object storage model with id [%s] is a '%s' model, not '%s'",
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Object storage model [%s] is a '%s' model, not '%s'",
 			id, storedStage, stage)
 	}
 
@@ -142,10 +142,12 @@ func getObjectStorageModelFromStore(id string, stage ModelStage) (map[string]int
 // saveObjectStorageModelToStore puts the model to the key-value store and saves the store to file.
 func saveObjectStorageModelToStore(id string, userModel interface{}) error {
 	if err := lkvstore.Put(id, userModel); err != nil {
-		return fmt.Errorf("failed to put the model to the lkvstore : [%v]", err)
+		log.Error().Err(err).Msg("Failed to put the model to the lkvstore")
+		return fmt.Errorf("Model save failed")
 	}
 	if err := lkvstore.SaveLkvStore(); err != nil {
-		return fmt.Errorf("failed to save the lkvstore to file : [%v]", err)
+		log.Error().Err(err).Msg("Failed to save the lkvstore to file")
+		return fmt.Errorf("Model save failed")
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 	return nil
@@ -200,7 +202,7 @@ func GetObjectStorageModels(c echo.Context) error {
 func GetObjectStorageModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -239,7 +241,7 @@ func GetObjectStorageModel(c echo.Context) error {
 func ConvertObjectStorageModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -255,13 +257,13 @@ func ConvertObjectStorageModel(c echo.Context) error {
 
 	storageVersions, err := getObjectStorageModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
-		return objectStorageModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-beetle/imdl model versions")
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	currentVersion, err := selectModelVersion(c.QueryParam("objectStorageModelVersion"), storageVersions)
 	if err != nil {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid object storage model version: %w", err))
+		return objectStorageModelErrResp(c, http.StatusBadRequest, err)
 	}
 
 	originVersion, _ := m["objectStorageModelVersion"].(string)
@@ -281,28 +283,31 @@ func ConvertObjectStorageModel(c echo.Context) error {
 
 	schema := objectStorageModelSchemaOf(modelStage)
 	if m[schema.FieldName] == nil {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("the stored model with id [%s] has no '%s' to convert", id, schema.FieldName))
+		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model [%s] has no '%s' to convert", id, schema.FieldName))
 	}
 	rawStorageModel, err := json.Marshal(m[schema.FieldName])
 	if err != nil {
-		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to read the stored '%s' : [%v]", schema.FieldName, err))
+		log.Error().Err(err).Msgf("Failed to read the stored '%s'", schema.FieldName)
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model data unreadable"))
 	}
 
 	pkg, err := modelschema.LoadPackage(c.Request().Context(), infraModelSchemaSource, currentVersion, objectStorageModelPkgDir)
 	if err != nil {
-		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-beetle/imdl %s '%s' model : [%v]", currentVersion, objectStorageModelPkgDir, err))
+		log.Error().Err(err).Msgf("Failed to load the cm-beetle/imdl %s '%s' model", currentVersion, objectStorageModelPkgDir)
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model schema for version %s unavailable", currentVersion))
 	}
 	if !pkg.HasType(schema.RootType) {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-beetle/imdl %s '%s'. Use another version", schema.RootType, currentVersion, objectStorageModelPkgDir))
+		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Version %s does not support this model: use another version", currentVersion))
 	}
 
 	storageModel, conversion, err := convertObjectStorageModel(pkg, modelStage, originVersion, currentVersion, rawStorageModel)
 	if err != nil {
-		newErr := fmt.Errorf("failed to convert the model with id [%s] from %s to %s : [%v]", id, originVersion, currentVersion, err)
+		newErr := fmt.Errorf("Model [%s] conversion from %s to %s failed", id, originVersion, currentVersion)
 		var validationErr *modelschema.ValidationError
 		if errors.As(err, &validationErr) {
-			return objectStorageModelErrResp(c, http.StatusBadRequest, newErr)
+			return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("%w: %v", newErr, validationErr))
 		}
+		log.Error().Err(err).Msgf("Failed to convert the model [%s] from %s to %s", id, originVersion, currentVersion)
 		return objectStorageModelErrResp(c, http.StatusInternalServerError, newErr)
 	}
 	log.Info().Msgf("Converted the model [%s] from %s to %s (dropped fields: %d, warnings: %d)", id, originVersion, currentVersion, len(conversion.DroppedFields), len(conversion.Warnings))
@@ -342,20 +347,21 @@ func CreateObjectStorageModel(c echo.Context) error {
 
 	reqBody := new(objectStorageModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request : [%v]", err))
+		log.Warn().Err(err).Msg("Failed to bind the request body")
+		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Malformed request body: check JSON syntax"))
 	}
 	requestedVer := strings.TrimSpace(c.QueryParam("objectStorageModelVersion"))
 	log.Info().Msgf("# CreateObjectStorageModel: modelStage=[%s], objectStorageModelVersion=[%s]", modelStage, requestedVer)
 
 	storageVersions, err := getObjectStorageModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
-		return objectStorageModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-beetle/imdl model versions")
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	resultVer, err := selectModelVersion(requestedVer, storageVersions)
 	if err != nil {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid object storage model version: %w", err))
+		return objectStorageModelErrResp(c, http.StatusBadRequest, err)
 	}
 	log.Info().Msgf("Object Storage Model version: %s", resultVer)
 
@@ -435,7 +441,7 @@ func CreateObjectStorageModel(c echo.Context) error {
 func UpdateObjectStorageModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	// 'modelStage' is optional. If it is empty, the stored stage is preserved.
@@ -450,7 +456,8 @@ func UpdateObjectStorageModel(c echo.Context) error {
 
 	reqBody := new(objectStorageModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request : [%v]", err))
+		log.Warn().Err(err).Msg("Failed to bind the request body")
+		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Malformed request body: check JSON syntax"))
 	}
 	log.Info().Msgf("# UpdateObjectStorageModel: id=[%s], modelStage=[%s]", id, requestedStage)
 
@@ -476,15 +483,16 @@ func UpdateObjectStorageModel(c echo.Context) error {
 
 	existingBytes, err := json.Marshal(existing)
 	if err != nil {
-		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to marshal the existing model : [%v]", err))
+		log.Error().Err(err).Msg("Failed to marshal the existing model")
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 	}
 
 	// The object storage model is validated against the struct of the stored (preserved) cm-beetle/imdl version.
 	preservedVer, _ := existing["objectStorageModelVersion"].(string)
 	storageVersions, err := getObjectStorageModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-beetle/imdl model versions: %w", err)
-		return objectStorageModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-beetle/imdl model versions")
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	var storageModel json.RawMessage
@@ -512,14 +520,16 @@ func UpdateObjectStorageModel(c echo.Context) error {
 	if modelStage == StageTarget {
 		fullModel := new(targetObjectStorageModelRecord)
 		if err := json.Unmarshal(existingBytes, fullModel); err != nil {
-			return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to unmarshal the existing model : [%v]", err))
+			log.Error().Err(err).Msg("Failed to unmarshal the existing model")
+			return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 		}
 		fullModel.TargetObjectStorageModel = storageModel
 		info, updatedModel = &fullModel.ObjectStorageModelRespInfo, fullModel
 	} else {
 		fullModel := new(sourceObjectStorageModelRecord)
 		if err := json.Unmarshal(existingBytes, fullModel); err != nil {
-			return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to unmarshal the existing model : [%v]", err))
+			log.Error().Err(err).Msg("Failed to unmarshal the existing model")
+			return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 		}
 		fullModel.SourceObjectStorageModel = storageModel
 		info, updatedModel = &fullModel.ObjectStorageModelRespInfo, fullModel
@@ -569,7 +579,7 @@ func UpdateObjectStorageModel(c echo.Context) error {
 func DeleteObjectStorageModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return objectStorageModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -598,9 +608,10 @@ func DeleteObjectStorageModel(c echo.Context) error {
 	log.Info().Msgf("Succeeded in Deleting the model : [%s]", id)
 
 	if err := lkvstore.SaveLkvStore(); err != nil {
-		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to save the lkvstore to file : [%v]", err))
+		log.Error().Err(err).Msg("Failed to save the lkvstore to file")
+		return objectStorageModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model save failed"))
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
-	return c.JSON(http.StatusOK, "Succeeded in Deleting the object storage model")
+	return c.JSON(http.StatusOK, "Object storage model deleted")
 }

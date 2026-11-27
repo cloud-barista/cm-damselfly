@@ -718,6 +718,24 @@ func matchField(fields []field, key string) int {
 	return -1
 }
 
+// isPointerType reports whether t is a pointer type, including a named type of a pointer (e.g. 'type P *bool').
+func (n *normalizer) isPointerType(t ast.Expr, depth int) bool {
+	if depth > maxDepth {
+		return false
+	}
+	switch t := t.(type) {
+	case *ast.StarExpr:
+		return true
+	case *ast.ParenExpr:
+		return n.isPointerType(t.X, depth+1)
+	case *ast.Ident:
+		if ts, ok := n.pkg.types[t.Name]; ok && ts.TypeParams == nil {
+			return n.isPointerType(ts.Type, depth+1)
+		}
+	}
+	return false
+}
+
 func isEmptyValue(v interface{}) bool {
 	switch vv := v.(type) {
 	case nil:
@@ -783,7 +801,8 @@ func (n *normalizer) structValue(v interface{}, st *ast.StructType, path string,
 		if !ok {
 			val = n.value(nil, f.typ, joinPath(path, f.name), depth+1)
 		}
-		if f.omitEmpty && isEmptyValue(val) {
+		// Like encoding/json, a pointer field with 'omitempty' is omitted only when it is nil (e.g. '*bool' keeps false).
+		if f.omitEmpty && (val == nil || !n.isPointerType(f.typ, 0) && isEmptyValue(val)) {
 			continue
 		}
 		if f.omitZero && reflect.DeepEqual(val, n.value(nil, f.typ, joinPath(path, f.name), depth+1)) {

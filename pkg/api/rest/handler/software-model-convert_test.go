@@ -178,9 +178,9 @@ func TestValidateSoftwareModelConversion(t *testing.T) {
 	}{
 		{"to a newer version", "v0.1.0", "v0.1.4", ""},
 		{"to the same version", "v0.1.4", "v0.1.4", ""},
-		{"to an older version", "v0.1.4", "v0.1.3", "only the conversion to a newer version"},
-		{"stored version is empty", "", "v0.1.4", "is not a cm-grasshopper/smdl tag"},
-		{"stored version is not a tag", "v0.1.0-untagged", "v0.1.4", "is not a cm-grasshopper/smdl tag"},
+		{"to an older version", "v0.1.4", "v0.1.3", "not convertible to older version"},
+		{"stored version is empty", "", "v0.1.4", "not a tagged version"},
+		{"stored version is not a tag", "v0.1.0-untagged", "v0.1.4", "not a tagged version"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -252,13 +252,13 @@ func TestConvertSoftwareModelHandler(t *testing.T) {
 		wantText   string
 	}{
 		{"modelStage is required", "sw-convert-old", "", http.StatusBadRequest, "'modelStage' must be"},
-		{"model not found", "sw-convert-no-such-model", "modelStage=source", http.StatusNotFound, "failed to find"},
+		{"model not found", "sw-convert-no-such-model", "modelStage=source", http.StatusNotFound, "not found"},
 		{"not a software model", "sw-convert-infra", "modelStage=source", http.StatusBadRequest, "is not a software model"},
-		{"model stage mismatch", "sw-convert-old", "modelStage=target", http.StatusBadRequest, "model stage mismatch"},
-		{"version is not a tag", "sw-convert-old", "modelStage=source&modelVersion=v9.9.9", http.StatusBadRequest, "not a tagged version"},
-		{"downgrade", "sw-convert-old", "modelStage=source&modelVersion=v0.1.0", http.StatusBadRequest, "only the conversion to a newer version"},
-		{"stored version is not a tag", "sw-convert-untagged", "modelStage=source", http.StatusBadRequest, "is not a cm-grasshopper/smdl tag"},
-		{"stored version is empty", "sw-convert-noversion", "modelStage=source", http.StatusBadRequest, "is not a cm-grasshopper/smdl tag"},
+		{"model stage mismatch", "sw-convert-old", "modelStage=target", http.StatusBadRequest, "' model, not '"},
+		{"version is not a tag", "sw-convert-old", "modelStage=source&modelVersion=v9.9.9", http.StatusBadRequest, "Unsupported version"},
+		{"downgrade", "sw-convert-old", "modelStage=source&modelVersion=v0.1.0", http.StatusBadRequest, "not convertible to older version"},
+		{"stored version is not a tag", "sw-convert-untagged", "modelStage=source", http.StatusBadRequest, "not a tagged version"},
+		{"stored version is empty", "sw-convert-noversion", "modelStage=source", http.StatusBadRequest, "not a tagged version"},
 		{"stored model has no body", "sw-convert-nobody", "modelStage=target", http.StatusBadRequest, "no 'targetSoftwareModel'"},
 	}
 	for _, tt := range tests {

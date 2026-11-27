@@ -335,9 +335,9 @@ func TestValidateRDBMSModelConversion(t *testing.T) {
 		{"to the latest version", "v0.1.13", "v0.1.20", ""},
 		{"to a newer version", "v0.1.14", "v0.1.19", ""},
 		{"to the same version", "v0.1.20", "v0.1.20", ""},
-		{"to an older version", "v0.1.20", "v0.1.19", "only the conversion to a newer version"},
-		{"stored version without the RDBMS model", "v0.1.12", "v0.1.20", "is not a cm-beetle/imdl tag with the RDBMS model"},
-		{"stored version is empty", "", "v0.1.20", "is not a cm-beetle/imdl tag with the RDBMS model"},
+		{"to an older version", "v0.1.20", "v0.1.19", "not convertible to older version"},
+		{"stored version without the RDBMS model", "v0.1.12", "v0.1.20", "RDBMS model support"},
+		{"stored version is empty", "", "v0.1.20", "RDBMS model support"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -429,14 +429,14 @@ func TestConvertRDBMSModelHandler(t *testing.T) {
 		wantText   string
 	}{
 		{"modelStage is required", "rdbms-convert-old", "", http.StatusBadRequest, "'modelStage' must be"},
-		{"model not found", "rdbms-convert-no-such-model", "modelStage=source", http.StatusNotFound, "failed to find"},
+		{"model not found", "rdbms-convert-no-such-model", "modelStage=source", http.StatusNotFound, "not found"},
 		{"not an RDBMS model", "rdbms-convert-sw", "modelStage=source", http.StatusBadRequest, "is not an RDBMS model"},
-		{"model stage mismatch", "rdbms-convert-old", "modelStage=source", http.StatusBadRequest, "model stage mismatch"},
-		{"version is not a tag", "rdbms-convert-old", "modelStage=planning&rdbmsModelVersion=v9.9.9", http.StatusBadRequest, "not a tagged version"},
-		{"version without the RDBMS model", "rdbms-convert-old", "modelStage=planning&rdbmsModelVersion=v0.1.12", http.StatusBadRequest, "not a tagged version"},
-		{"downgrade", "rdbms-convert-old", "modelStage=planning&rdbmsModelVersion=v0.1.13", http.StatusBadRequest, "only the conversion to a newer version"},
-		{"stored version without the RDBMS model", "rdbms-convert-pre-rdbms", "modelStage=source", http.StatusBadRequest, "is not a cm-beetle/imdl tag with the RDBMS model"},
-		{"stored version is empty", "rdbms-convert-noversion", "modelStage=source", http.StatusBadRequest, "is not a cm-beetle/imdl tag with the RDBMS model"},
+		{"model stage mismatch", "rdbms-convert-old", "modelStage=source", http.StatusBadRequest, "' model, not '"},
+		{"version is not a tag", "rdbms-convert-old", "modelStage=planning&rdbmsModelVersion=v9.9.9", http.StatusBadRequest, "Unsupported version"},
+		{"version without the RDBMS model", "rdbms-convert-old", "modelStage=planning&rdbmsModelVersion=v0.1.12", http.StatusBadRequest, "Unsupported version"},
+		{"downgrade", "rdbms-convert-old", "modelStage=planning&rdbmsModelVersion=v0.1.13", http.StatusBadRequest, "not convertible to older version"},
+		{"stored version without the RDBMS model", "rdbms-convert-pre-rdbms", "modelStage=source", http.StatusBadRequest, "RDBMS model support"},
+		{"stored version is empty", "rdbms-convert-noversion", "modelStage=source", http.StatusBadRequest, "RDBMS model support"},
 		{"stored model has no body", "rdbms-convert-nobody", "modelStage=target", http.StatusBadRequest, "no 'targetRDBMSModel'"},
 	}
 	for _, tt := range tests {

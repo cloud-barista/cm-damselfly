@@ -110,24 +110,24 @@ func softwareModelErrResp(c echo.Context, status int, err error) error {
 func getSoftwareModelFromStore(id string, stage ModelStage) (map[string]interface{}, ModelStage, int, error) {
 	stored, exists := lkvstore.Get(id)
 	if !exists {
-		return nil, "", http.StatusNotFound, fmt.Errorf("failed to find the model from db with id: [%s]", id)
+		return nil, "", http.StatusNotFound, fmt.Errorf("Model [%s] not found", id)
 	}
 
 	m, ok := stored.(map[string]interface{})
 	if !ok {
-		return nil, "", http.StatusInternalServerError, fmt.Errorf("internal error: unexpected model data format")
+		return nil, "", http.StatusInternalServerError, fmt.Errorf("Model data unreadable")
 	}
 
 	if isSoftwareModel, ok := m["isSoftwareModel"].(bool); !ok || !isSoftwareModel {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("invalid request: the model with id [%s] is not a software model", id)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Model [%s] is not a software model", id)
 	}
 
 	storedStage, ok := storedModelStage(m)
 	if !ok {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("the model with id [%s] has neither a valid 'modelStage' nor 'isTargetModel'", id)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Model [%s] has no valid 'modelStage'", id)
 	}
 	if stage != "" && storedStage != stage {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("model stage mismatch: the software model with id [%s] is a '%s' model, not '%s'",
+		return nil, "", http.StatusBadRequest, fmt.Errorf("Software model [%s] is a '%s' model, not '%s'",
 			id, storedStage, stage)
 	}
 
@@ -137,10 +137,12 @@ func getSoftwareModelFromStore(id string, stage ModelStage) (map[string]interfac
 // saveSoftwareModelToStore puts the model to the key-value store and saves the store to file.
 func saveSoftwareModelToStore(id string, userModel interface{}) error {
 	if err := lkvstore.Put(id, userModel); err != nil {
-		return fmt.Errorf("failed to put the model to the lkvstore : [%v]", err)
+		log.Error().Err(err).Msg("Failed to put the model to the lkvstore")
+		return fmt.Errorf("Model save failed")
 	}
 	if err := lkvstore.SaveLkvStore(); err != nil {
-		return fmt.Errorf("failed to save the lkvstore to file : [%v]", err)
+		log.Error().Err(err).Msg("Failed to save the lkvstore to file")
+		return fmt.Errorf("Model save failed")
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 	return nil
@@ -195,7 +197,7 @@ func GetSoftwareModels(c echo.Context) error {
 func GetSoftwareModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -234,7 +236,7 @@ func GetSoftwareModel(c echo.Context) error {
 func ConvertSoftwareModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -248,19 +250,19 @@ func ConvertSoftwareModel(c echo.Context) error {
 		return softwareModelErrResp(c, status, err)
 	}
 	if isFormerPlanningSoftwareModel(m, storedStage) {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("the planning model with id [%s] is stored in the former target structure ('targetSoftwareModel') and cannot be converted. "+
-			"Update it with 'sourceSoftwareModel' (PUT /software-model/{id}) or create a new planning model", id))
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Planning model [%s] uses the former target structure ('targetSoftwareModel') and cannot be converted: "+
+			"update it with 'sourceSoftwareModel' (PUT /software-model/{id}) or create a new planning model", id))
 	}
 
 	softwareVersions, err := getSoftwareModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-grasshopper/smdl model versions: %w", err)
-		return softwareModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-grasshopper/smdl model versions")
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	currentVersion, err := selectModelVersion(c.QueryParam("modelVersion"), softwareVersions)
 	if err != nil {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid software model version: %w", err))
+		return softwareModelErrResp(c, http.StatusBadRequest, err)
 	}
 
 	originVersion, _ := m["softwareModelVersion"].(string)
@@ -280,28 +282,31 @@ func ConvertSoftwareModel(c echo.Context) error {
 
 	schema := softwareModelSchemaOf(modelStage)
 	if m[schema.FieldName] == nil {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("the stored model with id [%s] has no '%s' to convert", id, schema.FieldName))
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model [%s] has no '%s' to convert", id, schema.FieldName))
 	}
 	rawSoftwareModel, err := json.Marshal(m[schema.FieldName])
 	if err != nil {
-		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to read the stored '%s' : [%v]", schema.FieldName, err))
+		log.Error().Err(err).Msgf("Failed to read the stored '%s'", schema.FieldName)
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model data unreadable"))
 	}
 
 	pkg, err := modelschema.LoadPackage(c.Request().Context(), softwareModelSchemaSource, currentVersion, "")
 	if err != nil {
-		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to load the cm-grasshopper/smdl %s model : [%v]", currentVersion, err))
+		log.Error().Err(err).Msgf("Failed to load the cm-grasshopper/smdl %s model", currentVersion)
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model schema for version %s unavailable", currentVersion))
 	}
 	if !pkg.HasType(schema.RootType) {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("'%s' struct does not exist in cm-grasshopper/smdl %s. Use another version", schema.RootType, currentVersion))
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Version %s does not support this model: use another version", currentVersion))
 	}
 
 	softwareModel, conversion, err := convertSoftwareModel(pkg, modelStage, originVersion, currentVersion, rawSoftwareModel)
 	if err != nil {
-		newErr := fmt.Errorf("failed to convert the model with id [%s] from %s to %s : [%v]", id, originVersion, currentVersion, err)
+		newErr := fmt.Errorf("Model [%s] conversion from %s to %s failed", id, originVersion, currentVersion)
 		var validationErr *modelschema.ValidationError
 		if errors.As(err, &validationErr) {
-			return softwareModelErrResp(c, http.StatusBadRequest, newErr)
+			return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("%w: %v", newErr, validationErr))
 		}
+		log.Error().Err(err).Msgf("Failed to convert the model [%s] from %s to %s", id, originVersion, currentVersion)
 		return softwareModelErrResp(c, http.StatusInternalServerError, newErr)
 	}
 	log.Info().Msgf("Converted the model [%s] from %s to %s (dropped fields: %d)", id, originVersion, currentVersion, len(conversion.DroppedFields))
@@ -341,20 +346,21 @@ func CreateSoftwareModel(c echo.Context) error {
 
 	reqBody := new(softwareModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request : [%v]", err))
+		log.Warn().Err(err).Msg("Failed to bind the request body")
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Malformed request body: check JSON syntax"))
 	}
 	requestedVer := strings.TrimSpace(c.QueryParam("softwareModelVersion"))
 	log.Info().Msgf("# CreateSoftwareModel: modelStage=[%s], softwareModelVersion=[%s]", modelStage, requestedVer)
 
 	softwareVersions, err := getSoftwareModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-grasshopper/smdl model versions: %w", err)
-		return softwareModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-grasshopper/smdl model versions")
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	resultVer, err := selectModelVersion(requestedVer, softwareVersions)
 	if err != nil {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid software model version: %w", err))
+		return softwareModelErrResp(c, http.StatusBadRequest, err)
 	}
 	log.Info().Msgf("Software Model version: %s", resultVer)
 
@@ -434,7 +440,7 @@ func CreateSoftwareModel(c echo.Context) error {
 func UpdateSoftwareModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	// 'modelStage' is optional. If it is empty, the stored stage is preserved.
@@ -449,7 +455,8 @@ func UpdateSoftwareModel(c echo.Context) error {
 
 	reqBody := new(softwareModelRawReq)
 	if err := c.Bind(reqBody); err != nil {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request : [%v]", err))
+		log.Warn().Err(err).Msg("Failed to bind the request body")
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Malformed request body: check JSON syntax"))
 	}
 	log.Info().Msgf("# UpdateSoftwareModel: id=[%s], modelStage=[%s]", id, requestedStage)
 
@@ -475,15 +482,16 @@ func UpdateSoftwareModel(c echo.Context) error {
 
 	existingBytes, err := json.Marshal(existing)
 	if err != nil {
-		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to marshal the existing model : [%v]", err))
+		log.Error().Err(err).Msg("Failed to marshal the existing model")
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 	}
 
 	// The software model is validated against the struct of the stored (preserved) smdl version.
 	preservedVer, _ := existing["softwareModelVersion"].(string)
 	softwareVersions, err := getSoftwareModelVersions()
 	if err != nil {
-		newErr := fmt.Errorf("failed to get the tagged cm-grasshopper/smdl model versions: %w", err)
-		return softwareModelErrResp(c, http.StatusInternalServerError, newErr)
+		log.Error().Err(err).Msg("Failed to get the tagged cm-grasshopper/smdl model versions")
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model versions unavailable"))
 	}
 
 	var softwareModel json.RawMessage
@@ -511,14 +519,16 @@ func UpdateSoftwareModel(c echo.Context) error {
 	if modelStage == StageTarget {
 		fullModel := new(targetSoftwareModelRecord)
 		if err := json.Unmarshal(existingBytes, fullModel); err != nil {
-			return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to unmarshal the existing model : [%v]", err))
+			log.Error().Err(err).Msg("Failed to unmarshal the existing model")
+			return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 		}
 		fullModel.TargetSoftwareModel = softwareModel
 		info, updatedModel = &fullModel.softwareModelMeta, fullModel
 	} else {
 		fullModel := new(sourceSoftwareModelRecord)
 		if err := json.Unmarshal(existingBytes, fullModel); err != nil {
-			return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to unmarshal the existing model : [%v]", err))
+			log.Error().Err(err).Msg("Failed to unmarshal the existing model")
+			return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model processing failed"))
 		}
 		fullModel.SourceSoftwareModel = softwareModel
 		info, updatedModel = &fullModel.softwareModelMeta, fullModel
@@ -568,7 +578,7 @@ func UpdateSoftwareModel(c echo.Context) error {
 func DeleteSoftwareModel(c echo.Context) error {
 	id := c.Param("id")
 	if strings.TrimSpace(id) == "" {
-		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("invalid request: model id is required"))
+		return softwareModelErrResp(c, http.StatusBadRequest, fmt.Errorf("Model ID required"))
 	}
 
 	modelStage, err := parseModelStageParam(c)
@@ -597,9 +607,10 @@ func DeleteSoftwareModel(c echo.Context) error {
 	log.Info().Msgf("Succeeded in Deleting the model : [%s]", id)
 
 	if err := lkvstore.SaveLkvStore(); err != nil {
-		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("failed to save the lkvstore to file : [%v]", err))
+		log.Error().Err(err).Msg("Failed to save the lkvstore to file")
+		return softwareModelErrResp(c, http.StatusInternalServerError, fmt.Errorf("Model save failed"))
 	}
 	log.Info().Msg("Succeeded in Saving the lkvstore to file.")
 
-	return c.JSON(http.StatusOK, "Succeeded in Deleting the software model")
+	return c.JSON(http.StatusOK, "Software model deleted")
 }

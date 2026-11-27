@@ -1,5 +1,35 @@
 basePath: /damselfly
 definitions:
+  cloudmodel.AvailabilityQuota:
+    properties:
+      fitCount:
+        description: more instances of this type that fit
+        example: 320
+        type: integer
+      limit:
+        example: 640
+        type: integer
+      name:
+        description: quota name as the CSP calls it
+        example: Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances
+        type: string
+      perInstance:
+        description: what one instance of this type takes from the quota
+        example: 2
+        type: integer
+      scope:
+        description: region, or "zone <id>"
+        example: region
+        type: string
+      unit:
+        example: vCPU
+        type: string
+      used:
+        description: Used is omitted when the CSP did not report usage; FitCount then
+          assumes nothing is in use
+        example: 0
+        type: integer
+    type: object
   cloudmodel.AvailabilityStatus:
     enum:
     - Available
@@ -51,6 +81,8 @@ definitions:
       imageId:
         description: ImageType        string   `json:"imageType"`
         type: string
+      initScript:
+        $ref: '#/definitions/cloudmodel.InitScriptReq'
       label:
         additionalProperties:
           type: string
@@ -298,15 +330,6 @@ definitions:
       description:
         example: Made in CB-TB
         type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
       label:
         additionalProperties:
           type: string
@@ -334,16 +357,11 @@ definitions:
         - refine
         example: continue
         type: string
-      postCommandAsync:
-        description: PostCommandAsync runs post-deployment commands in the background
-        example: false
-        type: boolean
-      postCommands:
-        description: PostCommands are sequential post-deployment command phases that
-          bootstrap the Nodes
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandReq'
-        type: array
+      postScript:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.PostScriptReq'
+        description: PostScript is the post-deployment script that bootstraps the
+          Nodes once they are up
       systemLabel:
         description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
@@ -352,6 +370,80 @@ definitions:
     required:
     - name
     - nodeGroups
+    type: object
+  cloudmodel.InitScriptReq:
+    properties:
+      env:
+        additionalProperties:
+          type: string
+        example:
+          ROLE: worker
+        type: object
+      fromTemplateId:
+        description: FromTemplateId records the template the steps were copied from
+          (set by CB-Tumblebug)
+        example: initscript-nginx
+        type: string
+      implicit:
+        description: |-
+          Implicit is set by CB-Tumblebug when the request had no initScript; a rendering failure then
+          falls back to the CB-Spider default user data instead of failing the Node
+        type: boolean
+      mode:
+        default: default
+        enum:
+        - default
+        - custom
+        - none
+        example: default
+        type: string
+      notify:
+        description: 'Notify false stops the Node from reporting its result to the
+          notifier (default: report when one is registered)'
+        example: true
+        type: boolean
+      script:
+        example: |-
+          #!/bin/bash
+          apt-get install -y -qq jq
+        type: string
+      scripts:
+        items:
+          $ref: '#/definitions/cloudmodel.InitScriptStep'
+        type: array
+      templateId:
+        example: initscript-nginx
+        type: string
+      userName:
+        default: cb-user
+        example: cb-user
+        type: string
+    type: object
+  cloudmodel.InitScriptStep:
+    properties:
+      continueOnError:
+        description: ContinueOnError keeps running the next steps when this one fails;
+          the Node then reports ok with a note
+        example: false
+        type: boolean
+      labelSelector:
+        description: LabelSelector runs the step only on Nodes whose labels match
+          (e.g. "role=gpu"); empty runs everywhere
+        example: role=gpu
+        type: string
+      name:
+        example: install-agent
+        type: string
+      script:
+        example: |-
+          #!/bin/bash
+          apt-get install -y -qq jq
+        type: string
+      timeoutSec:
+        description: 'TimeoutSec stops the step after this many seconds (0: no limit);
+          a timeout counts as a failure'
+        example: 600
+        type: integer
     type: object
   cloudmodel.K8sClusterReq:
     properties:
@@ -569,10 +661,11 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
-  cloudmodel.PostCommandReq:
+  cloudmodel.PostScriptPhase:
     properties:
       command:
-        description: Command is the list of commands to execute
+        description: Command is the list of commands to execute (not needed when TemplateId
+          or Scripts is given)
         example:
         - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
           is: $client_ip'
@@ -584,6 +677,13 @@ definitions:
           phase fails (default: false)'
         example: false
         type: boolean
+      env:
+        additionalProperties:
+          type: string
+        description: Env is exported to Command, TemplateId and Scripts
+        example:
+          ROLE: web
+        type: object
       labelSelector:
         description: LabelSelector limits execution to nodes matching the selector
           (e.g. "role=worker")
@@ -597,6 +697,18 @@ definitions:
         description: NodeId limits execution to a single node
         example: g1-1
         type: string
+      scripts:
+        description: Scripts runs these steps over SSH (same runner as TemplateId),
+          appended after the template's steps
+        items:
+          $ref: '#/definitions/cloudmodel.InitScriptStep'
+        type: array
+      templateId:
+        description: |-
+          TemplateId runs an init script template over SSH instead of Command: its steps run in order as root with
+          the Node identity (TB_*) and Env exported, exactly like a first-boot init script
+        example: initscript-nginx
+        type: string
       timeoutMinutes:
         default: 30
         description: |-
@@ -608,8 +720,15 @@ definitions:
         description: UserName is the SSH username to use for command execution
         example: cb-user
         type: string
-    required:
-    - command
+    type: object
+  cloudmodel.PostScriptReq:
+    properties:
+      phases:
+        description: Phases run sequentially; each may target a nodeGroupId, nodeId,
+          or labelSelector
+        items:
+          $ref: '#/definitions/cloudmodel.PostScriptPhase'
+        type: array
     type: object
   cloudmodel.RecommendedInfra:
     properties:
@@ -677,6 +796,9 @@ definitions:
         type: number
       acceleratorModel:
         type: string
+      acceleratorPartitionSize:
+        example: 0.125
+        type: number
       acceleratorType:
         type: string
       architecture:
@@ -688,6 +810,8 @@ definitions:
         type: array
       availabilityCheckedAt:
         type: string
+      availabilityQuota:
+        $ref: '#/definitions/cloudmodel.AvailabilityQuota'
       availabilityReason:
         type: string
       availabilityRefreshAfter:
@@ -3024,6 +3148,7 @@ paths:
         Only the conversion to the same or a newer version is allowed. A cloud model cannot be converted to a version older than v0.1.2, and a model whose stored version is not a cm-beetle/imdl tag cannot be converted.
         The response has the fields of 'GET /infra-model/{id}', with the model version and 'onpremiseInfraModel' (or 'cloudInfraModel') converted, and 'conversion' added: 'originVersion' (the stored version), 'currentVersion' (the version of the returned model), 'converted' (false if the stored version is already the requested version), 'droppedFields' (the paths of the fields removed because the requested version does not have them) and 'warnings' (what could not be converted as it was).
         The values are not changed by the conversion unless a field's structure requires it. e.g. the disk sizes are kept as they are although their unit was changed from GiB to GB in the comments of v0.1.11.
+        [Migrations] v0.1.22: 'targetInfra.postCommands' of a cloud model is converted to 'targetInfra.postScript.phases'. 'postCommandAsync' and 'installMonAgent' were removed, so they are dropped (with a warning if they were true / yes).
       operationId: ConvertInfraModel
       parameters:
       - description: Model ID

@@ -34,15 +34,15 @@ func TestCreateInfraModelVersionParam(t *testing.T) {
 		query   string
 		wantErr string
 	}{
-		{"former onprem parameter", "modelType=onprem&onpremModelVersion=v0.1.19", "'onpremModelVersion' is no longer supported. Use 'modelVersion' instead"},
-		{"former cloud parameter", "modelType=cloud&cloudModelVersion=v0.1.19", "'cloudModelVersion' is no longer supported. Use 'modelVersion' instead"},
-		{"former parameter of the other model type", "modelType=cloud&onpremModelVersion=v0.1.19", "'onpremModelVersion' is no longer supported"},
-		{"former parameter with an empty value", "modelType=onprem&cloudModelVersion=", "'cloudModelVersion' is no longer supported"},
-		{"former parameter with modelVersion", "modelType=onprem&modelVersion=v0.1.19&onpremModelVersion=v0.1.19", "'onpremModelVersion' is no longer supported"},
-		{"modelVersion is not a tag", "modelType=onprem&modelVersion=v9.9.9", "not a tagged version"},
-		{"modelVersion for onprem", "modelType=onprem&modelVersion=v0.1.18", "'onpremiseInfraModel' is required"},
-		{"modelVersion for cloud", "modelType=cloud&modelVersion=v0.1.18", "'cloudInfraModel' is required"},
-		{"modelVersion omitted", "modelType=cloud", "'cloudInfraModel' is required"},
+		{"former onprem parameter", "modelType=onprem&onpremModelVersion=v0.1.19", "'onpremModelVersion' no longer supported: use 'modelVersion'"},
+		{"former cloud parameter", "modelType=cloud&cloudModelVersion=v0.1.19", "'cloudModelVersion' no longer supported: use 'modelVersion'"},
+		{"former parameter of the other model type", "modelType=cloud&onpremModelVersion=v0.1.19", "'onpremModelVersion' no longer supported"},
+		{"former parameter with an empty value", "modelType=onprem&cloudModelVersion=", "'cloudModelVersion' no longer supported"},
+		{"former parameter with modelVersion", "modelType=onprem&modelVersion=v0.1.19&onpremModelVersion=v0.1.19", "'onpremModelVersion' no longer supported"},
+		{"modelVersion is not a tag", "modelType=onprem&modelVersion=v9.9.9", "Unsupported version"},
+		{"modelVersion for onprem", "modelType=onprem&modelVersion=v0.1.18", "'onpremiseInfraModel' required"},
+		{"modelVersion for cloud", "modelType=cloud&modelVersion=v0.1.18", "'cloudInfraModel' required"},
+		{"modelVersion omitted", "modelType=cloud", "'cloudInfraModel' required"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -36,19 +36,19 @@ func GetSmdlVersionSwaggerDoc(c echo.Context) error {
 	if err != nil {
 		newErr := fmt.Errorf("failed to get the tagged cm-grasshopper/smdl model versions: %w", err)
 		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: "Model versions unavailable"})
 	}
 	if _, err := selectModelVersion(version, versions); version == "" || err != nil {
 		newErr := fmt.Errorf("'%s' is not a cm-grasshopper/smdl tagged version", version)
 		log.Warn().Msg(newErr.Error())
-		return c.JSON(http.StatusNotFound, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusNotFound, model.Response{Success: false, Text: fmt.Sprintf("Version '%s' not found", version)})
 	}
 
 	doc, err := getSmdlVersionSwaggerDoc(c.Request().Context(), version)
 	if err != nil {
 		newErr := fmt.Errorf("failed to generate the API definition of cm-grasshopper/smdl %s : [%v]", version, err)
 		log.Error().Msg(newErr.Error())
-		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: newErr.Error()})
+		return c.JSON(http.StatusInternalServerError, model.Response{Success: false, Text: fmt.Sprintf("API definition for version %s unavailable", version)})
 	}
 	return c.JSONBlob(http.StatusOK, doc)
 }

@@ -242,10 +242,10 @@ func TestValidateObjectStorageModelConversion(t *testing.T) {
 		{"from the oldest to the latest version", "v0.1.3", "v0.1.20", ""},
 		{"to a newer version", "v0.1.10", "v0.1.11", ""},
 		{"to the same version", "v0.1.20", "v0.1.20", ""},
-		{"to an older version", "v0.1.20", "v0.1.19", "only the conversion to a newer version"},
-		{"to an older version across the restructure", "v0.1.11", "v0.1.10", "only the conversion to a newer version"},
-		{"stored version without the object storage model", "v0.1.2", "v0.1.20", "is not a cm-beetle/imdl tag with the object storage model"},
-		{"stored version is empty", "", "v0.1.20", "is not a cm-beetle/imdl tag with the object storage model"},
+		{"to an older version", "v0.1.20", "v0.1.19", "not convertible to older version"},
+		{"to an older version across the restructure", "v0.1.11", "v0.1.10", "not convertible to older version"},
+		{"stored version without the object storage model", "v0.1.2", "v0.1.20", "object storage model support"},
+		{"stored version is empty", "", "v0.1.20", "object storage model support"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -334,14 +334,14 @@ func TestConvertStorageModelHandler(t *testing.T) {
 		wantText   string
 	}{
 		{"modelStage is required", "os-convert-old", "", http.StatusBadRequest, "'modelStage' must be"},
-		{"model not found", "os-convert-no-such-model", "modelStage=source", http.StatusNotFound, "failed to find"},
+		{"model not found", "os-convert-no-such-model", "modelStage=source", http.StatusNotFound, "not found"},
 		{"not an object storage model", "os-convert-rdbms", "modelStage=source", http.StatusBadRequest, "is not an object storage model"},
-		{"model stage mismatch", "os-convert-old", "modelStage=source", http.StatusBadRequest, "model stage mismatch"},
-		{"version is not a tag", "os-convert-old", "modelStage=planning&objectStorageModelVersion=v9.9.9", http.StatusBadRequest, "not a tagged version"},
-		{"version without the object storage model", "os-convert-old", "modelStage=planning&objectStorageModelVersion=v0.1.2", http.StatusBadRequest, "not a tagged version"},
-		{"downgrade", "os-convert-old", "modelStage=planning&objectStorageModelVersion=v0.1.3", http.StatusBadRequest, "only the conversion to a newer version"},
-		{"stored version without the object storage model", "os-convert-pre-storage", "modelStage=source", http.StatusBadRequest, "is not a cm-beetle/imdl tag with the object storage model"},
-		{"stored version is empty", "os-convert-noversion", "modelStage=source", http.StatusBadRequest, "is not a cm-beetle/imdl tag with the object storage model"},
+		{"model stage mismatch", "os-convert-old", "modelStage=source", http.StatusBadRequest, "' model, not '"},
+		{"version is not a tag", "os-convert-old", "modelStage=planning&objectStorageModelVersion=v9.9.9", http.StatusBadRequest, "Unsupported version"},
+		{"version without the object storage model", "os-convert-old", "modelStage=planning&objectStorageModelVersion=v0.1.2", http.StatusBadRequest, "Unsupported version"},
+		{"downgrade", "os-convert-old", "modelStage=planning&objectStorageModelVersion=v0.1.3", http.StatusBadRequest, "not convertible to older version"},
+		{"stored version without the object storage model", "os-convert-pre-storage", "modelStage=source", http.StatusBadRequest, "object storage model support"},
+		{"stored version is empty", "os-convert-noversion", "modelStage=source", http.StatusBadRequest, "object storage model support"},
 		{"stored model has no body", "os-convert-nobody", "modelStage=target", http.StatusBadRequest, "no 'targetObjectStorageModel'"},
 	}
 	for _, tt := range tests {
